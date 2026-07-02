@@ -1,0 +1,62 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/admin_users/$(request.auth.uid));
+    }
+
+    function safeImageWrite() {
+      return request.resource != null &&
+        request.resource.size < 20 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    function validGuestUpload(boardId) {
+      return safeImageWrite() &&
+        request.resource.metadata != null &&
+        'uploadToken' in request.resource.metadata &&
+        'boardId' in request.resource.metadata &&
+        request.resource.metadata.boardId == boardId &&
+        firestore.exists(/databases/(default)/documents/boards/$(boardId)) &&
+        firestore.get(/databases/(default)/documents/boards/$(boardId)).data.allowGuestPost == true &&
+        firestore.get(/databases/(default)/documents/guest_upload_tokens/$(request.resource.metadata.uploadToken)).data.boardId == boardId &&
+        firestore.get(/databases/(default)/documents/guest_upload_tokens/$(request.resource.metadata.uploadToken)).data.proofHash ==
+        firestore.get(/databases/(default)/documents/site_settings/guest).data.codeHash;
+    }
+
+    function validHomeIntroUpload(fileName) {
+      return safeImageWrite() &&
+        request.resource.metadata != null &&
+        'uploadToken' in request.resource.metadata &&
+        firestore.get(/databases/(default)/documents/admin_upload_tokens/$(request.resource.metadata.uploadToken)).data.purpose == 'homeIntro' &&
+        firestore.get(/databases/(default)/documents/admin_upload_tokens/$(request.resource.metadata.uploadToken)).data.storagePath == 'home_intro/' + fileName;
+    }
+
+    match /gallery_thumbs/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if (isAdmin() && safeImageWrite()) || validGuestUpload(boardId);
+      allow delete: if isAdmin();
+    }
+
+    match /gallery_extra/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if (isAdmin() && safeImageWrite()) || validGuestUpload(boardId);
+      allow delete: if isAdmin();
+    }
+
+    match /home_intro/{fileName} {
+      allow read: if true;
+      allow write: if validHomeIntroUpload(fileName);
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

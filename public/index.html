@@ -1,0 +1,86 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NAMWALL</title>
+  <link rel="preconnect" href="https://r2.naru.pub">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="modulepreload" href="/assets/js/core/app.js">
+  <link rel="modulepreload" href="/assets/js/core/firebase.js">
+  <link rel="modulepreload" href="/assets/js/core/state.js">
+  <link rel="modulepreload" href="/assets/js/shared/boards-render.js">
+  <link rel="modulepreload" href="/assets/js/skins/registry.js">
+  <link rel="modulepreload" href="/assets/js/pages/home-page.js">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+  <script>try{var h=localStorage.getItem("archive_home_intro_h_v1");if(h)document.documentElement.style.setProperty("--home-intro-reserved",h);}catch(e){}</script>
+</head>
+<body class="site-page home-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="/index.html">
+          <span class="dot"></span><span id="siteTitle"></span>
+        </a>
+        <nav class="nav" id="topNav">
+        </nav>
+        <div class="pills">
+          <span class="pill" id="pillGuest">Guest: </span>
+          <span class="pill" id="pillAdmin">Admin: </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <div id="homeIntro"></div>
+
+    <div class="grid two mt-md">
+      <section class="card">
+        <h3>최근 업데이트</h3>
+        <div class="grid tight" id="recentList">
+          <div class="loading-indicator" role="status" aria-live="polite">
+            <span class="sr-only">최근 업데이트를 불러오는 중</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h3>빠른 메뉴</h3>
+        <div id="quickMenu" class="grid tight"></div>
+
+        <hr class="sep">
+        <h3>검색</h3>
+        <div class="formRow">
+          <input id="quickTag" placeholder="태그 입력 후 검색">
+          <button class="btn" id="quickSearchBtn">검색</button>
+        </div>
+
+        <hr class="sep">
+        <h3>최근 태그</h3>
+        <div id="recentTags">
+          <div class="loading-indicator" role="status" aria-live="polite">
+            <span class="sr-only">최근 태그를 불러오는 중</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer">
+      <div class="muted small">© <span id="year"></span> NAMWALL</div>
+    </div>
+  </main>
+
+  <script type="module" src="/assets/js/core/app.js"></script>
+  <script type="module">
+    import { loadHomeIntro, loadRecentUpdates, loadRecentTags } from "/assets/js/pages/home-page.js";
+    loadHomeIntro();
+    loadRecentUpdates();
+    loadRecentTags();
+  </script>
+</body>
+</html>

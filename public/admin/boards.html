@@ -1,0 +1,276 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게시판 메뉴 통합 관리</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/shared/boards-render.js">
+<link rel="modulepreload" href="/assets/js/skins/registry.js">
+<link rel="modulepreload" href="/assets/js/admin/boards-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body>
+  <main class="container">
+    <section class="card admin-board-editor">
+      <div class="board-editor-head">
+        <div>
+          <h2>게시판 메뉴 통합 관리</h2>
+          <p class="muted small">게시판 ID, 메뉴 노출, 공개 여부, 게스트 허용을 한 화면에서 바로 조정합니다.</p>
+        </div>
+        <div class="formRow board-editor-actions">
+          <button type="button" class="btn" id="resetBoardBtn">초기화</button>
+          <a class="btn" href="/admin/index.html">돌아가기</a>
+        </div>
+      </div>
+
+      <div class="admin-board-layout mt-md">
+        <div class="admin-board-form">
+          <div class="settings-block">
+            <div class="settings-block-head">
+              <strong>기본 정보</strong>
+              <span class="muted small">게시판 ID와 제목은 메뉴와 연결됩니다.</span>
+            </div>
+            <div class="grid tight">
+              <div class="field-group">
+                <div class="field-head">
+                  <label for="boardIdInput">게시판 ID</label>
+                  <button type="button" class="btn small" id="autoBoardIdBtn">자동 생성</button>
+                </div>
+                <input id="boardIdInput" placeholder="예: board, profile">
+                <div class="muted small hidden" id="boardIdHint"></div>
+              </div>
+
+              <div class="field-group">
+                <label for="boardTitleInput">게시판 제목</label>
+                <input id="boardTitleInput" placeholder="메뉴에 보일 이름">
+              </div>
+
+              <div class="field-group">
+                <label for="boardDescInput">설명</label>
+                <input id="boardDescInput" placeholder="간단한 소개 문구">
+              </div>
+
+              <div class="field-group">
+                <label for="pageSizeInput">페이지당 게시물 수</label>
+                <input id="pageSizeInput" type="number" min="1" step="1" placeholder="기본값">
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md">
+            <div class="settings-block-head">
+              <strong>스킨</strong>
+              <span class="muted small">게시판의 모양과 목록 구성을 맞춥니다.</span>
+            </div>
+            <div class="grid tight">
+              <div class="field-group">
+                <label for="boardKindInput">스킨 타입</label>
+                <input id="boardKindInput" list="boardKindOptions" placeholder="예: BOARD, LOG, ESSAY">
+                <datalist id="boardKindOptions"></datalist>
+                <div id="skinFolderHint" class="muted small"></div>
+              </div>
+              <div class="field-group">
+                <label>스킨 빠른 선택</label>
+                <div id="skinCatalogList" class="skin-catalog"></div>
+                <div class="formRow">
+                  <button type="button" class="btn" id="addSkinPathBtn">경로 추가</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md hidden" id="boardSkinOptionsBlock">
+            <div class="settings-block-head">
+              <strong>BOARD 옵션</strong>
+              <span class="muted small">일반 게시판의 가로 폭을 정합니다.</span>
+            </div>
+            <div class="grid tight">
+              <div class="field-group">
+                <label for="boardBoardWidthInput">게시판 가로</label>
+                <input id="boardBoardWidthInput" type="number" min="1" step="1" placeholder="기본 800 / 100 이하는 %">
+                <div class="muted small">100 이하는 %, 그 이상은 px로 적용됩니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md hidden" id="gallerySkinOptionsBlock">
+            <div class="settings-block-head">
+              <strong>GALLERY 옵션</strong>
+              <span class="muted small">갤러리 스킨에서만 사용하는 폭과 열 수 설정입니다.</span>
+            </div>
+            <div class="grid tight">
+              <div class="field-group">
+                <label for="galleryBoardWidthInput">게시판 가로</label>
+                <input id="galleryBoardWidthInput" type="number" min="1" step="1" placeholder="기본 800 / 100 이하는 %">
+                <div class="muted small">100 이하는 %, 그 이상은 px로 적용됩니다.</div>
+              </div>
+              <div class="field-group">
+                <label for="galleryColumnsInput">1줄 게시물 수</label>
+                <input id="galleryColumnsInput" type="number" min="1" step="1" placeholder="기본 4">
+                <div class="muted small">한 줄에 들어갈 카드 수입니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md">
+            <div class="settings-block-head">
+              <strong>노출과 공개</strong>
+              <span class="muted small">아래 옵션으로 메뉴와 게시판 공개 범위를 정합니다.</span>
+            </div>
+            <div class="option-grid">
+              <label class="option-card" for="menuVisibleInput">
+                <input type="checkbox" id="menuVisibleInput" checked>
+                <span class="option-card-copy">
+                  <span class="option-card-title">메뉴 노출</span>
+                  <span class="option-card-desc">상단 메뉴와 사이트 내비게이션에 보입니다.</span>
+                </span>
+              </label>
+              <label class="option-card" for="boardPublicInput">
+                <input type="checkbox" id="boardPublicInput" checked>
+                <span class="option-card-copy">
+                  <span class="option-card-title">공개 여부</span>
+                  <span class="option-card-desc">끄면 관리자만 게시판을 볼 수 있습니다.</span>
+                </span>
+              </label>
+              <label class="option-card" for="boardGuestInput">
+                <input type="checkbox" id="boardGuestInput">
+                <span class="option-card-copy">
+                  <span class="option-card-title">게스트 허용</span>
+                  <span class="option-card-desc">게스트 코드로 글쓰기를 허용합니다.</span>
+                </span>
+              </label>
+              <label class="option-card" for="commentRestrictionInput">
+                <input type="checkbox" id="commentRestrictionInput">
+                <span class="option-card-copy">
+                  <span class="option-card-title">댓글제한</span>
+                  <span class="option-card-desc">게스트 권한이 있어야 덧글을 쓸 수 있습니다.</span>
+                </span>
+              </label>
+            </div>
+            <div class="grid tight mt-sm">
+              <div class="field-group">
+                <label for="menuOrderInput">메뉴 순서</label>
+                <input id="menuOrderInput" type="number" min="0" step="1" placeholder="작을수록 위에 표시">
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md hidden" id="logSkinOptionsBlock">
+            <div class="settings-block-head">
+              <strong>LOG 옵션</strong>
+              <span class="muted small">로그 스킨에서만 사용하는 폭과 배치 설정입니다.</span>
+            </div>
+            <div class="grid tight">
+              <div class="field-group">
+                <label for="logBoardWidthInput">게시판 가로</label>
+                <input id="logBoardWidthInput" type="number" min="1" step="1" placeholder="기본 800 / 100 이하는 %">
+                <div class="muted small">100 이하는 %, 그 이상은 px로 적용됩니다.</div>
+              </div>
+              <div class="field-group">
+                <label for="logImageWidthInput">이미지 폭 크기</label>
+                <input id="logImageWidthInput" type="number" min="0" step="1" placeholder="기본값 / 0은 제한 없음">
+                <div class="muted small">0을 입력하면 이미지 폭 제한을 두지 않습니다.</div>
+              </div>
+              <div class="field-group">
+                <label for="logCommentPositionInput">덧글 위치</label>
+                <select id="logCommentPositionInput">
+                  <option value="default">우측</option>
+                  <option value="bottom">하단</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="admin-board-summary">
+          <div class="settings-block summary-panel">
+            <div class="settings-block-head">
+              <strong>현재 설정</strong>
+              <span class="muted small">입력값이 바로 요약됩니다.</span>
+            </div>
+            <div class="summary-title" id="boardSummaryTitle">새 게시판</div>
+            <div class="summary-chips" id="boardSummaryChips"></div>
+            <dl class="summary-list">
+              <div>
+                <dt>게시판 ID</dt>
+                <dd id="boardSummaryId">-</dd>
+              </div>
+              <div>
+                <dt>스킨</dt>
+                <dd id="boardSummarySkin">BOARD</dd>
+              </div>
+              <div>
+                <dt>메뉴 순서</dt>
+                <dd id="boardSummaryOrder">-</dd>
+              </div>
+              <div>
+                <dt>페이지 크기</dt>
+                <dd id="boardSummaryPageSize">12</dd>
+              </div>
+              <div>
+                <dt>댓글 제한</dt>
+                <dd id="boardSummaryCommentScope">OFF</dd>
+              </div>
+              <div>
+                <dt>게시판 가로</dt>
+                <dd id="boardSummaryBoardWidth">-</dd>
+              </div>
+              <div>
+                <dt>LOG 가로</dt>
+                <dd id="boardSummaryLogBoardWidth">-</dd>
+              </div>
+              <div>
+                <dt>갤러리 가로</dt>
+                <dd id="boardSummaryGalleryBoardWidth">-</dd>
+              </div>
+              <div>
+                <dt>갤러리 열 수</dt>
+                <dd id="boardSummaryGalleryColumns">-</dd>
+              </div>
+              <div>
+                <dt>이미지 폭</dt>
+                <dd id="boardSummaryLogImageWidth">-</dd>
+              </div>
+              <div>
+                <dt>덧글 위치</dt>
+                <dd id="boardSummaryLogCommentPosition">우측</dd>
+              </div>
+            </dl>
+            <div class="formRow board-summary-actions mt-md">
+              <button class="btn primary" id="saveBoardBtn">저장</button>
+            </div>
+            <div class="notice hidden mt-sm" id="boardMsg"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="card mt-md">
+      <div class="formRow board-maintenance-head">
+        <div>
+          <h3>Firestore 문서 정리</h3>
+          <p class="muted small">기존 boardType/navItems/root comments를 현재 구조로 정리합니다.</p>
+        </div>
+        <button class="btn" id="migrateDocsBtn">문서 정리 실행</button>
+      </div>
+      <div class="notice hidden mt-sm" id="migrateMsg"></div>
+    </section>
+
+    <section class="card mt-md">
+      <h3>게시판 목록</h3>
+      <div id="boardsList" class="grid tight mt-sm"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/admin/boards-page.js"></script>
+</body>
+</html>
+

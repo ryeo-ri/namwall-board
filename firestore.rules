@@ -1,0 +1,272 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    function publicPost() {
+      return !resource.data.keys().hasAny(['isPublic']) || resource.data.isPublic == true;
+    }
+
+    function guestCodeReady() {
+      return exists(/databases/$(database)/documents/site_settings/guest) &&
+        get(/databases/$(database)/documents/site_settings/guest).data.codeHash is string;
+    }
+
+    function guestProofPath(postId) {
+      return /databases/$(database)/documents/post_write_proofs/$(postId);
+    }
+
+    function validGuestPostCreate(postId) {
+      return guestCodeReady() &&
+        exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId)) &&
+        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.allowGuestPost == true &&
+        request.resource.data.authorType == 'GUEST' &&
+        request.resource.data.isPublic == true &&
+        request.resource.data.isSecret is bool &&
+        request.resource.data.status is string &&
+        (
+          (
+            request.resource.data.isSecret == true &&
+            (request.resource.data.status == 'PUBLISHED' || request.resource.data.status == 'SECRET')
+          ) ||
+          (request.resource.data.isSecret == false && request.resource.data.status == 'PUBLISHED')
+        ) &&
+        existsAfter(guestProofPath(postId)) &&
+        getAfter(guestProofPath(postId)).data.postId == postId &&
+        getAfter(guestProofPath(postId)).data.boardId == request.resource.data.boardId &&
+        getAfter(guestProofPath(postId)).data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash &&
+        request.resource.data.keys().hasOnly([
+          'boardId',
+          'skinType',
+          'title',
+          'tags',
+          'imageUrl',
+          'thumbnailAttachment',
+          'extraAttachments',
+          'authorType',
+          'authorName',
+          'isPublic',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'contentText',
+          'contentIsHtml',
+          'contentHtml',
+          'commentHtml',
+          'logNo',
+          'isSecret',
+          'secretHash',
+          'secretSalt',
+          'secretHint',
+          'source',
+          'thumbnailMode',
+          'thumbnailEmbedHtml',
+          'thumbnailEmbedSrc',
+          'skinData'
+        ]);
+    }
+
+    function validGuestProofCreate(postId) {
+      return guestCodeReady() &&
+        request.resource.data.postId == postId &&
+        request.resource.data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash &&
+        request.resource.data.keys().hasOnly([
+          'postId',
+          'boardId',
+          'proofHash',
+          'createdAt'
+        ]);
+    }
+
+    function validGuestUploadTokenCreate() {
+      return guestCodeReady() &&
+        request.resource.data.boardId is string &&
+        exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId)) &&
+        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.allowGuestPost == true &&
+        request.resource.data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash &&
+        request.resource.data.keys().hasOnly([
+          'boardId',
+          'proofHash',
+          'createdAt'
+        ]);
+    }
+
+    function validAdminUploadTokenCreate() {
+      return isAdmin() &&
+        request.resource.data.purpose == 'homeIntro' &&
+        request.resource.data.storagePath is string &&
+        request.resource.data.keys().hasOnly([
+          'purpose',
+          'storagePath',
+          'createdAt'
+        ]);
+    }
+
+    function validGuestSessionCreate() {
+      return guestCodeReady() &&
+        request.resource.data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash &&
+        request.resource.data.keys().hasOnly([
+          'proofHash',
+          'createdAt'
+        ]);
+    }
+
+    function parentPostPublic(postId) {
+      return isAdmin() ||
+        get(/databases/$(database)/documents/posts/$(postId)).data.isPublic == true ||
+        !get(/databases/$(database)/documents/posts/$(postId)).data.keys().hasAny(['isPublic']);
+    }
+
+    function postBoardId(postId) {
+      return get(/databases/$(database)/documents/posts/$(postId)).data.boardId;
+    }
+
+    function commentScopeIsGuest(postId) {
+      return exists(/databases/$(database)/documents/boards/$(postBoardId(postId))) &&
+        get(/databases/$(database)/documents/boards/$(postBoardId(postId))).data.commentScope == 'guest';
+    }
+
+    function validCommentCreate(postId) {
+      return request.resource.data.postId == postId &&
+        request.resource.data.nickname is string &&
+        request.resource.data.nickname.size() > 0 &&
+        request.resource.data.content is string &&
+        request.resource.data.content.size() > 0 &&
+        request.resource.data.contentHtml is string &&
+        request.resource.data.keys().hasOnly([
+          'postId',
+          'boardId',
+          'nickname',
+          'content',
+          'contentHtml',
+          'link',
+          'more',
+          'isSecret',
+          'secretHash',
+          'secretSalt',
+          'authorType',
+          'createdAt',
+          'isDeleted'
+        ]);
+    }
+
+    function validGuestCommentProofCreate(commentId) {
+      return guestCodeReady() &&
+        request.resource.data.postId is string &&
+        request.resource.data.boardId is string &&
+        request.resource.data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash &&
+        request.resource.data.keys().hasOnly([
+          'postId',
+          'boardId',
+          'proofHash',
+          'createdAt'
+        ]);
+    }
+
+    function validGuestCommentCreate(postId, commentId) {
+      return guestCodeReady() &&
+        request.resource.data.authorType == 'GUEST' &&
+        validCommentCreate(postId) &&
+        existsAfter(/databases/$(database)/documents/comment_write_proofs/$(commentId)) &&
+        getAfter(/databases/$(database)/documents/comment_write_proofs/$(commentId)).data.postId == postId &&
+        getAfter(/databases/$(database)/documents/comment_write_proofs/$(commentId)).data.proofHash ==
+          get(/databases/$(database)/documents/site_settings/guest).data.codeHash;
+    }
+
+    match /site_settings/main {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site_settings/guest {
+      allow read, write: if isAdmin();
+    }
+
+    match /boards/{boardId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /posts/{postId} {
+      allow read: if isAdmin() || publicPost();
+      allow create: if isAdmin() || validGuestPostCreate(postId);
+      allow update, delete: if isAdmin();
+
+      match /comments/{commentId} {
+        allow read: if parentPostPublic(postId);
+        allow create: if parentPostPublic(postId) &&
+          (isAdmin() || (commentScopeIsGuest(postId) ? validGuestCommentCreate(postId, commentId) : validCommentCreate(postId)));
+        allow delete: if isAdmin();
+        allow update: if isAdmin();
+      }
+    }
+
+    match /comment_write_proofs/{commentId} {
+      allow create: if validGuestCommentProofCreate(commentId);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /post_write_proofs/{postId} {
+      allow create: if validGuestProofCreate(postId);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /guest_upload_tokens/{tokenId} {
+      allow create: if validGuestUploadTokenCreate();
+      allow delete: if isAdmin() ||
+        (
+          guestCodeReady() &&
+          resource.data.proofHash ==
+            get(/databases/$(database)/documents/site_settings/guest).data.codeHash
+        );
+      allow read, update: if isAdmin();
+    }
+
+    match /admin_upload_tokens/{tokenId} {
+      allow create: if validAdminUploadTokenCreate();
+      allow delete: if isAdmin();
+      allow read, update: if isAdmin();
+    }
+
+    match /guest_sessions/{sessionId} {
+      allow create: if validGuestSessionCreate();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /guest_submissions/{submissionId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
+
+    // Legacy root comments support for migration only.
+    match /comments/{commentId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /admin_users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

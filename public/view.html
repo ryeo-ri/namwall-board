@@ -1,0 +1,59 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게시물 보기</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/app.js">
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/shared/boards-render.js">
+<link rel="modulepreload" href="/assets/js/skins/registry.js">
+<link rel="modulepreload" href="/assets/js/pages/view-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="/index.html"><span class="dot"></span><span id="siteTitle"></span></a>
+        <nav class="nav" id="viewNav"></nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card view-card">
+      <div class="view-head">
+        <div class="view-meta-row">
+          <div class="view-meta" id="viewMeta"></div>
+          <div id="viewAdminTools" class="view-admin-tools hidden"></div>
+        </div>
+        <h1 id="viewTitle" class="view-title">
+          <span class="loading-indicator title-loader" role="status" aria-live="polite">
+            <span class="sr-only">게시물을 불러오는 중</span>
+          </span>
+        </h1>
+        <div id="viewTags" class="view-tags"></div>
+      </div>
+      <div id="viewImage" class="mt-md"></div>
+      <div id="viewContent" class="mt-md"></div>
+      <div id="viewSource" class="muted small mt-sm"></div>
+    </section>
+
+    <section class="card mt-md" id="viewCommentsWrap">
+      <h3>덧글</h3>
+      <div id="viewComments"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/core/app.js"></script>
+  <script type="module" src="/assets/js/pages/view-page.js"></script>
+</body>
+</html>

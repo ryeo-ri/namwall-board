@@ -1,0 +1,41 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관리자 대시보드</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/admin/dashboard-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body>
+  <main class="container hidden" id="adminDashboard">
+    <section class="card">
+      <h2>관리자 대시보드</h2>
+      <div class="muted small" id="adminInfo">확인 중...</div>
+      <div class="formRow mt-sm">
+        <button class="btn" id="logoutBtn">로그아웃</button>
+        <a class="btn" href="/index.html">홈</a>
+      </div>
+    </section>
+
+    <section class="admin-menu mt-md">
+      <ul>
+        <li><a href="/admin/home.html"><span>홈 소개 관리</span><span class="meta">site_settings/main</span></a></li>
+        <li><a href="/admin/boards.html"><span>게시판/메뉴 통합 관리</span><span class="meta">boards</span></a></li>
+        <li><a href="/admin/guest.html"><span>게스트 코드 관리</span><span class="meta">site_settings/guest</span></a></li>
+        <li><a href="/admin/admins.html"><span>관리자 프로필</span><span class="meta">admin_users</span></a></li>
+      </ul>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/admin/dashboard-page.js"></script>
+</body>
+</html>

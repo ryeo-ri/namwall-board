@@ -1,0 +1,44 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관리자 프로필</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/admin/admins-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h2>관리자 프로필 목록</h2>
+      <p class="muted small">Auth 계정 생성은 Firebase Console/Auth에서 수행하고, 여기서는 admin_users 프로필을 추가/수정합니다.</p>
+      <div class="grid tight mt-sm">
+        <input id="adminUidInput" placeholder="관리자 UID (Auth UID)">
+        <input id="adminNicknameInput" placeholder="닉네임">
+        <select id="adminRoleInput">
+          <option value="ADMIN">ADMIN</option>
+          <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+        </select>
+      </div>
+      <div class="formRow mt-sm">
+        <button class="btn primary" id="saveAdminProfileBtn">관리자 프로필 저장</button>
+      </div>
+      <div id="adminProfileMsg" class="notice hidden mt-sm"></div>
+      <div id="adminsList" class="grid tight mt-sm"></div>
+      <div class="formRow mt-sm">
+        <a class="btn" href="/admin/index.html">대시보드</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/admin/admins-page.js"></script>
+</body>
+</html>

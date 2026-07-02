@@ -1,0 +1,254 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게시물 작성</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/app.js">
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/shared/boards-render.js">
+<link rel="modulepreload" href="/assets/js/skins/registry.js">
+<link rel="modulepreload" href="/assets/js/pages/write-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="/index.html"><span class="dot"></span><span id="siteTitle"></span></a>
+        <nav class="nav" id="topNav"></nav>
+        <div class="pills">
+          <span class="pill" id="pillGuest">Guest: </span>
+          <span class="pill" id="pillAdmin">Admin: </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card write-page write-compact">
+      <div class="write-head">
+        <div>
+          <h2 id="writeHeading">게시물 작성</h2>
+          <p class="muted small">아래 순서대로 입력하면 됩니다.</p>
+        </div>
+      </div>
+
+      <div class="notice hidden mt-sm" id="writeMsg"></div>
+
+      <div class="write-form mt-md">
+        <div class="write-row write-static-row">
+          <div class="write-label">게시판</div>
+          <div class="write-static-field inline">
+            <strong id="boardCurrentValue">-</strong>
+          </div>
+          <select id="boardSelect" class="hidden"></select>
+        </div>
+
+        <div class="write-row write-static-row">
+          <div class="write-label">작성자</div>
+          <div class="write-static-field inline">
+            <strong id="authorCurrentValue">-</strong>
+          </div>
+          <input id="authorNameInput" class="hidden" placeholder="작성자">
+        </div>
+
+        <div id="logOnlyFields" class="write-row write-log-row hidden">
+          <label class="muted small" for="logNumberInput">로그번호</label>
+          <input id="logNumberInput" placeholder="자동 부여">
+        </div>
+
+        <div class="write-row" id="thumbSection">
+          <div class="write-thumb-head">
+            <div class="write-label">대표이미지</div>
+            <div class="write-mode-row">
+              <label><input type="radio" name="thumbMode" value="url" id="thumbModeUrl" checked> URL</label>
+              <label><input type="radio" name="thumbMode" value="file" id="thumbModeFile"> 파일</label>
+              <label><input type="radio" name="thumbMode" value="video" id="thumbModeVideo"> VIDEO</label>
+            </div>
+          </div>
+          <div class="write-thumb-panel">
+            <div id="thumbUrlFields" class="write-field-block">
+              <label class="muted small" for="imageUrlInput">이미지 URL</label>
+              <input id="imageUrlInput" placeholder="https://...">
+            </div>
+
+            <div id="thumbFileFields" class="write-field-block hidden">
+              <div class="formRow write-file-row">
+                <button type="button" class="btn" id="selectThumbFileBtn">파일 선택</button>
+                <button type="button" class="btn" id="clearThumbFileBtn">선택 삭제</button>
+              </div>
+              <input id="thumbFilePathInput" readonly placeholder="선택한 파일 없음">
+              <input id="thumbFileInput" type="file" accept="image/*" class="hidden">
+            </div>
+
+            <div id="thumbVideoFields" class="write-field-block hidden">
+              <label class="muted small" for="thumbVideoInput">VIDEO iframe</label>
+              <textarea id="thumbVideoInput" class="write-video-input" rows="4" placeholder='<iframe width="560" height="315" src="https://www.youtube.com/embed/..." allowfullscreen></iframe>'></textarea>
+            </div>
+
+            <div id="thumbPreview" class="previewGrid mt-sm"></div>
+          </div>
+        </div>
+
+        <div class="write-row">
+          <div class="write-field-block">
+            <label class="muted small" for="visibilityInput">공개범위</label>
+            <div class="write-visibility-inline">
+              <select id="visibilityInput">
+                <option value="public">전체공개</option>
+                <option value="secret">비밀글</option>
+                <option value="private">비공개</option>
+              </select>
+              <div class="write-secret-inline hidden" id="secretPwWrap">
+                <label class="muted small" for="secretPwInput">비밀번호</label>
+                <input id="secretPwInput" type="password" placeholder="비밀번호">
+              </div>
+            </div>
+          </div>
+          <div id="galleryOnlyFields" class="write-field-block hidden mt-sm">
+            <div class="field-group">
+              <label class="muted small" for="sourceInput">출처</label>
+              <input id="sourceInput" placeholder="URL 또는 메모">
+            </div>
+          </div>
+        </div>
+
+        <div id="titleFields" class="write-row">
+          <div class="field-group">
+            <label class="write-label" for="titleInput">제목</label>
+            <input id="titleInput" placeholder="제목">
+          </div>
+        </div>
+
+        <div id="profileOnlyFields" class="write-step hidden">
+          <div class="write-step-head">
+            <div>
+              <strong>프로필 정보</strong>
+              <span class="muted small">전신 이미지는 위 대표이미지 영역을 사용합니다.</span>
+            </div>
+          </div>
+          <div class="write-step-body">
+            <div class="write-profile-grid">
+              <div class="field-group">
+                <label class="muted small" for="profileHeadInput">캐릭터 두상 이미지 URL (선택)</label>
+                <input id="profileHeadInput" placeholder="https://...">
+              </div>
+              <div class="field-group">
+                <label class="muted small" for="profileNameEnInput">영문 이름</label>
+                <input id="profileNameEnInput" placeholder="English name">
+              </div>
+            </div>
+            <div class="write-profile-meta">
+              <div class="field-group">
+                <label class="muted small" for="profileAgeInput">나이</label>
+                <input id="profileAgeInput" placeholder="예: 21">
+              </div>
+              <div class="field-group">
+                <label class="muted small" for="profileGenderInput">성별</label>
+                <input id="profileGenderInput" placeholder="예: 여성">
+              </div>
+              <div class="field-group">
+                <label class="muted small" for="profileHeightInput">키</label>
+                <input id="profileHeightInput" placeholder="예: 165cm">
+              </div>
+            </div>
+            <div class="write-profile-stack">
+              <div class="field-group">
+                <label class="muted small" for="profileAppearanceInput">외형</label>
+                <textarea id="profileAppearanceInput" class="textarea write-profile-textarea" rows="4" placeholder="외형을 입력하세요."></textarea>
+              </div>
+              <div class="field-group">
+                <label class="muted small" for="profilePersonalityInput">성격</label>
+                <textarea id="profilePersonalityInput" class="textarea write-profile-textarea" rows="4" placeholder="성격을 입력하세요."></textarea>
+              </div>
+              <div class="field-group">
+                <label class="muted small" for="profileEtcInput">기타</label>
+                <textarea id="profileEtcInput" class="textarea write-profile-textarea" rows="4" placeholder="기타 정보를 입력하세요."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <div id="contentFields" class="write-row">
+          <div class="write-content-head">
+            <label class="write-label" for="contentInput">본문</label>
+            <div class="write-inline-options">
+              <label class="write-check">
+                <input type="checkbox" id="htmlModeInput">
+                <span>HTML</span>
+              </label>
+            </div>
+          </div>
+          <div class="field-group">
+            <textarea id="contentInput" rows="12" class="textarea" placeholder="내용을 입력하세요."></textarea>
+          </div>
+        </div>
+
+        <details class="write-extra-details">
+          <summary>추가 이미지</summary>
+          <div class="write-extra-body">
+            <div class="write-mode-row">
+              <label><input type="radio" name="extraMode" value="url" id="extraModeUrl" checked> URL</label>
+              <label><input type="radio" name="extraMode" value="file" id="extraModeFile"> 파일</label>
+              <label><input type="radio" name="extraMode" value="video" id="extraModeVideo"> VIDEO</label>
+            </div>
+
+            <div id="extraUrlFields" class="write-field-block">
+              <label class="muted small" for="extraImageUrlInput">추가 이미지 URL</label>
+              <input id="extraImageUrlInput" placeholder="https://...">
+            </div>
+
+            <div id="extraVideoFields" class="write-field-block hidden">
+              <label class="muted small" for="extraVideoInput">VIDEO iframe</label>
+              <textarea id="extraVideoInput" class="write-video-input" rows="4" placeholder='<iframe width="560" height="315" src="https://www.youtube.com/embed/..." allowfullscreen></iframe>'></textarea>
+            </div>
+
+            <div id="extraFileFields" class="write-field-block hidden">
+              <div class="formRow write-file-row">
+                <button type="button" class="btn" id="selectExtraFileBtn">파일 선택</button>
+                <button type="button" class="btn" id="clearExtraFileBtn">선택 삭제</button>
+              </div>
+              <input id="extraFilePathInput" readonly placeholder="선택한 파일 없음">
+              <input id="extraFileInput" type="file" accept="image/*" multiple class="hidden">
+            </div>
+
+            <div id="extraPendingPreview" class="previewGrid mt-sm"></div>
+            <div class="formRow mt-sm">
+              <button type="button" class="btn" id="addExtraItemBtn">등록</button>
+            </div>
+            <div id="extraItems" class="previewGrid mt-sm"></div>
+            <div class="notice hidden mt-sm" id="uploadMsg"></div>
+          </div>
+        </details>
+
+        <div class="write-row">
+          <div class="field-group">
+            <label class="write-label" for="tagsInput">태그</label>
+            <input id="tagsInput" placeholder="tag1, tag2, tag3">
+          </div>
+        </div>
+
+        <input id="honeypotWebsite" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true" placeholder="website">
+
+        <div class="formRow write-actions write-actions-center mt-md">
+          <button class="btn primary" id="saveBtn">등록</button>
+          <a class="btn" id="cancelBtn" href="/index.html">목록</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/core/app.js"></script>
+  <script type="module" src="/assets/js/pages/write-page.js"></script>
+</body>
+</html>

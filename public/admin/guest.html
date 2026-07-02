@@ -1,0 +1,40 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게스트 코드 관리</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/core/state.js">
+<link rel="modulepreload" href="/assets/js/admin/guest-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h2>게스트 코드 관리</h2>
+      <div class="muted small" id="guestInfo">
+        <span class="loading-indicator compact" role="status" aria-live="polite">
+          <span class="sr-only">게스트 코드 설정을 불러오는 중</span>
+        </span>
+      </div>
+      <div class="grid tight mt-sm">
+        <input id="guestCodeInput" type="password" placeholder="새 게스트 코드">
+      </div>
+      <div class="formRow mt-sm">
+        <button class="btn primary" id="saveGuestCodeBtn">코드 갱신</button>
+        <a class="btn" href="/admin/index.html">대시보드</a>
+      </div>
+      <div id="guestMsg" class="notice hidden mt-sm"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/admin/guest-page.js"></script>
+</body>
+</html>

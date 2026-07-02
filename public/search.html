@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>검색</title>
+  <link rel="preconnect" href="https://r2.naru.pub">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="modulepreload" href="/assets/js/core/app.js">
+  <link rel="modulepreload" href="/assets/js/core/firebase.js">
+  <link rel="modulepreload" href="/assets/js/core/state.js">
+  <link rel="modulepreload" href="/assets/js/shared/boards-render.js">
+  <link rel="modulepreload" href="/assets/js/skins/registry.js">
+  <link rel="modulepreload" href="/assets/js/pages/search.js">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="/index.html"><span class="dot"></span><span id="siteTitle"></span></a>
+        <nav class="nav" id="topNav"></nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card">
+      <h2>검색</h2>
+      <div class="formRow mt-sm">
+        <input id="searchInput" placeholder="제목, 본문, 대표이미지">
+        <input id="tagInput" placeholder="태그(선택)">
+        <button class="btn primary" id="searchBtn">검색</button>
+      </div>
+      <div class="muted small mt-sm" id="searchMeta"></div>
+    </section>
+
+    <section class="card mt-md">
+      <div id="searchResults"><div class="notice">검색어를 입력해 주세요.</div></div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/core/app.js"></script>
+  <script type="module" src="/assets/js/pages/search.js"></script>
+</body>
+</html>
