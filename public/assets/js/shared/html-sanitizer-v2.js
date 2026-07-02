@@ -6,8 +6,8 @@ export function sanitizeHTML(html, options = {}) {
   if (allowIframes) allowedTags.push("iframe");
 
   const allowedAttributes = {
-    a: ["href", "title"],
-    img: ["src", "alt", "title", "width", "height"],
+    a: ["href", "title", "target"],
+    img: ["src", "alt", "title", "width", "height", "border"],
     iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "frameborder", "referrerpolicy", "loading"]
   };
 

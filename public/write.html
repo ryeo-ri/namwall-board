@@ -98,7 +98,7 @@
           </div>
         </div>
 
-        <div class="write-row">
+        <div class="write-row" id="visibilityFields">
           <div class="write-field-block">
             <label class="muted small" for="visibilityInput">공개범위</label>
             <div class="write-visibility-inline">
@@ -131,50 +131,11 @@
         <div id="profileOnlyFields" class="write-step hidden">
           <div class="write-step-head">
             <div>
-              <strong>프로필 정보</strong>
-              <span class="muted small">전신 이미지는 위 대표이미지 영역을 사용합니다.</span>
+              <strong id="skinFieldsTitle">스킨 정보</strong>
+              <span class="muted small hidden" id="profileSkinFieldsHelp">대표이미지는 목록 썸네일로 쓰이고, 전신/두상은 아래에서 따로 받습니다.</span>
             </div>
           </div>
-          <div class="write-step-body">
-            <div class="write-profile-grid">
-              <div class="field-group">
-                <label class="muted small" for="profileHeadInput">캐릭터 두상 이미지 URL (선택)</label>
-                <input id="profileHeadInput" placeholder="https://...">
-              </div>
-              <div class="field-group">
-                <label class="muted small" for="profileNameEnInput">영문 이름</label>
-                <input id="profileNameEnInput" placeholder="English name">
-              </div>
-            </div>
-            <div class="write-profile-meta">
-              <div class="field-group">
-                <label class="muted small" for="profileAgeInput">나이</label>
-                <input id="profileAgeInput" placeholder="예: 21">
-              </div>
-              <div class="field-group">
-                <label class="muted small" for="profileGenderInput">성별</label>
-                <input id="profileGenderInput" placeholder="예: 여성">
-              </div>
-              <div class="field-group">
-                <label class="muted small" for="profileHeightInput">키</label>
-                <input id="profileHeightInput" placeholder="예: 165cm">
-              </div>
-            </div>
-            <div class="write-profile-stack">
-              <div class="field-group">
-                <label class="muted small" for="profileAppearanceInput">외형</label>
-                <textarea id="profileAppearanceInput" class="textarea write-profile-textarea" rows="4" placeholder="외형을 입력하세요."></textarea>
-              </div>
-              <div class="field-group">
-                <label class="muted small" for="profilePersonalityInput">성격</label>
-                <textarea id="profilePersonalityInput" class="textarea write-profile-textarea" rows="4" placeholder="성격을 입력하세요."></textarea>
-              </div>
-              <div class="field-group">
-                <label class="muted small" for="profileEtcInput">기타</label>
-                <textarea id="profileEtcInput" class="textarea write-profile-textarea" rows="4" placeholder="기타 정보를 입력하세요."></textarea>
-              </div>
-            </div>
-          </div>
+          <div class="write-step-body" id="skinFieldsContainer"></div>
         </div>
 
 
@@ -194,7 +155,7 @@
           </div>
         </div>
 
-        <details class="write-extra-details">
+        <details class="write-extra-details" id="extraFields">
           <summary>추가 이미지</summary>
           <div class="write-extra-body">
             <div class="write-mode-row">
@@ -231,7 +192,7 @@
           </div>
         </details>
 
-        <div class="write-row">
+        <div class="write-row" id="tagFields">
           <div class="field-group">
             <label class="write-label" for="tagsInput">태그</label>
             <input id="tagsInput" placeholder="tag1, tag2, tag3">

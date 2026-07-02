@@ -4,10 +4,11 @@ const SKIN_CATALOG = [
   { type: "BOARD", folder: "board", aliases: ["board"], description: "Default board" },
   { type: "LOG", folder: "log", aliases: ["log"], description: "Log feed" },
   { type: "GALLERY", folder: "gallery", aliases: ["gal", "gallery"], description: "Gallery board" },
-  { type: "PROFILE", folder: "profile", aliases: ["profile"], description: "Profile board" }
+  { type: "PROFILE", folder: "profile", aliases: ["profile"], description: "Profile board" },
+  { type: "PAGE", folder: "page", aliases: ["page"], description: "Free page" }
 ];
 
-const HIDDEN_SKIN_TYPES = new Set(["PROFILE"]);
+const HIDDEN_SKIN_TYPES = new Set();
 
 const SKIN_META_BY_TYPE = new Map(
   SKIN_CATALOG.map((entry) => [entry.type, Object.freeze({ ...entry })])
@@ -50,7 +51,7 @@ function normalizeProfileSkinData(value = {}, post = {}) {
   const sourceMeta = clonePlainObject(source.meta);
   const legacyMeta = clonePlainObject(legacyProfile.meta);
   return {
-    fullBodyImage: String(source.fullBodyImage || legacyProfile.fullBodyImage || post?.imageUrl || post?.thumbnailAttachment?.url || "").trim(),
+    fullBodyImage: String(source.fullBodyImage || legacyProfile.fullBodyImage || "").trim(),
     headImage: String(source.headImage || legacyProfile.headImage || "").trim(),
     nameKo: String(source.nameKo || legacyProfile.nameKo || post?.title || "").trim(),
     nameEn: String(source.nameEn || legacyProfile.nameEn || "").trim(),
@@ -62,7 +63,8 @@ function normalizeProfileSkinData(value = {}, post = {}) {
     },
     appearance: String(source.appearance || legacyProfile.appearance || "").trim(),
     personality: String(source.personality || legacyProfile.personality || "").trim(),
-    etc: String(source.etc || legacyProfile.etc || "").trim()
+    etc: String(source.etc || legacyProfile.etc || "").trim(),
+    etcIsHtml: source.etcIsHtml === true || legacyProfile.etcIsHtml === true
   };
 }
 
@@ -89,7 +91,7 @@ export function isProfilePost(post = {}) {
 }
 
 export function isBoardMenuVisible(board) {
-  return board?.menuVisible !== false && board?.isVisible !== false && !isProfileBoard(board);
+  return board?.menuVisible !== false && board?.isVisible !== false;
 }
 
 export function getSkinAliases(type) {

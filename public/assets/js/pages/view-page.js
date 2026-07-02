@@ -6,10 +6,10 @@ import { deletePostsByIds } from "../shared/post-maintenance.js";
 import { getPostCoverMedia, normalizeVideoEmbedInput, renderPostVideoFrame } from "../shared/post-cover.js";
 import { renderLockIcon } from "../shared/secret-icon.js";
 import { getAuthSnapshot, sha256Hex } from "../core/state.js";
-import { isAdminOnlyBoard, renderAdminOnlyBoardNotice, renderHiddenBoardNotice } from "../shared/board-access.js";
+import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
 import { showInputModal } from "../shared/ui-modal.js";
-import { getSiteTitle, loadSiteMainSettings } from "../shared/boards-render.js";
-import { findSkinTypeByAlias, getPostSkinData, getSkin, isProfileBoard } from "../skins/registry.js";
+import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings, renderTopNav } from "../shared/boards-render.js";
+import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin } from "../skins/registry.js";
 import "../shared/lightbox.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -110,6 +110,30 @@ function renderInlineAttachments(attachments) {
   `;
 }
 
+function renderSkinDetailResult(detail = {}, skinData = {}) {
+  if (detail.hideTags) {
+    const viewTagsEl = document.getElementById("viewTags");
+    if (viewTagsEl) viewTagsEl.innerHTML = "";
+  }
+  document.getElementById("viewImage").innerHTML = detail.imageHtml || "";
+  document.getElementById("viewSource").textContent = detail.sourceText || (skinData.source ? `출처: ${skinData.source}` : "");
+  document.getElementById("viewContent").innerHTML = detail.contentHtml || "";
+}
+
+function applyViewWidth(board = {}, skin = null) {
+  const mainEl = document.querySelector("body.site-page main.container");
+  if (!mainEl) return;
+  document.body?.classList.toggle("page-raw-view", skin?.type === "PAGE");
+  const fallback = skin?.type === "PAGE" ? 900 : "";
+  const width = formatResponsiveWidth(getBoardSkinOption(board, "boardWidth", fallback));
+  if (width) {
+    mainEl.style.setProperty("--board-page-w", width);
+  } else {
+    mainEl.style.removeProperty("--board-page-w");
+  }
+  mainEl.style.setProperty("--board-page-extra-w", "0px");
+}
+
 function renderBoardAccessDeniedPage(board = {}, fallbackBoardId = "") {
   const mainEl = document.querySelector("main.container");
   const viewNavEl = document.getElementById("viewNav");
@@ -121,19 +145,6 @@ function renderBoardAccessDeniedPage(board = {}, fallbackBoardId = "") {
   mainEl.classList.add("access-denied-shell");
   mainEl.innerHTML = renderAdminOnlyBoardNotice(board?.title || board?.name || fallbackBoardId);
   setDocumentTitle("관리자 전용 게시판입니다.");
-}
-
-function renderHiddenBoardPage(board = {}, fallbackBoardId = "") {
-  const mainEl = document.querySelector("main.container");
-  const viewNavEl = document.getElementById("viewNav");
-  if (viewNavEl) {
-    viewNavEl.innerHTML = `<a href="/index.html">홈으로</a>`;
-  }
-  if (!mainEl) return;
-
-  mainEl.classList.add("access-denied-shell");
-  mainEl.innerHTML = renderHiddenBoardNotice(board?.title || board?.name || fallbackBoardId);
-  setDocumentTitle("준비 중인 게시판입니다.");
 }
 
 async function unlockSecretIfNeeded(post, isAdmin) {
@@ -190,10 +201,6 @@ async function loadPage() {
     }
 
     const auth = await getAuthSnapshot();
-    if (isProfileBoard(board, boardId)) {
-      renderHiddenBoardPage(board, boardId);
-      return;
-    }
     if (isAdminOnlyBoard(board) && !auth?.isAdmin) {
       renderBoardAccessDeniedPage(board, boardId);
       return;
@@ -204,6 +211,10 @@ async function loadPage() {
       skin = await getSkin(board);
     } catch (_error) {
       // keep the alias skin fallback
+    }
+    applyViewWidth(board, skin);
+    if (skin?.type === "PAGE") {
+      await renderTopNav(document.getElementById("viewNav"));
     }
     renderAdminTools(auth, post, boardId);
     const secretUnlocked = await unlockSecretIfNeeded(post, auth.isAdmin);
@@ -228,12 +239,9 @@ async function loadPage() {
     const tags = (post.tags || []).map((tag) => `<a class="tag" href="/search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`).join("");
     document.getElementById("viewTags").innerHTML = tags;
 
-    if (skin?.type === "PROFILE") {
-      const { renderProfileView } = await import("../skins/profile/renderer.js");
-      const profileView = renderProfileView(post, board, { secretUnlocked, isAdmin: auth.isAdmin });
-      document.getElementById("viewImage").innerHTML = profileView.imageHtml || "";
-      document.getElementById("viewSource").textContent = profileView.sourceText || (skinData.source ? `출처: ${skinData.source}` : "");
-      document.getElementById("viewContent").innerHTML = profileView.contentHtml || "";
+    if (typeof skin?.renderDetail === "function") {
+      const detail = await skin.renderDetail(post, board, { secretUnlocked, isAdmin: auth.isAdmin });
+      renderSkinDetailResult(detail, skinData);
     } else {
       const cover = getPostCoverMedia(post);
       const hideLogCover = skin?.type === "LOG" && post.isSecret && !secretUnlocked;
@@ -336,4 +344,3 @@ function escapeJsString(value) {
     .replace(/\\/g, "\\\\")
     .replace(/'/g, "\\'");
 }
-

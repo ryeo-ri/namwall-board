@@ -33,57 +33,52 @@ export function renderProfileView(post = {}, board = {}, options = {}) {
   const profile = normalizeProfile(post);
   const title = profile.nameKo || post.title || "(이름 없음)";
   const titleHtml = escapeHtml(title);
-  const boardUrl = `/board.html?bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
-  const mediaHtml = renderProfileMedia(post, title, "profile-hero-media");
-  const headshotHtml = renderProfileHeadshot(profile.headImage, title, "profile-hero-headshot");
-  const oneLine = renderTextBlock(profile.oneLine || post.contentText || "");
-  const basicFacts = [
-    renderFact("나이", profile.meta.age),
-    renderFact("성별", profile.meta.gender),
-    renderFact("키", profile.meta.height)
-  ].filter(Boolean).join("");
+  const mediaHtml = renderProfileMedia(post, title, "profile-hero-media", { preferFullBody: true });
+  const oneLine = renderTextBlock(getPostSkinData(post).profile?.oneLine || post.contentText || "");
+  const tagChips = (post.tags || [])
+    .map((tag) => String(tag || "").trim())
+    .filter(Boolean)
+    .map((tag) => `<a class="tag" href="/search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`)
+    .join("");
+  const namecardPhoto = profile.headImage
+    ? `<button type="button" class="profile-namecard-photo profile-namecard-photo-button" onclick="openLightbox('${escapeJsString(profile.headImage)}')" aria-label="${escapeHtml(`${title} 두상 원본 보기`)}"><img src="${escapeHtml(profile.headImage)}" alt="${escapeHtml(`${title} 두상`)}" loading="lazy"></button>`
+    : "";
+  const namecardMeta = [
+    ["나이", profile.meta.age],
+    ["성별", profile.meta.gender],
+    ["키", profile.meta.height]
+  ].filter((pair) => pair[1])
+    .map((pair) => `<div class="profile-namecard-fact"><span class="profile-namecard-key">${pair[0]}</span><span class="profile-namecard-val">${escapeHtml(pair[1])}</span></div>`)
+    .join("");
+  const extraImagesHtml = renderProfileExtraImages(post);
   const detailPanels = [
     renderTextPanel("외형", profile.appearance),
     renderTextPanel("성격", profile.personality),
-    renderTextPanel("기타", profile.etc)
+    renderTextPanel("기타", profile.etc, { allowHtml: profile.etcIsHtml })
   ].filter(Boolean).join("");
-  const tagsHtml = renderTags(post.tags || []);
 
   return {
     imageHtml: `
       <section class="profile-hero card profile-view-hero">
         <div class="profile-hero-main">
           <div class="profile-hero-visual">
-            <div class="profile-file-label">PROFILE BACKUP</div>
+            <div class="profile-file-label">PROFILE</div>
             ${mediaHtml || '<div class="profile-media-placeholder">전신 이미지가 없습니다.</div>'}
-            ${headshotHtml}
           </div>
           <div class="profile-copy">
-            <a class="profile-name-link" href="${boardUrl}">
-              <span class="profile-panel-label">캐릭터 이름</span>
-              <span class="profile-panel-title">${titleHtml}</span>
-              ${profile.nameEn ? `<span class="profile-name-en">${escapeHtml(profile.nameEn)}</span>` : ""}
-            </a>
-            <div class="profile-view-quote">
-              <div class="profile-panel-label">캐릭터 한마디</div>
-              <div class="profile-quote-text">${oneLine || "한마디가 없습니다."}</div>
+            <div class="profile-namecard">
+              ${oneLine ? `<p class="profile-namecard-quote">${oneLine}</p>` : ""}
+              <div class="profile-namecard-main${profile.headImage ? "" : " profile-namecard-main-no-photo"}">
+                ${namecardPhoto}
+                <div class="profile-namecard-body">
+                  <span class="profile-namecard-name">${titleHtml}</span>
+                  ${profile.nameEn ? `<span class="profile-name-en">${escapeHtml(profile.nameEn)}</span>` : ""}
+                  ${namecardMeta ? `<div class="profile-namecard-meta">${namecardMeta}</div>` : ""}
+                </div>
+              </div>
+              ${tagChips ? `<div class="profile-namecard-tags">${tagChips}</div>` : ""}
             </div>
-            <div class="profile-meta-row">
-              ${renderMetaChip("AGE", profile.meta.age)}
-              ${renderMetaChip("GENDER", profile.meta.gender)}
-              ${renderMetaChip("HEIGHT", profile.meta.height)}
-            </div>
-            ${tagsHtml}
-          </div>
-        </div>
-        <div class="profile-hero-side">
-          <div class="profile-panel profile-identity-panel">
-            <span class="profile-panel-label">IDENTITY</span>
-            <span class="profile-panel-title">${titleHtml}</span>
-            ${profile.nameEn ? `<span class="profile-name-en">${escapeHtml(profile.nameEn)}</span>` : ""}
-            <div class="profile-facts profile-view-facts">
-              ${basicFacts || '<div class="profile-muted">기본 정보가 없습니다.</div>'}
-            </div>
+            ${extraImagesHtml}
           </div>
         </div>
       </section>
@@ -97,53 +92,88 @@ export function renderProfileView(post = {}, board = {}, options = {}) {
   };
 }
 
+function isProfileImageAttachment(item) {
+  if (!item || !item.url) return false;
+  if (String(item.mode || "").toLowerCase() === "video") return false;
+  const mime = String(item.mimeType || "").toLowerCase();
+  if (mime.startsWith("image/")) return true;
+  return /\.(png|jpe?g|gif|webp|svg|avif)(\?|#|$)/i.test(String(item.url));
+}
+
+function renderProfileExtraImages(post) {
+  const attachments = Array.isArray(post?.extraAttachments) ? post.extraAttachments : [];
+  const images = attachments.filter(isProfileImageAttachment);
+  if (!images.length) return "";
+
+  const thumbs = images.map((item) => {
+    const url = String(item.url || "").trim();
+    const alt = escapeHtml(item.name || "추가 이미지");
+    return `
+      <button type="button" class="profile-extra-thumb" onclick="openLightbox('${escapeJsString(url)}')" aria-label="${alt} 원본 보기">
+        <img src="${escapeHtml(url)}" alt="${alt}" loading="lazy">
+      </button>
+    `;
+  }).join("");
+
+  return `
+    <div class="profile-extra">
+      <span class="profile-panel-label">추가 이미지</span>
+      <div class="profile-extra-grid">${thumbs}</div>
+    </div>
+  `;
+}
+
 function renderProfileCard(post, board, options) {
+  const deleteMode = Boolean(options.deleteMode);
+  const selectedPostIds = new Set(options.selectedPostIds || []);
   const profile = normalizeProfile(post);
   const title = profile.nameKo || post.title || "(이름 없음)";
   const titleHtml = escapeHtml(title);
-  const date = formatDate(post.createdAt);
   const boardUrl = `/view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
-  const mediaHtml = renderProfileMedia(post, title, "profile-card-media");
-  const headshotHtml = renderProfileHeadshot(profile.headImage, title, "profile-card-headshot");
-  const oneLine = renderTextBlock(profile.oneLine || post.contentText || "");
-  const facts = [
-    renderFact("외형", profile.appearance),
-    renderFact("성격", profile.personality),
-    renderFact("기타", profile.etc)
-  ].filter(Boolean).join("");
+  const mediaHtml = renderProfileCardMedia(post, title);
+  const postId = String(post.id || "");
+  const safePostId = escapeHtml(postId);
+  const isSelected = selectedPostIds.has(postId);
+  const nameEnHtml = profile.nameEn ? `<span class="profile-name-en">${escapeHtml(profile.nameEn)}</span>` : "";
+  const metaChips = [
+    renderMetaChip("AGE", profile.meta.age),
+    renderMetaChip("GENDER", profile.meta.gender),
+    renderMetaChip("HEIGHT", profile.meta.height)
+  ].join("");
+  const oneLineHtml = profile.oneLine ? `<p class="profile-card-quote">${escapeHtml(profile.oneLine)}</p>` : "";
 
   return `
-    <article class="card profile-card" data-post-id="${escapeHtml(String(post.id || ""))}">
-      <div class="profile-card-spine">CHARACTER FILE</div>
-      <div class="profile-card-grid">
-        <div class="profile-card-visual">
-          <div class="profile-file-label">BACKUP</div>
-          ${mediaHtml || '<div class="profile-media-placeholder">전신 이미지가 없습니다.</div>'}
-          ${headshotHtml}
+    <article class="card profile-card${deleteMode ? " profile-card-delete-mode" : ""}${isSelected ? " is-delete-selected" : ""}" data-post-id="${safePostId}">
+      <a class="profile-card-link" href="${boardUrl}" aria-label="${escapeHtml(`${title} 프로필 보기`)}">
+        <div class="profile-card-media">
+          ${mediaHtml || '<div class="profile-media-placeholder">대표이미지가 없습니다.</div>'}
         </div>
-        <div class="profile-card-body">
-          <div class="profile-card-top">
-            <span class="profile-card-date">${escapeHtml(date)}</span>
-          </div>
-          <div class="profile-card-head">
-            <div class="profile-card-head-copy">
-              <span class="profile-panel-label">CHARACTER</span>
-              <a class="profile-card-title" href="${boardUrl}">${titleHtml}</a>
-              ${profile.nameEn ? `<div class="profile-name-en">${escapeHtml(profile.nameEn)}</div>` : ""}
-            </div>
-          </div>
-          ${oneLine ? `<div class="profile-card-quote"><span class="profile-quote-mark">"</span>${oneLine}</div>` : ""}
-          <div class="profile-meta-row profile-card-meta">
-            ${renderMetaChip("AGE", profile.meta.age)}
-            ${renderMetaChip("GENDER", profile.meta.gender)}
-            ${renderMetaChip("HEIGHT", profile.meta.height)}
-          </div>
-          ${facts ? `<div class="profile-facts profile-card-facts">${facts}</div>` : ""}
-          ${renderTags(post.tags || [])}
+        <div class="profile-card-namebar">
+          <span class="profile-card-name">${titleHtml}</span>
+          ${nameEnHtml}
         </div>
-      </div>
+        <div class="profile-card-overlay">
+          ${oneLineHtml}
+          <span class="profile-card-name">${titleHtml}</span>
+          ${nameEnHtml}
+          ${metaChips ? `<div class="profile-meta-row profile-card-meta">${metaChips}</div>` : ""}
+        </div>
+      </a>
+      ${deleteMode ? `
+        <label class="profile-delete-check" aria-label="프로필 선택">
+          <input type="checkbox" data-board-select="${safePostId}" ${isSelected ? "checked" : ""}>
+        </label>
+      ` : ""}
     </article>
   `;
+}
+
+function renderProfileCardMedia(post, title) {
+  const cover = getPostCoverMedia(post);
+  const imageUrl = cover.imageUrl || cover.previewUrl || "";
+  if (!imageUrl) return "";
+
+  return `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}" loading="lazy" class="profile-media-image">`;
 }
 
 function normalizeProfile(post = {}) {
@@ -154,7 +184,7 @@ function normalizeProfile(post = {}) {
   return {
     nameKo: String(title || "").trim(),
     nameEn: String(profile.nameEn || "").trim(),
-    fullBodyImage: String(profile.fullBodyImage || post.imageUrl || post.thumbnailAttachment?.url || "").trim(),
+    fullBodyImage: String(profile.fullBodyImage || "").trim(),
     headImage: String(profile.headImage || "").trim(),
     oneLine: toPlainText(profile.oneLine || post.contentText || post.contentHtml || post.commentHtml || ""),
     meta: {
@@ -164,17 +194,20 @@ function normalizeProfile(post = {}) {
     },
     appearance: String(profile.appearance || "").trim(),
     personality: String(profile.personality || "").trim(),
-    etc: String(profile.etc || "").trim()
+    etc: String(profile.etc || "").trim(),
+    etcIsHtml: profile.etcIsHtml === true
   };
 }
 
-function renderProfileMedia(post, title, className = "") {
+function renderProfileMedia(post, title, className = "", options = {}) {
+  const preferFullBody = options.preferFullBody === true;
   const cover = getPostCoverMedia(post);
   const profile = getPostSkinData(post).profile || {};
-  const alt = escapeHtml(`${title} 전신 이미지`);
+  const kind = preferFullBody ? "전신 이미지" : "대표 이미지";
+  const alt = escapeHtml(`${title} ${kind}`);
   const extraClass = className ? ` ${className}` : "";
 
-  if (cover.mode === "video" && cover.embedHtml) {
+  if (!preferFullBody && cover.mode === "video" && cover.embedHtml) {
     return `
       <div class="profile-media-video${extraClass}">
         ${renderPostVideoFrame(cover.embedHtml, "profile-media-video-frame")}
@@ -182,7 +215,9 @@ function renderProfileMedia(post, title, className = "") {
     `;
   }
 
-  const imageUrl = cover.imageUrl || cover.previewUrl || profile.fullBodyImage || "";
+  const imageUrl = preferFullBody
+    ? (profile.fullBodyImage || "")
+    : (cover.imageUrl || cover.previewUrl || profile.fullBodyImage || "");
   if (!imageUrl) return "";
 
   return `
@@ -191,7 +226,7 @@ function renderProfileMedia(post, title, className = "") {
       class="profile-media-button${extraClass}"
       data-lightbox-image="${escapeHtml(imageUrl)}"
       onclick="openLightbox('${escapeJsString(imageUrl)}')"
-      aria-label="${escapeHtml(`${title} 전신 이미지 보기`)}"
+      aria-label="${escapeHtml(`${title} ${kind} 보기`)}"
     >
       <img src="${escapeHtml(imageUrl)}" alt="${alt}" loading="lazy" class="profile-media-image">
     </button>
@@ -235,13 +270,14 @@ function renderFact(label, value) {
   `;
 }
 
-function renderTextPanel(label, value) {
+function renderTextPanel(label, value, options = {}) {
   const text = String(value || "").trim();
   if (!text) return "";
+  const bodyHtml = options.allowHtml ? text : renderTextBlock(text);
   return `
     <div class="profile-panel">
       <span class="profile-panel-label">${escapeHtml(label)}</span>
-      <div class="profile-panel-title">${renderTextBlock(text)}</div>
+      <div class="profile-panel-title">${bodyHtml}</div>
     </div>
   `;
 }
@@ -275,12 +311,23 @@ function formatDate(createdAt) {
 
 function toPlainText(value) {
   const text = String(value || "").replace(/<br\s*\/?>/gi, "\n");
+  if (typeof document === "undefined") {
+    return text.replace(/<[^>]*>/g, "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+  }
   const temp = document.createElement("div");
   temp.innerHTML = text;
   return temp.textContent?.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim() || "";
 }
 
 function escapeHtml(text) {
+  if (typeof document === "undefined") {
+    return String(text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
   const div = document.createElement("div");
   div.textContent = String(text || "");
   return div.innerHTML;

@@ -6,7 +6,15 @@ export const skin = createSkinDefinition({
   aliases: ["board"],
   cssNamespace: "skin-board",
   boardOptionsSchema: {
-    boardWidth: { type: "number", defaultValue: 800 }
+    boardWidth: {
+      type: "number",
+      label: "게시판 가로",
+      defaultValue: 800,
+      min: 1,
+      step: 1,
+      placeholder: "기본 800 / 100 이하는 %",
+      help: "100 이하는 %, 그 이상은 px로 적용됩니다."
+    }
   },
   postFields: [],
   renderWriteFields: [],

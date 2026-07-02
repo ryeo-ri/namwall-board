@@ -36,7 +36,6 @@ import {
   findSkinTypeByAlias,
   getBoardAliasCandidates as getSkinBoardAliasCandidates,
   getPostSkinData,
-  isProfileBoard,
   isProfilePost,
   getSkin,
   resolveBoardSkinType
@@ -97,14 +96,12 @@ const uploadMsgEl = document.getElementById("uploadMsg");
 const titleFieldsEl = document.getElementById("titleFields");
 const profileOnlyFieldsEl = document.getElementById("profileOnlyFields");
 const contentFieldsEl = document.getElementById("contentFields");
-const profileHeadInput = document.getElementById("profileHeadInput");
-const profileNameEnInput = document.getElementById("profileNameEnInput");
-const profileAgeInput = document.getElementById("profileAgeInput");
-const profileGenderInput = document.getElementById("profileGenderInput");
-const profileHeightInput = document.getElementById("profileHeightInput");
-const profileAppearanceInput = document.getElementById("profileAppearanceInput");
-const profilePersonalityInput = document.getElementById("profilePersonalityInput");
-const profileEtcInput = document.getElementById("profileEtcInput");
+const visibilityFieldsEl = document.getElementById("visibilityFields");
+const extraFieldsEl = document.getElementById("extraFields");
+const tagFieldsEl = document.getElementById("tagFields");
+const skinFieldsTitleEl = document.getElementById("skinFieldsTitle");
+const skinFieldsContainerEl = document.getElementById("skinFieldsContainer");
+const profileSkinFieldsHelpEl = document.getElementById("profileSkinFieldsHelp");
 
 let boards = [];
 let activeBoardId = "";
@@ -117,6 +114,8 @@ let stagedExtraAttachments = [];
 let stagedThumbFile = null;
 let thumbPreviewBlobUrl = "";
 let editingPost = null;
+const stagedSkinImageFiles = new Map();
+const stagedSkinImagePreviewUrls = new Map();
 const nextLogNumberCache = new Map();
 
 function showMsg(text, isError = false) {
@@ -190,7 +189,7 @@ async function getSelectedSkin() {
   if (selectedBoard) return getSkin(selectedBoard);
 
   const fallbackSkinType = findSkinTypeByAlias(preselectBoardId);
-  return getSkin(fallbackSkinType === "PROFILE" ? "BOARD" : fallbackSkinType);
+  return getSkin(fallbackSkinType);
 }
 
 function applyProfileWriteLabels(isProfileSkin) {
@@ -199,73 +198,315 @@ function applyProfileWriteLabels(isProfileSkin) {
   const titleLabelEl = titleFieldsEl?.querySelector(".write-label");
   const contentLabelEl = contentFieldsEl?.querySelector(".write-label");
 
-  if (thumbLabelEl) thumbLabelEl.textContent = isProfileSkin ? "캐릭터 전신" : "대표이미지";
-  if (thumbUrlLabelEl) thumbUrlLabelEl.textContent = isProfileSkin ? "전신 이미지 URL" : "이미지 URL";
+  if (thumbLabelEl) thumbLabelEl.textContent = isProfileSkin ? "대표이미지(썸네일)" : "대표이미지";
+  if (thumbUrlLabelEl) thumbUrlLabelEl.textContent = isProfileSkin ? "썸네일 이미지 URL" : "이미지 URL";
   if (titleLabelEl) titleLabelEl.textContent = isProfileSkin ? "캐릭터 이름" : "제목";
   if (contentLabelEl) contentLabelEl.textContent = isProfileSkin ? "캐릭터 한마디" : "본문";
   if (titleInput) titleInput.placeholder = isProfileSkin ? "캐릭터 이름" : "제목";
 }
 
-function populateProfileFields(post = {}) {
-  const skinData = getPostSkinData(post);
-  const profile = skinData.profile || post.profile || {};
-  const meta = profile.meta || {};
-  if (profileHeadInput) profileHeadInput.value = profile.headImage || "";
-  if (profileNameEnInput) profileNameEnInput.value = profile.nameEn || "";
-  if (profileAgeInput) profileAgeInput.value = meta.age || profile.age || "";
-  if (profileGenderInput) profileGenderInput.value = meta.gender || profile.gender || "";
-  if (profileHeightInput) profileHeightInput.value = meta.height || profile.height || "";
-  if (profileAppearanceInput) profileAppearanceInput.value = profile.appearance || "";
-  if (profilePersonalityInput) profilePersonalityInput.value = profile.personality || "";
-  if (profileEtcInput) profileEtcInput.value = profile.etc || "";
+function getSkinPostFields(skin) {
+  return Array.isArray(skin?.postFields) ? skin.postFields.filter((field) => field?.key) : [];
 }
 
-function readProfileFields(title, imageUrl, contentText) {
-  return {
-    nameKo: String(title || "").trim(),
-    fullBodyImage: String(imageUrl || "").trim(),
-    headImage: String(profileHeadInput?.value || "").trim(),
-    nameEn: String(profileNameEnInput?.value || "").trim(),
-    oneLine: String(contentText || "").trim(),
-    meta: {
-      age: String(profileAgeInput?.value || "").trim(),
-      gender: String(profileGenderInput?.value || "").trim(),
-      height: String(profileHeightInput?.value || "").trim()
-    },
-    appearance: String(profileAppearanceInput?.value || "").trim(),
-    personality: String(profilePersonalityInput?.value || "").trim(),
-    etc: String(profileEtcInput?.value || "").trim()
+function getNestedValue(source = {}, key = "") {
+  return String(key || "")
+    .split(".")
+    .filter(Boolean)
+    .reduce((value, part) => (value && typeof value === "object" ? value[part] : undefined), source);
+}
+
+function setNestedValue(target, key = "", value = "") {
+  const parts = String(key || "").split(".").filter(Boolean);
+  if (!parts.length) return target;
+  let cursor = target;
+  parts.slice(0, -1).forEach((part) => {
+    if (!cursor[part] || typeof cursor[part] !== "object") cursor[part] = {};
+    cursor = cursor[part];
+  });
+  cursor[parts[parts.length - 1]] = value;
+  return target;
+}
+
+function mergePlainObjects(target = {}, source = {}) {
+  Object.entries(source || {}).forEach(([key, value]) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      target[key] = mergePlainObjects(target[key] && typeof target[key] === "object" ? target[key] : {}, value);
+    } else {
+      target[key] = value;
+    }
+  });
+  return target;
+}
+
+function renderSkinPostFields(skin, post = editingPost) {
+  const fields = getSkinPostFields(skin);
+  if (!skinFieldsContainerEl) return;
+  if (!fields.length) {
+    skinFieldsContainerEl.innerHTML = "";
+    return;
+  }
+
+  const skinData = getPostSkinData(post || {});
+  if (skinFieldsTitleEl) skinFieldsTitleEl.textContent = `${skin.type} 정보`;
+
+  const fieldHtml = fields.map((field) => {
+    const key = String(field.key || "");
+    const id = `skinField_${key.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+    const value = String(getNestedValue(skinData, key) ?? field.defaultValue ?? "");
+    const label = escapeHtml(field.label || key);
+    const placeholder = escapeHtml(field.placeholder || "");
+    const visibleWhen = field.visibleWhen && typeof field.visibleWhen === "object" ? field.visibleWhen : null;
+    const visibleAttrs = visibleWhen
+      ? ` data-visible-when-key="${escapeHtml(visibleWhen.key)}" data-visible-when-value="${escapeHtml(visibleWhen.value)}"`
+      : "";
+    const commonAttrs = `id="${id}" data-skin-field="${escapeHtml(key)}" placeholder="${placeholder}"${visibleAttrs}`;
+    const wrapperAttrs = visibleWhen
+      ? ` data-skin-field-wrap="${escapeHtml(key)}" data-visible-when-key="${escapeHtml(visibleWhen.key)}" data-visible-when-value="${escapeHtml(visibleWhen.value)}"`
+      : ` data-skin-field-wrap="${escapeHtml(key)}"`;
+
+    if (field.type === "select") {
+      const options = Array.isArray(field.options) ? field.options : [];
+      const selectedValue = value || String(field.defaultValue || "");
+      const optionsHtml = options.map((option) => {
+        const optionValue = typeof option === "object" ? option.value : option;
+        const optionLabel = typeof option === "object" ? option.label : option;
+        const selected = String(optionValue) === selectedValue ? " selected" : "";
+        return `<option value="${escapeHtml(optionValue)}"${selected}>${escapeHtml(optionLabel)}</option>`;
+      }).join("");
+      return `
+        <div class="field-group write-skin-field"${wrapperAttrs}>
+          <label class="muted small" for="${id}">${label}</label>
+          <select ${commonAttrs}>${optionsHtml}</select>
+        </div>
+      `;
+    }
+
+    if (field.type === "textarea") {
+      const rows = Number.isFinite(Number(field.rows)) ? Number(field.rows) : 4;
+      const htmlToggleKey = String(field.htmlToggleKey || "");
+      const htmlToggleId = htmlToggleKey ? `skinField_${htmlToggleKey.replace(/[^a-zA-Z0-9_-]/g, "_")}` : "";
+      const htmlToggleValue = htmlToggleKey ? getNestedValue(skinData, htmlToggleKey) : false;
+      const htmlToggleHtml = htmlToggleKey ? `
+        <label class="write-check write-skin-html-toggle">
+          <input id="${htmlToggleId}" type="checkbox" data-skin-field="${escapeHtml(htmlToggleKey)}" ${htmlToggleValue === true || htmlToggleValue === "true" ? "checked" : ""}>
+          <span>HTML 허용</span>
+        </label>
+      ` : "";
+      return `
+        <div class="field-group write-skin-field write-skin-field-textarea"${wrapperAttrs}>
+          <div class="write-skin-field-head">
+            <label class="muted small" for="${id}">${label}</label>
+            ${htmlToggleHtml}
+          </div>
+          <textarea ${commonAttrs} class="textarea write-profile-textarea" rows="${rows}">${escapeHtml(value)}</textarea>
+        </div>
+      `;
+    }
+
+    if (field.type === "image") {
+      return `
+        <div class="field-group write-skin-field write-skin-image-field"${wrapperAttrs}>
+          <label class="muted small" for="${id}">${label}</label>
+          <input ${commonAttrs} type="url" value="${escapeHtml(value)}">
+          <div class="formRow write-file-row mt-sm">
+            <button type="button" class="btn" data-skin-file-select="${escapeHtml(key)}">파일 선택</button>
+            <button type="button" class="btn" data-skin-file-clear="${escapeHtml(key)}">선택 삭제</button>
+          </div>
+          <input type="file" accept="image/*" class="hidden" data-skin-file-input="${escapeHtml(key)}">
+          <div class="previewGrid mt-sm" data-skin-file-preview="${escapeHtml(key)}"></div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="field-group write-skin-field"${wrapperAttrs}>
+        <label class="muted small" for="${id}">${label}</label>
+        <input ${commonAttrs} type="${escapeHtml(field.type || "text")}" value="${escapeHtml(value)}">
+      </div>
+    `;
+  }).join("");
+
+  skinFieldsContainerEl.innerHTML = `<div class="write-skin-fields">${fieldHtml}</div>`;
+  bindSkinFieldVisibility();
+  bindSkinImageFieldActions(skin);
+}
+
+function getSkinFieldInput(key = "") {
+  const safeKey = cssEscape(String(key || ""));
+  return skinFieldsContainerEl?.querySelector(`[data-skin-field="${safeKey}"]`) || null;
+}
+
+function getSkinImagePreviewEl(key = "") {
+  const safeKey = cssEscape(String(key || ""));
+  return skinFieldsContainerEl?.querySelector(`[data-skin-file-preview="${safeKey}"]`) || null;
+}
+
+function revokeSkinImagePreview(key = "") {
+  const existingUrl = stagedSkinImagePreviewUrls.get(key);
+  revokeObjectUrl(existingUrl);
+  stagedSkinImagePreviewUrls.delete(key);
+}
+
+function renderSkinImagePreview(key = "", attachment = null) {
+  const previewEl = getSkinImagePreviewEl(key);
+  if (!previewEl) return;
+
+  const input = getSkinFieldInput(key);
+  const url = attachment?.url || input?.value || "";
+  if (!url) {
+    previewEl.innerHTML = "";
+    return;
+  }
+
+  const name = attachment?.name || "profile-image";
+  previewEl.innerHTML = `
+    <div class="previewItem">
+      <img src="${escapeHtml(url)}" alt="profile image preview" class="previewImage">
+      <div class="muted small previewName" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+    </div>
+  `;
+}
+
+function clearSkinImageSelection(key = "", clearValue = false) {
+  revokeSkinImagePreview(key);
+  stagedSkinImageFiles.delete(key);
+  const input = getSkinFieldInput(key);
+  const fileInput = skinFieldsContainerEl?.querySelector(`[data-skin-file-input="${cssEscape(key)}"]`);
+  if (clearValue && input) input.value = "";
+  if (fileInput) fileInput.value = "";
+  renderSkinImagePreview(key);
+}
+
+function setSkinImageFileSelection(key = "", file) {
+  ensureImageFile(file, "프로필 이미지");
+  revokeSkinImagePreview(key);
+  stagedSkinImageFiles.set(key, file);
+  const previewUrl = URL.createObjectURL(file);
+  stagedSkinImagePreviewUrls.set(key, previewUrl);
+  renderSkinImagePreview(key, createLocalAttachment(file, previewUrl));
+  showUploadMsg("프로필 이미지를 선택했습니다. 저장 시 Storage에 업로드됩니다.");
+}
+
+function bindSkinImageFieldActions(skin) {
+  const imageFields = getSkinPostFields(skin).filter((field) => field.type === "image");
+  if (!skinFieldsContainerEl || !imageFields.length) return;
+
+  imageFields.forEach((field) => {
+    const key = String(field.key || "");
+    renderSkinImagePreview(key);
+
+    const selectBtn = skinFieldsContainerEl.querySelector(`[data-skin-file-select="${cssEscape(key)}"]`);
+    const clearBtn = skinFieldsContainerEl.querySelector(`[data-skin-file-clear="${cssEscape(key)}"]`);
+    const fileInput = skinFieldsContainerEl.querySelector(`[data-skin-file-input="${cssEscape(key)}"]`);
+    const urlInput = getSkinFieldInput(key);
+
+    selectBtn?.addEventListener("click", () => fileInput?.click());
+    clearBtn?.addEventListener("click", () => {
+      clearSkinImageSelection(key, true);
+      showUploadMsg("프로필 이미지 선택을 해제했습니다.");
+    });
+    fileInput?.addEventListener("change", (event) => {
+      try {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setSkinImageFileSelection(key, file);
+      } catch (error) {
+        clearSkinImageSelection(key);
+        showUploadMsg(error.message || "프로필 이미지 파일 선택 실패", true);
+      }
+    });
+    urlInput?.addEventListener("input", () => {
+      if (stagedSkinImageFiles.has(key)) clearSkinImageSelection(key);
+      renderSkinImagePreview(key);
+    });
+  });
+}
+
+function bindSkinFieldVisibility() {
+  if (!skinFieldsContainerEl) return;
+  const updateVisibility = () => {
+    const inputs = Array.from(skinFieldsContainerEl.querySelectorAll("[data-skin-field]"));
+    const values = new Map(inputs.map((input) => [input.dataset.skinField, input.value]));
+    skinFieldsContainerEl.querySelectorAll("[data-skin-field-wrap][data-visible-when-key]").forEach((wrap) => {
+      const key = wrap.dataset.visibleWhenKey || "";
+      const value = wrap.dataset.visibleWhenValue || "";
+      wrap.classList.toggle("hidden", String(values.get(key) || "") !== value);
+    });
   };
+  skinFieldsContainerEl.querySelectorAll("[data-skin-field]").forEach((input) => {
+    input.addEventListener("input", updateVisibility);
+    input.addEventListener("change", updateVisibility);
+  });
+  updateVisibility();
+}
+
+function readSkinPostFields(skin) {
+  const result = {};
+  const inputs = Array.from(skinFieldsContainerEl?.querySelectorAll("[data-skin-field]") || []);
+  getSkinPostFields(skin).forEach((field) => {
+    const key = String(field.key || "");
+    const input = inputs.find((item) => item.dataset.skinField === key);
+    setNestedValue(result, key, input?.type === "checkbox" ? Boolean(input.checked) : String(input?.value || "").trim());
+    const htmlToggleKey = String(field.htmlToggleKey || "");
+    if (htmlToggleKey) {
+      const toggle = inputs.find((item) => item.dataset.skinField === htmlToggleKey);
+      setNestedValue(result, htmlToggleKey, Boolean(toggle?.checked));
+    }
+  });
+  return result;
 }
 
 async function setSkinFields() {
   const skin = await getSelectedSkin();
   const writeCaps = skin.capabilities.write;
   const isProfileSkin = skin.type === "PROFILE";
+  const isPageSkin = skin.type === "PAGE";
   const hideThumbnailFields = skin.type === "BOARD";
   const hideGalleryTextFields = !!writeCaps.supportsGalleryFields;
+  const hideContentFields = writeCaps.supportsContent === false;
+  const hasSkinPostFields = getSkinPostFields(skin).length > 0;
 
-  if (saveBtn) saveBtn.disabled = false;
+  if (writeCaps.disabled) {
+    if (saveBtn) saveBtn.disabled = true;
+    showMsg(`${skin.type}는 관리자 > 게시판 관리에서 내용을 수정하세요.`, true);
+  } else if (saveBtn) {
+    saveBtn.disabled = false;
+  }
 
-  if (thumbSectionEl) thumbSectionEl.classList.toggle("hidden", hideThumbnailFields);
-  if (profileOnlyFieldsEl) profileOnlyFieldsEl.classList.toggle("hidden", !isProfileSkin);
+  if (thumbSectionEl) thumbSectionEl.classList.toggle("hidden", hideThumbnailFields || isPageSkin);
+  if (profileOnlyFieldsEl) profileOnlyFieldsEl.classList.toggle("hidden", !hasSkinPostFields);
   document.getElementById("logOnlyFields").classList.toggle("hidden", !writeCaps.supportsLogFields);
   document.getElementById("galleryOnlyFields").classList.toggle("hidden", !writeCaps.supportsGalleryFields);
-  if (titleFieldsEl) titleFieldsEl.classList.toggle("hidden", !writeCaps.supportsTitle || hideGalleryTextFields);
-  if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields);
+  if (titleFieldsEl) titleFieldsEl.classList.toggle("hidden", !writeCaps.supportsTitle || hideGalleryTextFields || isPageSkin);
+  if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields || hideContentFields);
+  if (visibilityFieldsEl) visibilityFieldsEl.classList.toggle("hidden", isPageSkin);
+  if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin);
+  if (tagFieldsEl) tagFieldsEl.classList.toggle("hidden", isPageSkin);
+  profileSkinFieldsHelpEl?.classList.toggle("hidden", !isProfileSkin);
   if (logNumberInput) {
     logNumberInput.readOnly = !!writeCaps.autoLogNumber;
   }
 
   applyProfileWriteLabels(isProfileSkin);
+  renderSkinPostFields(skin, editingPost);
   contentInput.placeholder = writeCaps.contentPlaceholder || (isProfileSkin ? "캐릭터 한마디" : "본문");
   if (!writeCaps.supportsTitle) {
     titleInput.value = "";
   }
-  if (hideThumbnailFields) {
+  if (hideThumbnailFields || isPageSkin) {
     clearSelectedThumb();
     uploadedThumbnail = null;
     imageUrlInput.value = "";
+  }
+  if (isPageSkin) {
+    uploadedExtraAttachments = [];
+    extraItems = [];
+    stagedExtraAttachments = [];
+    if (tagsInput) tagsInput.value = "";
+    if (visibilityInput) visibilityInput.value = "public";
+    renderExtraItems();
+    clearPendingExtraPreview();
   }
   updateSecretPasswordVisibility();
 }
@@ -874,22 +1115,39 @@ async function resolveExtraAttachments(boardId) {
   return (await Promise.all(pendingUploads)).filter((item) => item?.url);
 }
 
+async function resolveSkinFieldImageUploads(boardId) {
+  if (!stagedSkinImageFiles.size) return;
+
+  const entries = Array.from(stagedSkinImageFiles.entries());
+  await Promise.all(entries.map(async ([key, file]) => {
+    const uploaded = await uploadImageFile(file, "profile_images", boardId);
+    const input = getSkinFieldInput(key);
+    if (input) input.value = uploaded.url;
+    revokeSkinImagePreview(key);
+    stagedSkinImageFiles.delete(key);
+    renderSkinImagePreview(key, uploaded);
+  }));
+}
+
 async function uploadSelectedImages(boardId) {
   const thumbTask = stagedThumbFile ? 1 : 0;
   const extraTask = extraItems.filter((item) => item.file).length;
+  const skinImageTask = stagedSkinImageFiles.size;
 
-  if (thumbTask || extraTask) {
+  if (thumbTask || extraTask || skinImageTask) {
     const labels = [];
     if (thumbTask) labels.push("썸네일 1개");
     if (extraTask) labels.push(`추가 이미지 ${extraTask}개`);
+    if (skinImageTask) labels.push(`프로필 이미지 ${skinImageTask}개`);
     showUploadMsg(`Storage 업로드 중 (${labels.join(", ")})...`);
   }
 
   uploadedThumbnail = await resolveThumbnailAttachment(boardId);
   uploadedExtraAttachments = await resolveExtraAttachments(boardId);
+  await resolveSkinFieldImageUploads(boardId);
 
-  if (thumbTask || extraTask) {
-    showUploadMsg(`업로드 완료 (썸네일 ${uploadedThumbnail ? "적용" : "없음"}, 추가 ${uploadedExtraAttachments.length}개)`);
+  if (thumbTask || extraTask || skinImageTask) {
+    showUploadMsg(`업로드 완료 (썸네일 ${uploadedThumbnail ? "적용" : "없음"}, 추가 ${uploadedExtraAttachments.length}개, 프로필 ${skinImageTask}개)`);
   }
 }
 
@@ -944,10 +1202,10 @@ async function loadBoards() {
   const q = query(collection(db, "boards"), orderBy("updatedAt", "desc"));
   const snap = await getDocs(q);
   const allBoards = snap.docs.map((item) => ({ id: item.id, ...item.data() }));
-  boards = allBoards.filter((board) => !isProfileBoard(board));
+  boards = allBoards;
 
   if (!boards.length) {
-    showMsg(allBoards.length ? "프로필 게시판은 현재 작성 대상에서 제외되었습니다." : "boards 컬렉션이 비어 있습니다. 관리자에서 게시판을 먼저 만드세요.", true);
+    showMsg("boards 컬렉션이 비어 있습니다. 관리자에서 게시판을 먼저 만드세요.", true);
     if (saveBtn) saveBtn.disabled = true;
     if (boardSelect) {
       boardSelect.innerHTML = "";
@@ -1029,11 +1287,6 @@ async function loadEditPost() {
   }
 
   const post = snap.data();
-  if (isProfilePost(post)) {
-    showMsg("프로필 게시판은 현재 수정할 수 없습니다.", true);
-    if (saveBtn) saveBtn.disabled = true;
-    return;
-  }
   editingPost = { id: snap.id, ...post };
   document.getElementById("writeHeading").textContent = "게시물 수정";
   const skinData = getPostSkinData(post);
@@ -1041,7 +1294,7 @@ async function loadEditPost() {
 
   if (post.boardId) syncBoardDisplay(post.boardId);
   titleInput.value = post.title || profile.nameKo || "";
-  imageUrlInput.value = post.imageUrl || profile.fullBodyImage || "";
+  imageUrlInput.value = post.imageUrl || "";
   logNumberInput.value = skinData.logNo || post.logNo || post.logNumber || "";
   syncLogTitleFromNumber(skinData.logNo || post.logNo || post.logNumber || post.title || "");
   sourceInput.value = skinData.source || "";
@@ -1062,7 +1315,6 @@ async function loadEditPost() {
   }
   uploadedThumbnail = post.thumbnailAttachment || null;
   uploadedExtraAttachments = Array.isArray(post.extraAttachments) ? post.extraAttachments : [];
-  populateProfileFields(post);
 
   const thumbMode = String(post.thumbnailMode || "").toLowerCase();
   const isVideoThumb = thumbMode === "video" || Boolean(post.thumbnailEmbedHtml);
@@ -1112,13 +1364,19 @@ async function buildPayload() {
   const skin = await getSkin(selected);
   const skinType = skin.type;
   const writeCaps = skin.capabilities.write;
-  let title = writeCaps.supportsTitle ? titleInput.value.trim() : "";
-  const allowThumbnail = skinType !== "BOARD";
+  if (writeCaps.disabled) {
+    throw new Error(`${skin.type}는 관리자 > 게시판 관리에서 내용을 수정하세요.`);
+  }
+  const isPageSkin = skinType === "PAGE";
+  let title = isPageSkin
+    ? (selected.title || selected.name || selected.id || "PAGE")
+    : (writeCaps.supportsTitle ? titleInput.value.trim() : "");
+  const allowThumbnail = skinType !== "BOARD" && !isPageSkin;
   const thumbMode = allowThumbnail ? getThumbMode() : "";
   const videoThumb = thumbMode === "video" ? normalizeThumbVideoHtml(thumbVideoInput?.value || "") : null;
   const imageUrlFromInput = allowThumbnail && thumbMode === "url" ? imageUrlInput.value.trim() : "";
   const contentRaw = contentInput.value.trim();
-  const tags = tagsInput.value.split(",").map((value) => value.trim()).filter(Boolean);
+  const tags = isPageSkin ? [] : tagsInput.value.split(",").map((value) => value.trim()).filter(Boolean);
 
   if (writeCaps.requiresTitle && !title) throw new Error(`${skinType}는 제목이 필요합니다.`);
   if (allowThumbnail && thumbMode === "file" && !uploadedThumbnail?.url) throw new Error("Storage에 올릴 썸네일 파일을 선택하세요.");
@@ -1132,12 +1390,15 @@ async function buildPayload() {
   }
   const normalizedContentHtml = getContentHtmlFromInput(contentRaw);
   const contentText = contentRaw.replace(/<[^>]*>/g, " ").trim();
-  const visibility = visibilityInput?.value || "public";
+  const visibility = isPageSkin ? "public" : (visibilityInput?.value || "public");
   const isPublic = visibility !== "private";
   const isSecret = visibility === "secret";
 
   const authState = await getAuthSnapshot();
   const isAdmin = Boolean(authState.isAdmin);
+  if (writeCaps.adminOnly && !isAdmin) {
+    throw new Error(`${skinType}는 관리자만 작성할 수 있습니다.`);
+  }
   const authorType = isAdmin
     ? (editingPost?.authorType || "ADMIN")
     : "GUEST";
@@ -1154,7 +1415,7 @@ async function buildPayload() {
     thumbnailAttachment: allowThumbnail && thumbMode === "file" ? uploadedThumbnail : null,
     thumbnailEmbedHtml: allowThumbnail && thumbMode === "video" ? videoThumb.embedHtml : "",
     thumbnailEmbedSrc: allowThumbnail && thumbMode === "video" ? videoThumb.embedSrc : "",
-    extraAttachments: uploadedExtraAttachments,
+    extraAttachments: isPageSkin ? [] : uploadedExtraAttachments,
     authorType,
     authorName: resolvedAuthorName,
     isPublic,
@@ -1167,9 +1428,6 @@ async function buildPayload() {
 
   if (writeCaps.contentField === "commentHtml") payload.commentHtml = sanitizeHTML(normalizedContentHtml, { allowIframes: true });
   if (writeCaps.contentField === "contentHtml") payload.contentHtml = sanitizeHTML(normalizedContentHtml, { allowIframes: true });
-  if (skinType === "PROFILE") {
-    payload.skinData = { ...(payload.skinData || {}), profile: readProfileFields(title, imageUrl, contentText) };
-  }
 
   if (isSecret) {
     const secretPw = (secretPwInput?.value || "").trim();
@@ -1219,10 +1477,19 @@ async function buildPayload() {
     delete skinData.source;
   }
 
-  if (skinType === "PROFILE") {
-    skinData.profile = readProfileFields(title, imageUrl, contentText);
-  } else {
+  if (getSkinPostFields(skin).length || typeof skin.buildSkinData === "function") {
+    const fieldData = readSkinPostFields(skin);
+    const builtSkinData = typeof skin.buildSkinData === "function"
+      ? skin.buildSkinData({ title, contentText, fieldData, payload, editingPost })
+      : fieldData;
+    mergePlainObjects(skinData, builtSkinData);
+  }
+
+  if (skinType !== "PROFILE") {
     delete skinData.profile;
+  }
+  if (skinType !== "PAGE") {
+    delete skinData.page;
   }
 
   payload.skinData = {
@@ -1245,6 +1512,12 @@ async function savePost() {
     if (!allowed) return;
 
     const authState = await getAuthSnapshot();
+    const selectedSkin = await getSelectedSkin();
+    if (selectedSkin?.capabilities?.write?.adminOnly && !authState.isAdmin) {
+      showMsg(`${selectedSkin.type}는 관리자만 작성할 수 있습니다.`, true);
+      return;
+    }
+
     if (!authState.isAdmin && !isGuestCooldownPassed(30)) {
       showMsg("게스트 글쓰기는 30초 쿨타임 후 가능합니다.", true);
       return;
@@ -1316,6 +1589,9 @@ function buildGuestPostPayload(payload, status = "PUBLISHED") {
     contentText: payload.contentText || ""
   };
 
+  if (Object.keys(skinData).length) {
+    guestPost.skinData = skinData;
+  }
   if (payload.commentHtml != null) guestPost.commentHtml = payload.commentHtml;
   if (payload.contentHtml != null) guestPost.contentHtml = payload.contentHtml;
   if (guestPost.isSecret) {
@@ -1476,9 +1752,13 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function cssEscape(value) {
+  if (window.CSS?.escape) return CSS.escape(String(value || ""));
+  return String(value || "").replace(/["\\]/g, "\\$&");
+}
+
 function preserveLineBreaks(value) {
   return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
 }
 
 init();
-

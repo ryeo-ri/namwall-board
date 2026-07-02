@@ -49,6 +49,12 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    match /profile_images/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if (isAdmin() && safeImageWrite()) || validGuestUpload(boardId);
+      allow delete: if isAdmin();
+    }
+
     match /home_intro/{fileName} {
       allow read: if true;
       allow write: if validHomeIntroUpload(fileName);

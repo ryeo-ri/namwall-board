@@ -2,8 +2,8 @@
 import { deleteBoardContent } from "../shared/post-maintenance.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
-import { formatResponsiveWidth } from "../shared/boards-render.js";
-import { getBoardSkinOptions, getSkinCatalog, isBoardMenuVisible, isProfileBoard } from "../skins/registry.js";
+import { formatResponsiveWidth, invalidateNavigationCaches } from "../shared/boards-render.js";
+import { getBoardSkinOptions, getSkin, getSkinCatalog, isBoardMenuVisible } from "../skins/registry.js";
 import { normalizeSkinType } from "../skins/skin-definition.js";
 import {
   collection,
@@ -37,19 +37,24 @@ const autoBoardIdBtn = document.getElementById("autoBoardIdBtn");
 const resetBoardBtn = document.getElementById("resetBoardBtn");
 const boardIdHintEl = document.getElementById("boardIdHint");
 const addSkinPathBtn = document.getElementById("addSkinPathBtn");
-const boardSkinOptionsBlockEl = document.getElementById("boardSkinOptionsBlock");
-const gallerySkinOptionsBlockEl = document.getElementById("gallerySkinOptionsBlock");
-const logSkinOptionsBlockEl = document.getElementById("logSkinOptionsBlock");
-const boardBoardWidthInput = document.getElementById("boardBoardWidthInput");
-const galleryBoardWidthInput = document.getElementById("galleryBoardWidthInput");
-const galleryColumnsInput = document.getElementById("galleryColumnsInput");
-const logBoardWidthInput = document.getElementById("logBoardWidthInput");
-const logImageWidthInput = document.getElementById("logImageWidthInput");
-const logCommentPositionInput = document.getElementById("logCommentPositionInput");
+const guestOptionCardEl = document.getElementById("guestOptionCard");
+const commentRestrictionOptionCardEl = document.getElementById("commentRestrictionOptionCard");
+const skinOptionsBlockEl = document.getElementById("skinOptionsBlock");
+const skinOptionsTitleEl = document.getElementById("skinOptionsTitle");
+const skinOptionsDescEl = document.getElementById("skinOptionsDesc");
+const skinOptionsFieldsEl = document.getElementById("skinOptionsFields");
+const pageContentBlockEl = document.getElementById("pageContentBlock");
+const pageModeInput = document.getElementById("pageModeInput");
+const pageHtmlInput = document.getElementById("pageHtmlInput");
+const pageIframeUrlInput = document.getElementById("pageIframeUrlInput");
+const pageHeightInput = document.getElementById("pageHeightInput");
 const skinCatalog = getSkinCatalog();
 let loadedBoards = [];
 let boardIdAutoMode = true;
 let pendingBoardEditId = String(boardPageParams.get("boardId") || boardPageParams.get("edit") || "").trim();
+let activeSkinOptionsType = "BOARD";
+let activeSkinOptionsSchema = {};
+let skinOptionsRenderToken = 0;
 
 if (boardIdHintEl) {
   boardIdHintEl.hidden = true;
@@ -94,6 +99,47 @@ function normalizeLogCommentPosition(value) {
   return String(value || "default").trim().toLowerCase() === "bottom" ? "bottom" : "default";
 }
 
+function normalizePageMode(value) {
+  return String(value || "srcdoc").trim().toLowerCase() === "url" ? "url" : "srcdoc";
+}
+
+function readPageDataFromInputs() {
+  const mode = normalizePageMode(pageModeInput?.value);
+  const height = parsePositiveNumber(pageHeightInput?.value) || 720;
+  return {
+    mode,
+    html: mode === "srcdoc" ? String(pageHtmlInput?.value || "").trim() : "",
+    iframeUrl: mode === "url" ? String(pageIframeUrlInput?.value || "").trim() : "",
+    height
+  };
+}
+
+function fillPageData(pageData = {}) {
+  const mode = normalizePageMode(pageData.mode);
+  if (pageModeInput) pageModeInput.value = mode;
+  if (pageHtmlInput) pageHtmlInput.value = String(pageData.html || "");
+  if (pageIframeUrlInput) pageIframeUrlInput.value = String(pageData.iframeUrl || "");
+  if (pageHeightInput) pageHeightInput.value = pageData.height || 720;
+  updatePageContentVisibility();
+}
+
+function updatePageContentVisibility() {
+  const skinType = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
+  const isPageSkin = skinType === "PAGE";
+  const mode = normalizePageMode(pageModeInput?.value);
+  pageContentBlockEl?.classList.toggle("hidden", !isPageSkin);
+  pageHtmlInput?.closest(".field-group")?.classList.toggle("hidden", !isPageSkin || mode !== "srcdoc");
+  pageIframeUrlInput?.closest(".field-group")?.classList.toggle("hidden", !isPageSkin || mode !== "url");
+  guestOptionCardEl?.classList.toggle("hidden", isPageSkin);
+  commentRestrictionOptionCardEl?.classList.toggle("hidden", isPageSkin);
+  if (isPageSkin) {
+    const guestInput = document.getElementById("boardGuestInput");
+    const commentInput = document.getElementById("commentRestrictionInput");
+    if (guestInput) guestInput.checked = false;
+    if (commentInput) commentInput.checked = false;
+  }
+}
+
 function formatLogImageWidth(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "";
@@ -104,6 +150,161 @@ function formatLogImageWidth(value) {
 
 function getLogCommentPositionLabel(value) {
   return normalizeLogCommentPosition(value) === "bottom" ? "하단" : "우측";
+}
+
+function getSchemaEntries(schema = {}) {
+  return Object.entries(schema || {}).filter(([key]) => Boolean(String(key || "").trim()));
+}
+
+function getSkinOptionInputId(key) {
+  return `skinOption_${String(key || "").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+}
+
+function getSkinOptionLabel(key, field = {}) {
+  const fallbackLabels = {
+    boardWidth: "게시판 가로",
+    galleryColumns: "1줄 게시물 수",
+    imageWidth: "이미지 폭 크기",
+    commentPosition: "덧글 위치"
+  };
+  return field.label || fallbackLabels[key] || key;
+}
+
+function getSkinOptionPlaceholder(key, field = {}) {
+  const fallbackPlaceholders = {
+    boardWidth: "기본 800 / 100 이하는 %",
+    galleryColumns: "기본 4",
+    imageWidth: "기본값 / 0은 제한 없음"
+  };
+  return field.placeholder || fallbackPlaceholders[key] || "";
+}
+
+function getSkinOptionHelp(key, field = {}) {
+  const fallbackHelp = {
+    boardWidth: "100 이하는 %, 그 이상은 px로 적용됩니다.",
+    galleryColumns: "한 줄에 들어갈 카드 수입니다.",
+    imageWidth: "0을 입력하면 이미지 폭 제한을 두지 않습니다."
+  };
+  return field.help || fallbackHelp[key] || "";
+}
+
+function getSkinOptionDefault(key, field = {}, skinType = activeSkinOptionsType) {
+  if (field.defaultValue != null) return field.defaultValue;
+  if (key === "boardWidth" && skinType === "BOARD") return 800;
+  if (key === "galleryColumns") return 4;
+  if (key === "commentPosition") return "default";
+  return "";
+}
+
+function normalizeSkinOptionValue(key, rawValue, field = {}, skinType = activeSkinOptionsType) {
+  const raw = String(rawValue ?? "").trim();
+  if (field.type === "select") {
+    if (key === "commentPosition") return normalizeLogCommentPosition(raw);
+    return raw || String(getSkinOptionDefault(key, field, skinType) || "");
+  }
+
+  if (field.type === "number") {
+    if (!raw) {
+      const defaultValue = getSkinOptionDefault(key, field, skinType);
+      return defaultValue === "" ? null : defaultValue;
+    }
+    const defaultValue = getSkinOptionDefault(key, field, skinType);
+    const fallbackValue = defaultValue === "" ? null : defaultValue;
+    if (key === "galleryColumns" || Number(field.min) >= 1) {
+      return parsePositiveNumber(raw) ?? fallbackValue;
+    }
+    return parseOptionalNumber(raw) ?? fallbackValue;
+  }
+
+  return raw || getSkinOptionDefault(key, field, skinType);
+}
+
+function readSkinOptionsFromInputs() {
+  const skinOptions = {};
+  const inputs = Array.from(skinOptionsFieldsEl?.querySelectorAll("[data-skin-option]") || []);
+  getSchemaEntries(activeSkinOptionsSchema).forEach(([key, field]) => {
+    const input = inputs.find((item) => item.dataset.skinOption === key);
+    const value = normalizeSkinOptionValue(key, input?.value, field, activeSkinOptionsType);
+    if (value != null && value !== "") {
+      skinOptions[key] = value;
+    }
+  });
+  return skinOptions;
+}
+
+function renderSkinOptionField(key, field = {}, value = "") {
+  const id = getSkinOptionInputId(key);
+  const label = escapeHtml(getSkinOptionLabel(key, field));
+  const placeholder = escapeHtml(getSkinOptionPlaceholder(key, field));
+  const help = getSkinOptionHelp(key, field);
+  const commonAttrs = `id="${id}" data-skin-option="${escapeHtml(key)}"`;
+
+  if (field.type === "select") {
+    const options = Array.isArray(field.options) ? field.options : [];
+    const normalizedValue = String(value || getSkinOptionDefault(key, field) || "");
+    const optionsHtml = options.map((option) => {
+      const optionValue = typeof option === "object" ? option.value : option;
+      const optionLabel = typeof option === "object" ? option.label : option;
+      const selected = String(optionValue) === normalizedValue ? " selected" : "";
+      return `<option value="${escapeHtml(optionValue)}"${selected}>${escapeHtml(optionLabel)}</option>`;
+    }).join("");
+    return `
+      <div class="field-group">
+        <label for="${id}">${label}</label>
+        <select ${commonAttrs}>${optionsHtml}</select>
+        ${help ? `<div class="muted small">${escapeHtml(help)}</div>` : ""}
+      </div>
+    `;
+  }
+
+  const inputType = field.type === "number" ? "number" : "text";
+  const minAttr = field.min != null ? ` min="${escapeHtml(field.min)}"` : "";
+  const stepAttr = field.step != null ? ` step="${escapeHtml(field.step)}"` : "";
+  return `
+    <div class="field-group">
+      <label for="${id}">${label}</label>
+      <input ${commonAttrs} type="${inputType}"${minAttr}${stepAttr} placeholder="${placeholder}" value="${escapeHtml(value)}">
+      ${help ? `<div class="muted small">${escapeHtml(help)}</div>` : ""}
+    </div>
+  `;
+}
+
+async function renderSkinOptionsForType(rawType = "BOARD", values = {}) {
+  const token = ++skinOptionsRenderToken;
+  const skinType = normalizeKind(rawType, "BOARD");
+  let skin;
+
+  try {
+    skin = await getSkin(skinType);
+  } catch (error) {
+    console.warn("Failed to load skin options schema:", error);
+    skin = null;
+  }
+
+  if (token !== skinOptionsRenderToken) return;
+
+  const loadedType = skin?.type || "";
+  activeSkinOptionsType = skinType;
+  activeSkinOptionsSchema = loadedType === skinType ? (skin?.boardOptionsSchema || {}) : {};
+  const entries = getSchemaEntries(activeSkinOptionsSchema);
+
+  if (skinOptionsTitleEl) skinOptionsTitleEl.textContent = `${activeSkinOptionsType} 옵션`;
+  if (skinOptionsDescEl) skinOptionsDescEl.textContent = entries.length
+    ? "선택한 스킨의 게시판 옵션입니다."
+    : "이 스킨에는 별도 게시판 옵션이 없습니다.";
+  if (skinOptionsBlockEl) skinOptionsBlockEl.classList.toggle("hidden", entries.length === 0);
+
+  if (!skinOptionsFieldsEl) return;
+  skinOptionsFieldsEl.innerHTML = entries.map(([key, field]) => {
+    const defaultValue = getSkinOptionDefault(key, field, activeSkinOptionsType);
+    const value = values[key] ?? defaultValue ?? "";
+    return renderSkinOptionField(key, field, value);
+  }).join("");
+
+  skinOptionsFieldsEl.querySelectorAll("[data-skin-option]").forEach((input) => {
+    input.addEventListener("input", updateFormSummary);
+    input.addEventListener("change", updateFormSummary);
+  });
 }
 
 function slugifyBoardId(value) {
@@ -138,12 +339,11 @@ function updateBoardIdHint() {
 
 function updateSkinOptionsVisibility() {
   const kind = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
-  if (boardSkinOptionsBlockEl) boardSkinOptionsBlockEl.classList.toggle("hidden", kind !== "BOARD");
-  if (gallerySkinOptionsBlockEl) gallerySkinOptionsBlockEl.classList.toggle("hidden", kind !== "GALLERY");
-  if (logSkinOptionsBlockEl) logSkinOptionsBlockEl.classList.toggle("hidden", kind !== "LOG");
-  if (kind === "BOARD" && boardBoardWidthInput && !String(boardBoardWidthInput.value || "").trim()) {
-    boardBoardWidthInput.value = "800";
+  if (activeSkinOptionsType !== kind) {
+    void renderSkinOptionsForType(kind);
+    return;
   }
+  if (skinOptionsBlockEl) skinOptionsBlockEl.classList.toggle("hidden", getSchemaEntries(activeSkinOptionsSchema).length === 0);
 }
 
 function arrangeBoardEditorLayout() {
@@ -156,11 +356,10 @@ function arrangeBoardEditorLayout() {
 
   const blocks = Array.from(formEl.querySelectorAll(":scope > .settings-block"));
   const skinBlock = blocks[1];
-  const optionBlock = blocks[4] || blocks[3] || blocks[2];
-  const extraBlocks = [boardSkinOptionsBlockEl, gallerySkinOptionsBlockEl, logSkinOptionsBlockEl].filter(Boolean);
+  const optionBlock = blocks[3] || blocks[2];
 
-  if (skinBlock && extraBlocks.length) skinBlock.after(...extraBlocks);
-  if (optionBlock && extraBlocks.length) extraBlocks[extraBlocks.length - 1].after(optionBlock);
+  if (skinBlock && skinOptionsBlockEl) skinBlock.after(skinOptionsBlockEl);
+  if (optionBlock && skinOptionsBlockEl) skinOptionsBlockEl.after(optionBlock);
 
   const summaryList = summaryPanel.querySelector(".summary-list");
   const saveBtn = document.getElementById("saveBoardBtn");
@@ -222,17 +421,19 @@ function renderSkinCatalogOptions() {
       </button>
     `).join("");
     catalogListEl.querySelectorAll("[data-skin]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         const input = document.getElementById("boardKindInput");
         if (!input) return;
         input.value = button.dataset.skin || "BOARD";
         updateSkinFolderHint(input.value);
+        await renderSkinOptionsForType(input.value);
+        updatePageContentVisibility();
         updateFormSummary();
       });
     });
   }
   updateSkinFolderHint();
-  updateFormSummary();
+  void renderSkinOptionsForType(document.getElementById("boardKindInput")?.value || "BOARD").then(updateFormSummary);
 }
 
 function normalizeCustomSkinPath(value) {
@@ -289,20 +490,8 @@ function readForm() {
   const pageSizeRaw = (document.getElementById("pageSizeInput")?.value || "").trim();
   const commentRestricted = !!document.getElementById("commentRestrictionInput")?.checked;
   const skinType = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
-  const skinOptions = {};
-
-  if (skinType === "BOARD") {
-    skinOptions.boardWidth = parsePositiveNumber(boardBoardWidthInput?.value) || 800;
-  }
-  if (skinType === "GALLERY") {
-    skinOptions.boardWidth = parseOptionalNumber(galleryBoardWidthInput?.value);
-    skinOptions.galleryColumns = parsePositiveNumber(galleryColumnsInput?.value) || 4;
-  }
-  if (skinType === "LOG") {
-    skinOptions.boardWidth = parseOptionalNumber(logBoardWidthInput?.value);
-    skinOptions.imageWidth = parseOptionalNumber(logImageWidthInput?.value);
-    skinOptions.commentPosition = normalizeLogCommentPosition(logCommentPositionInput?.value);
-  }
+  const skinOptions = activeSkinOptionsType === skinType ? readSkinOptionsFromInputs() : {};
+  const isPageSkin = skinType === "PAGE";
 
   return {
     boardId,
@@ -313,10 +502,11 @@ function readForm() {
     menuOrder: toMenuOrder(menuOrderRaw),
     menuVisible: !!document.getElementById("menuVisibleInput")?.checked,
     isPublic: !!document.getElementById("boardPublicInput")?.checked,
-    allowGuestPost: !!document.getElementById("boardGuestInput")?.checked,
-    commentScope: commentRestricted ? "guest" : "all",
-    commentRestricted,
-    skinOptions
+    allowGuestPost: isPageSkin ? false : !!document.getElementById("boardGuestInput")?.checked,
+    commentScope: isPageSkin ? "all" : (commentRestricted ? "guest" : "all"),
+    commentRestricted: isPageSkin ? false : commentRestricted,
+    skinOptions,
+    pageData: skinType === "PAGE" ? readPageDataFromInputs() : null
   };
 }
 
@@ -340,6 +530,9 @@ function updateFormSummary() {
   const isBoardSkin = data.skinType === "BOARD";
   const isLogSkin = data.skinType === "LOG";
   const isGallerySkin = data.skinType === "GALLERY";
+  const isProfileSkin = data.skinType === "PROFILE";
+  const isPageSkin = data.skinType === "PAGE";
+  const hasBoardWidth = Object.prototype.hasOwnProperty.call(skinOptions, "boardWidth");
   const boardWidth = skinOptions.boardWidth ?? "";
   const galleryColumns = skinOptions.galleryColumns ?? skinOptions.columns ?? "";
   const imageWidth = skinOptions.imageWidth ?? "";
@@ -350,9 +543,9 @@ function updateFormSummary() {
   if (summaryOrderEl) summaryOrderEl.textContent = Number.isFinite(Number(data.menuOrder)) ? String(data.menuOrder) : "-";
   if (summaryPageSizeEl) summaryPageSizeEl.textContent = String(data.pageSize || 12);
   if (summaryCommentScopeEl) summaryCommentScopeEl.textContent = data.commentRestricted ? "ON" : "OFF";
-  if (summaryBoardWidthEl) summaryBoardWidthEl.textContent = isBoardSkin ? (formatResponsiveWidth(boardWidth || 800) || "800px") : "-";
+  if (summaryBoardWidthEl) summaryBoardWidthEl.textContent = hasBoardWidth ? (formatResponsiveWidth(boardWidth) || "-") : "-";
   if (summaryGalleryBoardWidthEl) summaryGalleryBoardWidthEl.textContent = isGallerySkin ? (formatResponsiveWidth(boardWidth) || "-") : "-";
-  if (summaryGalleryColumnsEl) summaryGalleryColumnsEl.textContent = isGallerySkin ? (galleryColumns || "-") : "-";
+  if (summaryGalleryColumnsEl) summaryGalleryColumnsEl.textContent = (isGallerySkin || isProfileSkin) ? (galleryColumns || "-") : "-";
   if (summaryLogBoardWidthEl) summaryLogBoardWidthEl.textContent = isLogSkin ? (formatResponsiveWidth(boardWidth) || "-") : "-";
   if (summaryLogImageWidthEl) summaryLogImageWidthEl.textContent = isLogSkin ? (formatLogImageWidth(imageWidth) || "-") : "-";
   if (summaryLogCommentPositionEl) summaryLogCommentPositionEl.textContent = isLogSkin ? getLogCommentPositionLabel(commentPosition) : "우측";
@@ -361,18 +554,20 @@ function updateFormSummary() {
     summaryChipsEl.innerHTML = `
       <span class="summary-chip ${data.menuVisible ? "is-on" : "is-off"}">메뉴 ${getBoardStatusLabel(data.menuVisible)}</span>
       <span class="summary-chip ${data.isPublic ? "is-on" : "is-off"}">공개 ${getBoardStatusLabel(data.isPublic)}</span>
-      <span class="summary-chip ${data.allowGuestPost ? "is-on" : "is-off"}">게스트 ${getBoardStatusLabel(data.allowGuestPost)}</span>
-      <span class="summary-chip ${data.commentRestricted ? "is-off" : "is-on"}">댓글제한 ${data.commentRestricted ? "ON" : "OFF"}</span>
-      ${isBoardSkin ? `<span class="summary-chip is-on">BOARD ${formatResponsiveWidth(boardWidth || 800) || "800px"}</span>` : ""}
+      ${isPageSkin ? "" : `<span class="summary-chip ${data.allowGuestPost ? "is-on" : "is-off"}">게스트 ${getBoardStatusLabel(data.allowGuestPost)}</span>`}
+      ${isPageSkin ? "" : `<span class="summary-chip ${data.commentRestricted ? "is-off" : "is-on"}">댓글제한 ${data.commentRestricted ? "ON" : "OFF"}</span>`}
+      ${hasBoardWidth ? `<span class="summary-chip is-on">가로 ${formatResponsiveWidth(boardWidth) || "-"}</span>` : ""}
       ${isGallerySkin ? `<span class="summary-chip is-on">갤러리 ${galleryColumns || 4}열</span>` : ""}
+      ${isProfileSkin ? `<span class="summary-chip is-on">프로필 ${galleryColumns || 4}열</span>` : ""}
       ${isLogSkin ? `<span class="summary-chip is-on">배치 ${getLogCommentPositionLabel(commentPosition)}</span>` : ""}
     `;
   }
   updateBoardIdHint();
   updateSkinOptionsVisibility();
+  updatePageContentVisibility();
 }
 
-function fillForm(board) {
+async function fillForm(board) {
   boardIdAutoMode = false;
   const skinType = normalizeKind(board.skinType || board.skin, "BOARD");
   const skinOptions = getBoardSkinOptions(board, skinType);
@@ -389,12 +584,8 @@ function fillForm(board) {
   document.getElementById("pageSizeInput").value = toMenuOrder(board.pageSize, 12);
   document.getElementById("boardKindInput").value = skinType;
   updateSkinFolderHint(document.getElementById("boardKindInput").value);
-  if (boardBoardWidthInput) boardBoardWidthInput.value = skinType === "BOARD" ? (skinOptions.boardWidth ?? 800) : "";
-  if (logBoardWidthInput) logBoardWidthInput.value = skinType === "LOG" ? (skinOptions.boardWidth ?? "") : "";
-  if (galleryBoardWidthInput) galleryBoardWidthInput.value = skinType === "GALLERY" ? (skinOptions.boardWidth ?? "") : "";
-  if (galleryColumnsInput) galleryColumnsInput.value = skinType === "GALLERY" ? (skinOptions.galleryColumns ?? skinOptions.columns ?? "") : "";
-  if (logImageWidthInput) logImageWidthInput.value = skinType === "LOG" ? (skinOptions.imageWidth ?? "") : "";
-  if (logCommentPositionInput) logCommentPositionInput.value = skinType === "LOG" ? normalizeLogCommentPosition(skinOptions.commentPosition || board.logCommentPosition || board.logCommentLayout || "default") : "default";
+  await renderSkinOptionsForType(skinType, skinOptions);
+  fillPageData(board.pageData || {});
 
   document.getElementById("menuOrderInput").value = toMenuOrder(board.menuOrder, "");
   document.getElementById("menuVisibleInput").checked = board.menuVisible !== false && board.isVisible !== false;
@@ -405,7 +596,7 @@ function fillForm(board) {
   updateFormSummary();
 }
 
-function resetBoardForm() {
+async function resetBoardForm() {
   const boardIdInput = document.getElementById("boardIdInput");
   const titleInput = document.getElementById("boardTitleInput");
   const descInput = document.getElementById("boardDescInput");
@@ -428,69 +619,37 @@ function resetBoardForm() {
   if (kindInput) kindInput.value = "BOARD";
   if (pageSizeInput) pageSizeInput.value = 12;
   if (menuOrderInput) menuOrderInput.value = "";
-  if (boardBoardWidthInput) boardBoardWidthInput.value = 800;
-  if (logBoardWidthInput) logBoardWidthInput.value = "";
-  if (galleryBoardWidthInput) galleryBoardWidthInput.value = "";
-  if (galleryColumnsInput) galleryColumnsInput.value = "";
-  if (logImageWidthInput) logImageWidthInput.value = "";
-  if (logCommentPositionInput) logCommentPositionInput.value = "default";
   if (menuVisibleInput) menuVisibleInput.checked = true;
   if (boardPublicInput) boardPublicInput.checked = true;
   if (boardGuestInput) boardGuestInput.checked = false;
   if (commentRestrictionInput) commentRestrictionInput.checked = false;
+  fillPageData({});
 
   boardIdAutoMode = true;
   if (autoBoardIdBtn) autoBoardIdBtn.disabled = false;
   updateSkinFolderHint("BOARD");
+  await renderSkinOptionsForType("BOARD");
   updateFormSummary();
   showMsg("초기화되었습니다.");
 }
 
 async function saveBoard() {
+  const selectedSkinType = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
+  if (activeSkinOptionsType !== selectedSkinType) {
+    await renderSkinOptionsForType(selectedSkinType);
+  }
+
   const data = readForm();
   if (!data.boardId) data.boardId = getUniqueBoardId(data.title || "board");
   if (!data.title) return showMsg("게시판 제목을 입력하세요.", true);
 
   const ref = doc(db, "boards", data.boardId);
   const snap = await getDoc(ref);
-  const existingData = snap.exists() ? (snap.data() || {}) : {};
-  const skinOptionsSource = existingData.skinOptions && typeof existingData.skinOptions === "object" ? existingData.skinOptions : {};
-  const skinOptions = { ...skinOptionsSource };
-
-  if (data.skinType === "BOARD") {
-    skinOptions.boardWidth = data.skinOptions?.boardWidth || 800;
-    delete skinOptions.columns;
-    delete skinOptions.galleryColumns;
-    delete skinOptions.imageWidth;
-    delete skinOptions.commentPosition;
-    delete skinOptions.logCommentLayout;
-  }
-
-  if (data.skinType === "GALLERY") {
-    if (data.skinOptions?.boardWidth != null && data.skinOptions.boardWidth !== "") {
-      skinOptions.boardWidth = data.skinOptions.boardWidth;
-    }
-    if (data.skinOptions?.galleryColumns != null && data.skinOptions.galleryColumns !== "") {
-      skinOptions.galleryColumns = data.skinOptions.galleryColumns;
-    }
-    delete skinOptions.columns;
-    delete skinOptions.imageWidth;
-    delete skinOptions.commentPosition;
-    delete skinOptions.logCommentLayout;
-  }
-
-  if (data.skinType === "LOG") {
-    if (data.skinOptions?.boardWidth != null && data.skinOptions.boardWidth !== "") {
-      skinOptions.boardWidth = data.skinOptions.boardWidth;
-    }
-    if (data.skinOptions?.imageWidth != null && data.skinOptions.imageWidth !== "") {
-      skinOptions.imageWidth = data.skinOptions.imageWidth;
-    }
-    skinOptions.commentPosition = data.skinOptions?.commentPosition === "bottom" ? "bottom" : "default";
-    delete skinOptions.galleryColumns;
-    delete skinOptions.columns;
-    delete skinOptions.logCommentLayout;
-  }
+  const skinOptions = {};
+  getSchemaEntries(activeSkinOptionsSchema).forEach(([key]) => {
+    const value = data.skinOptions?.[key];
+    if (value != null && value !== "") skinOptions[key] = value;
+  });
 
   const payload = {
     title: data.title,
@@ -511,6 +670,10 @@ async function saveBoard() {
     updatedAt: serverTimestamp()
   };
 
+  if (data.skinType === "PAGE") {
+    payload.pageData = data.pageData || readPageDataFromInputs();
+  }
+
   if (!snap.exists()) {
     payload.createdAt = serverTimestamp();
     await setDoc(ref, payload);
@@ -527,10 +690,12 @@ async function saveBoard() {
       galleryColumns: deleteField(),
       logBoardWidth: deleteField(),
       logImageWidth: deleteField(),
-      logCommentPosition: deleteField()
+      logCommentPosition: deleteField(),
+      pageData: data.skinType === "PAGE" ? payload.pageData : deleteField()
     });
   }
   showMsg("저장 완료");
+  invalidateNavigationCaches();
   boardIdAutoMode = false;
   await loadBoards();
   updateFormSummary();
@@ -552,6 +717,7 @@ async function removeBoard(boardId) {
     showMsg("게시판과 연결 콘텐츠를 삭제하는 중...");
     const result = await deleteBoardContent(board);
     await deleteDoc(doc(db, "boards", boardId));
+    invalidateNavigationCaches();
     showMsg(`삭제 완료 (게시물 ${result.deletedPosts}개, 카테고리 ${result.deletedCategories}개)`);
     await loadBoards();
   } catch (error) {
@@ -564,7 +730,6 @@ async function loadBoards() {
   const snap = await getDocs(collection(db, "boards"));
   loadedBoards = snap.docs
     .map((item) => ({ id: item.id, ...item.data() }))
-    .filter((board) => !isProfileBoard(board))
     .sort((a, b) => {
       const ao = toMenuOrder(a.menuOrder);
       const bo = toMenuOrder(b.menuOrder);
@@ -588,7 +753,7 @@ async function loadBoards() {
     const commentRestricted = commentScope === "guest";
     const boardWidthLabel = kind === "BOARD" ? (formatResponsiveWidth(skinOptions.boardWidth ?? 800) || "800px") : "-";
     const galleryBoardWidthLabel = kind === "GALLERY" ? (formatResponsiveWidth(skinOptions.boardWidth) || "-") : "-";
-    const galleryColumnsLabel = kind === "GALLERY" ? (skinOptions.galleryColumns || "-") : "-";
+    const galleryColumnsLabel = kind === "GALLERY" || kind === "PROFILE" ? (skinOptions.galleryColumns || "-") : "-";
     const logBoardWidthLabel = kind === "LOG" ? (formatResponsiveWidth(skinOptions.boardWidth) || "-") : "-";
     const imageWidthLabel = kind === "LOG" ? (formatLogImageWidth(skinOptions.imageWidth) || "-") : "-";
     const commentPositionLabel = kind === "LOG" ? getLogCommentPositionLabel(skinOptions.commentPosition) : "우측";
@@ -604,9 +769,9 @@ async function loadBoards() {
             <div class="board-row-meta">
               <span class="summary-chip ${isVisible ? "is-on" : "is-off"}">노출 ${isVisible ? "ON" : "OFF"}</span>
               <span class="summary-chip ${isPublic ? "is-on" : "is-off"}">공개 ${isPublic ? "ON" : "OFF"}</span>
-              <span class="summary-chip ${allowGuest ? "is-on" : "is-off"}">게스트 ${allowGuest ? "ON" : "OFF"}</span>
-              <span class="summary-chip ${commentRestricted ? "is-off" : "is-on"}">댓글제한 ${commentRestricted ? "ON" : "OFF"}</span>
-              <span class="muted small">skin ${kind} / order ${menuOrder} / size ${toMenuOrder(board.pageSize, 12)}${kind === "BOARD" ? ` / width ${boardWidthLabel}` : ""}${kind === "GALLERY" ? ` / width ${galleryBoardWidthLabel} / cols ${galleryColumnsLabel}` : ""}${kind === "LOG" ? ` / width ${logBoardWidthLabel} / image ${imageWidthLabel} / comments ${commentPositionLabel}` : ""}</span>
+              ${kind === "PAGE" ? "" : `<span class="summary-chip ${allowGuest ? "is-on" : "is-off"}">게스트 ${allowGuest ? "ON" : "OFF"}</span>`}
+              ${kind === "PAGE" ? "" : `<span class="summary-chip ${commentRestricted ? "is-off" : "is-on"}">댓글제한 ${commentRestricted ? "ON" : "OFF"}</span>`}
+              <span class="muted small">skin ${kind} / order ${menuOrder} / size ${toMenuOrder(board.pageSize, 12)}${kind === "BOARD" ? ` / width ${boardWidthLabel}` : ""}${kind === "GALLERY" ? ` / width ${galleryBoardWidthLabel} / cols ${galleryColumnsLabel}` : ""}${kind === "PROFILE" ? ` / cols ${galleryColumnsLabel}` : ""}${kind === "LOG" ? ` / width ${logBoardWidthLabel} / image ${imageWidthLabel} / comments ${commentPositionLabel}` : ""}</span>
             </div>
           </div>
           <div class="formRow board-row-actions">
@@ -619,9 +784,9 @@ async function loadBoards() {
   }).join("");
 
   listEl.querySelectorAll("[data-edit]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const item = loadedBoards.find((b) => b.id === btn.dataset.edit);
-      if (item) fillForm(item);
+      if (item) await fillForm(item);
     });
   });
 
@@ -642,7 +807,7 @@ async function openRequestedBoardEditor() {
     return;
   }
 
-  fillForm(board);
+  await fillForm(board);
   document.querySelector(".admin-board-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -932,6 +1097,7 @@ async function migrateFirestoreDocs() {
   }
 
   await loadBoards();
+  invalidateNavigationCaches();
 }
 
 function markBoardIdManualEdit() {
@@ -965,6 +1131,8 @@ async function addCustomSkinChip() {
 
   boardKindInput.value = custom.skinType;
   updateSkinFolderHint(custom.folder);
+  await renderSkinOptionsForType(custom.skinType);
+  updatePageContentVisibility();
   updateFormSummary();
 
   const catalogListEl = document.getElementById("skinCatalogList");
@@ -979,9 +1147,11 @@ async function addCustomSkinChip() {
       <span class="skin-chip-type">${escapeHtml(custom.skinType)}</span>
       <span class="skin-chip-folder">${escapeHtml(custom.folder)}</span>
     `;
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", async () => {
       boardKindInput.value = custom.skinType;
       updateSkinFolderHint(custom.folder);
+      await renderSkinOptionsForType(custom.skinType);
+      updatePageContentVisibility();
       updateFormSummary();
     });
     catalogListEl.appendChild(chip);
@@ -1013,34 +1183,39 @@ function stripHtml(html) {
     updateFormSummary();
   });
   document.getElementById("boardIdInput")?.addEventListener("input", markBoardIdManualEdit);
-  document.getElementById("boardKindInput")?.addEventListener("input", (event) => {
+  document.getElementById("boardKindInput")?.addEventListener("input", async (event) => {
     updateSkinFolderHint(event.target.value);
-    updateSkinOptionsVisibility();
+    await renderSkinOptionsForType(event.target.value);
+    updatePageContentVisibility();
     updateFormSummary();
+  });
+  pageModeInput?.addEventListener("change", () => {
+    updatePageContentVisibility();
+    updateFormSummary();
+  });
+  [pageHtmlInput, pageIframeUrlInput, pageHeightInput].forEach((input) => {
+    input?.addEventListener("input", updateFormSummary);
+    input?.addEventListener("change", updateFormSummary);
   });
   addSkinPathBtn?.addEventListener("click", addCustomSkinChip);
   autoBoardIdBtn?.addEventListener("click", () => {
     boardIdAutoMode = true;
     syncBoardIdFromTitle(true);
   });
-  resetBoardBtn?.addEventListener("click", resetBoardForm);
+  resetBoardBtn?.addEventListener("click", () => {
+    void resetBoardForm();
+  });
   document.getElementById("saveBoardBtn")?.addEventListener("click", saveBoard);
   document.getElementById("migrateDocsBtn")?.addEventListener("click", migrateFirestoreDocs);
   [
     "boardDescInput",
-      "boardKindInput",
-      "boardBoardWidthInput",
-      "pageSizeInput",
+    "boardKindInput",
+    "pageSizeInput",
     "menuOrderInput",
     "menuVisibleInput",
     "boardPublicInput",
     "boardGuestInput",
-    "commentRestrictionInput",
-    "galleryBoardWidthInput",
-    "galleryColumnsInput",
-    "logBoardWidthInput",
-    "logImageWidthInput",
-    "logCommentPositionInput"
+    "commentRestrictionInput"
   ].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", updateFormSummary);
     document.getElementById(id)?.addEventListener("change", updateFormSummary);
@@ -1048,7 +1223,3 @@ function stripHtml(html) {
   syncBoardIdFromTitle();
   updateFormSummary();
 })();
-
-
-
-

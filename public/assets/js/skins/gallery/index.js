@@ -6,8 +6,24 @@ export const skin = createSkinDefinition({
   aliases: ["gal", "gallery"],
   cssNamespace: "skin-gallery",
   boardOptionsSchema: {
-    boardWidth: { type: "number", defaultValue: 800 },
-    galleryColumns: { type: "number", defaultValue: 4 }
+    boardWidth: {
+      type: "number",
+      label: "게시판 가로",
+      defaultValue: 800,
+      min: 1,
+      step: 1,
+      placeholder: "기본 800 / 100 이하는 %",
+      help: "100 이하는 %, 그 이상은 px로 적용됩니다."
+    },
+    galleryColumns: {
+      type: "number",
+      label: "1줄 게시물 수",
+      defaultValue: 4,
+      min: 1,
+      step: 1,
+      placeholder: "기본 4",
+      help: "한 줄에 들어갈 카드 수입니다."
+    }
   },
   postFields: [
     { key: "source", label: "출처", type: "text" }

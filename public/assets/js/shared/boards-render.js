@@ -1,8 +1,8 @@
 import { db } from "../core/firebase.js";
 import { collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { isBoardMenuVisible } from "../skins/registry.js";
+import { isBoardMenuVisible, resolveBoardSkinType } from "../skins/registry.js";
 
-const NAV_CACHE_KEY = "archive_nav_cache_v1";
+const NAV_CACHE_KEY = "archive_nav_cache_v2";
 const SITE_SETTINGS_CACHE_KEY = "archive_site_settings_cache_v3";
 const BOARD_SNAPSHOT_CACHE_KEY = "archive_board_snapshot_cache_v1";
 const NAV_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -69,6 +69,29 @@ export function invalidateSiteMainSettingsCache() {
   }
 }
 
+export function invalidateBoardSnapshotCache() {
+  boardSnapshotCache = null;
+  boardSnapshotPromise = null;
+  try {
+    sessionStorage.removeItem(BOARD_SNAPSHOT_CACHE_KEY);
+  } catch (_error) {
+    // ignore
+  }
+}
+
+export function invalidateTopNavCache() {
+  try {
+    sessionStorage.removeItem(NAV_CACHE_KEY);
+  } catch (_error) {
+    // ignore
+  }
+}
+
+export function invalidateNavigationCaches() {
+  invalidateTopNavCache();
+  invalidateBoardSnapshotCache();
+}
+
 export async function loadBoardTitleMap() {
   const boards = await loadBoardSnapshot();
   return boards.reduce((map, board) => {
@@ -121,7 +144,7 @@ export async function renderTopNav(navEl) {
   }
 
   const settings = await loadSiteMainSettings();
-  const boards = await loadBoardSnapshot();
+  const boards = await loadBoardSnapshot({ forceRefresh: true });
   const menuBoards = boards
     .filter((board) => isBoardMenuVisible(board))
     .sort((a, b) => {
@@ -132,7 +155,7 @@ export async function renderTopNav(navEl) {
     });
 
   const html = menuBoards
-    .map((board) => `<a href="/board.html?bo=${encodeURIComponent(board.id)}">${escapeHtml(board.title || board.id)}</a>`)
+    .map((board) => `<a href="${escapeHtml(getBoardMenuHref(board))}">${escapeHtml(board.title || board.id)}</a>`)
     .join("");
 
   writeNavCache({ html, siteTitle: settings.siteTitle });
@@ -141,6 +164,13 @@ export async function renderTopNav(navEl) {
   prefetchTopLinksOnIdle(navEl, 3);
 
   return settings;
+}
+
+function getBoardMenuHref(board = {}) {
+  const boardId = encodeURIComponent(board.id || "");
+  return resolveBoardSkinType(board) === "PAGE"
+    ? `/page.html?bo=${boardId}`
+    : `/board.html?bo=${boardId}`;
 }
 
 function escapeHtml(text) {
@@ -169,12 +199,12 @@ function writeNavCache(payload) {
   }
 }
 
-async function loadBoardSnapshot() {
-  if (boardSnapshotCache) return boardSnapshotCache;
-  if (boardSnapshotPromise) return boardSnapshotPromise;
+async function loadBoardSnapshot({ forceRefresh = false } = {}) {
+  if (!forceRefresh && boardSnapshotCache) return boardSnapshotCache;
+  if (!forceRefresh && boardSnapshotPromise) return boardSnapshotPromise;
 
   boardSnapshotPromise = (async () => {
-    const cached = readTimedJsonCache(BOARD_SNAPSHOT_CACHE_KEY, DATA_CACHE_TTL_MS);
+    const cached = forceRefresh ? null : readTimedJsonCache(BOARD_SNAPSHOT_CACHE_KEY, DATA_CACHE_TTL_MS);
     if (cached) {
       boardSnapshotCache = cached;
       return cached;

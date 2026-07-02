@@ -20,6 +20,9 @@ const DEFAULT_CAPABILITIES = {
     supportsGalleryFields: false,
     requiresThumbnail: false,
     supportsSource: false,
+    supportsContent: true,
+    adminOnly: false,
+    disabled: false,
     contentPlaceholder: "본문",
     contentField: "contentHtml"
   }
@@ -46,6 +49,7 @@ export function createSkinDefinition(definition = {}) {
     renderList,
     renderDetail: definition.renderDetail || null,
     renderWriteFields: Array.isArray(definition.renderWriteFields) ? definition.renderWriteFields.slice() : [],
+    buildSkinData: typeof definition.buildSkinData === "function" ? definition.buildSkinData : null,
     capabilities: mergeCapabilities(DEFAULT_CAPABILITIES, definition.capabilities || {}),
     renderBoardList: definition.renderBoardList || renderList
   };

@@ -8,8 +8,8 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings } from "../shared/boards-render.js";
-import { isAdminOnlyBoard, renderAdminOnlyBoardNotice, renderHiddenBoardNotice } from "../shared/board-access.js";
-import { findSkinTypeByAlias, getBoardAliasCandidates, getBoardSkinOption, getPostSkinData, getSkin, isProfileBoard, resolveBoardSkinType } from "../skins/registry.js";
+import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
+import { findSkinTypeByAlias, getBoardAliasCandidates, getBoardSkinOption, getPostSkinData, getSkin, resolveBoardSkinType } from "../skins/registry.js";
 import { initLightbox } from "../shared/lightbox.js";
 import { deletePostsByIds } from "../shared/post-maintenance.js";
 import { canWriteToBoard, getAuthSnapshot, sha256Hex, verifyGuestCode } from "../core/state.js";
@@ -70,8 +70,10 @@ function getBoardPageSize(board) {
 function applyBoardWidth(board) {
   const mainEl = document.querySelector("body.site-page main.container");
   const skinType = resolveBoardSkinType(board);
-  const width = formatResponsiveWidth(getBoardSkinOption(board, "boardWidth", skinType === "BOARD" ? 800 : ""));
+  const widthFallback = skinType === "BOARD" ? 800 : (skinType === "PAGE" ? 900 : "");
+  const width = formatResponsiveWidth(getBoardSkinOption(board, "boardWidth", widthFallback));
   const galleryColumns = skinType === "GALLERY" ? Number(getBoardSkinOption(board, "galleryColumns", NaN)) : NaN;
+  const profileColumns = skinType === "PROFILE" ? Number(getBoardSkinOption(board, "galleryColumns", NaN)) : NaN;
   const extraWidth = skinType === "LOG" ? "40px" : "0px";
   if (width) {
     if (mainEl) {
@@ -88,6 +90,11 @@ function applyBoardWidth(board) {
       mainEl.style.setProperty("--gallery-columns", String(Math.round(galleryColumns)));
     } else {
       mainEl.style.removeProperty("--gallery-columns");
+    }
+    if (Number.isFinite(profileColumns) && profileColumns > 0) {
+      mainEl.style.setProperty("--profile-columns", String(Math.round(profileColumns)));
+    } else {
+      mainEl.style.removeProperty("--profile-columns");
     }
   }
 }
@@ -211,15 +218,6 @@ function renderBoardAccessDeniedPage(board = {}) {
   setDocumentTitle("관리자 전용 게시판입니다.");
 }
 
-function renderHiddenBoardPage(board = {}) {
-  const mainEl = document.querySelector("main.container");
-  if (!mainEl) return;
-
-  mainEl.classList.add("access-denied-shell");
-  mainEl.innerHTML = renderHiddenBoardNotice(board?.title || board?.name || boardId);
-  setDocumentTitle("준비 중인 게시판입니다.");
-}
-
 async function loadBoard() {
   try {
     clearGalleryDeleteState();
@@ -238,10 +236,6 @@ async function loadBoard() {
 
     const auth = await getAuthSnapshot();
     readAuthCache = auth;
-    if (isProfileBoard(currentBoard, boardId)) {
-      renderHiddenBoardPage(currentBoard);
-      return;
-    }
     if (isAdminOnlyBoard(currentBoard) && !auth?.isAdmin) {
       renderBoardAccessDeniedPage(currentBoard);
       return;
@@ -252,6 +246,10 @@ async function loadBoard() {
     } catch (skinError) {
       console.warn("Primary skin load failed, falling back to BOARD:", skinError);
       currentSkin = await getSkin("BOARD");
+    }
+    if (currentSkin?.type === "PAGE") {
+      location.replace(`/page.html?bo=${encodeURIComponent(currentBoard.id || boardId)}`);
+      return;
     }
     applyBoardWidth(currentBoard);
 
@@ -306,6 +304,12 @@ async function refreshWriteButtonState(writeBtn) {
     return { canWrite: true, reason: "admin" };
   }
 
+  if (currentSkin?.capabilities?.write?.adminOnly) {
+    writeBtn.classList.add("is-locked");
+    writeBtn.textContent = "WRITE(잠금)";
+    return { canWrite: false, reason: "skin-admin-only" };
+  }
+
   const access = await canWriteToBoard(currentBoard);
   const canWrite = Boolean(access?.ok);
   writeBtn.classList.toggle("is-locked", !canWrite);
@@ -322,6 +326,11 @@ async function bindWriteButton(writeBtn) {
     const auth = await getAuthSnapshot();
     if (auth.isAdmin) {
       location.href = writeBtn.href;
+      return;
+    }
+
+    if (currentSkin?.capabilities?.write?.adminOnly) {
+      window.alert("이 페이지는 관리자만 작성할 수 있습니다.");
       return;
     }
 
@@ -520,6 +529,11 @@ async function renderBoardBySkin() {
     searchSortEl?.classList.add("hidden");
   }
 
+  if (currentSkin.type === "PAGE") {
+    await renderSinglePageBoard(contentEl, auth);
+    return;
+  }
+
   let pagedPosts = [];
 
   if (capabilities.board.useCursorPagination && !singleMode) {
@@ -585,6 +599,59 @@ async function renderBoardBySkin() {
   renderPagination();
 }
 
+async function renderSinglePageBoard(contentEl, auth = {}) {
+  const paginationTopEl = document.getElementById("paginationTop");
+  const paginationEl = document.getElementById("pagination");
+  const categoryFilterEl = document.getElementById("categoryFilter");
+  const boardHeaderEl = document.querySelector(".board-header");
+  const boardActionsEl = document.querySelector(".board-actions");
+  const writeBtn = document.getElementById("writeBtn");
+
+  document.body?.classList.add("page-raw-board");
+  paginationTopEl.innerHTML = "";
+  paginationEl.innerHTML = "";
+  categoryFilterEl.innerHTML = "";
+  boardHeaderEl?.classList.add("hidden");
+  boardActionsEl?.classList.add("hidden");
+  if (writeBtn) writeBtn.textContent = "WRITE";
+
+  const pageData = currentBoard?.pageData && typeof currentBoard.pageData === "object" ? currentBoard.pageData : null;
+  const hasPageContent = Boolean(pageData?.html || pageData?.iframeUrl);
+
+  currentBoardPosts = [];
+  currentGalleryPosts = [];
+  currentLogPosts = [];
+  clearBoardDeleteState();
+  clearGalleryDeleteState();
+  clearLogDeleteState();
+
+  if (hasPageContent) {
+    const pagePost = {
+      id: `${currentBoard?.id || boardId}-page`,
+      title: currentBoard?.title || currentBoard?.name || boardId,
+      boardId: currentBoard?.id || boardId,
+      skinType: "PAGE",
+      skinData: {
+        page: pageData
+      }
+    };
+    const detail = typeof currentSkin.renderDetail === "function"
+      ? await currentSkin.renderDetail(pagePost, currentBoard, { secretUnlocked: true, isAdmin: Boolean(auth?.isAdmin) })
+      : { contentHtml: "" };
+    contentEl.innerHTML = detail.contentHtml || '<div class="notice">표시할 PAGE 내용이 없습니다.</div>';
+    return;
+  }
+
+  const canWrite = Boolean(auth?.isAdmin);
+  contentEl.innerHTML = `
+    <div class="notice page-empty-notice">
+      <div>연결된 PAGE가 아직 없습니다.</div>
+      ${canWrite ? `<div class="actionRow" style="margin-top:8px;"><a class="btn primary" href="/admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}">페이지 작성</a></div>` : ""}
+    </div>
+  `;
+  await renderBoardAdminToolsCompact(currentSkin);
+}
+
 function bindBoardDeleteActions(container) {
   if (!boardDeleteMode) return;
 
@@ -595,7 +662,7 @@ function bindBoardDeleteActions(container) {
       if (input.checked) selectedBoardPostIds.add(postId);
       else selectedBoardPostIds.delete(postId);
 
-      const item = input.closest(".board-line-item");
+      const item = input.closest(".board-line-item, .profile-card");
       item?.classList.toggle("is-delete-selected", input.checked);
       await renderBoardAdminToolsCompact(currentSkin);
     });
@@ -786,97 +853,7 @@ function hideLogSecretError(errorEl) {
 }
 
 async function renderBoardAdminToolsCompact(skin) {
-  return renderBoardAdminToolsUnified(skin);
-  if (!boardAdminToolsEl) return;
-
-  const variant = skin?.capabilities?.board?.deleteModeVariant || "none";
-  const isBoard = variant === "board";
-  const isGallery = variant === "gallery";
-  const isLog = variant === "log";
-  if (variant === "none") {
-    boardAdminToolsEl.classList.add("hidden");
-    boardAdminToolsEl.innerHTML = "";
-    return;
-  }
-
-  const auth = await getAuthSnapshot();
-  const isAdmin = Boolean(auth?.isAdmin);
-  boardAdminToolsEl.classList.toggle("hidden", !isAdmin);
-  if (!isAdmin) {
-    boardAdminToolsEl.innerHTML = "";
-    return;
-  }
-
-  const deleteMode = isBoard ? boardDeleteMode : isGallery ? galleryDeleteMode : logDeleteMode;
-  const currentPosts = isBoard ? currentBoardPosts : isGallery ? currentGalleryPosts : currentLogPosts;
-  const selectedIds = isBoard ? selectedBoardPostIds : isGallery ? selectedGalleryPostIds : selectedLogPostIds;
-  const status = isBoard ? boardDeleteStatus : isGallery ? galleryDeleteStatus : logDeleteStatus;
-  const currentCount = currentPosts.length;
-  const selectedCount = Array.from(selectedIds).filter((postId) => currentPosts.some((post) => post.id === postId)).length;
-  const prefix = isBoard ? "board" : isGallery ? "gallery" : "log";
-  const boardEditUrl = `/admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}`;
-
-  boardAdminToolsEl.innerHTML = `
-    <div class="board-admin-tools">
-      <button class="btn board-admin-toggle-btn ${deleteMode ? "primary" : ""}" type="button" id="toggle${prefix}DeleteModeBtn">
-        ADMIN
-      </button>
-      ${deleteMode ? `
-        ${isBoard ? "" : `<a class="btn board-admin-edit-btn" href="${boardEditUrl}">게시판수정</a>`}
-        <span class="muted small board-admin-counts">현재 ${currentCount}개 / 선택 ${selectedCount}개</span>
-        <button class="btn board-admin-action-btn" type="button" id="deleteSelected${prefix}Btn" ${selectedCount ? "" : "disabled"}>체크 삭제</button>
-        <button class="btn board-admin-action-btn" type="button" id="deleteAll${prefix}Btn" ${currentCount ? "" : "disabled"}>전체 삭제</button>
-        <button class="btn board-admin-action-btn" type="button" id="clear${prefix}SelectionBtn" ${selectedCount ? "" : "disabled"}>선택 해제</button>
-      ` : ""}
-    </div>
-    ${renderDeleteStatus(status)}
-  `;
-
-  document.getElementById(`toggle${prefix}DeleteModeBtn`)?.addEventListener("click", async () => {
-    if (isBoard) {
-      boardDeleteMode = !boardDeleteMode;
-      setBoardDeleteStatus("");
-      if (!boardDeleteMode) selectedBoardPostIds.clear();
-    } else if (isGallery) {
-      galleryDeleteMode = !galleryDeleteMode;
-      setGalleryDeleteStatus("");
-      if (!galleryDeleteMode) selectedGalleryPostIds.clear();
-    } else {
-      logDeleteMode = !logDeleteMode;
-      setLogDeleteStatus("");
-      if (!logDeleteMode) selectedLogPostIds.clear();
-    }
-    await renderBoardBySkin();
-  });
-
-  document.getElementById(`clear${prefix}SelectionBtn`)?.addEventListener("click", async () => {
-    selectedIds.clear();
-    if (isBoard) setBoardDeleteStatus("");
-    else if (isGallery) setGalleryDeleteStatus("");
-    else setLogDeleteStatus("");
-    await renderBoardAdminToolsCompact(currentSkin);
-    const selector = isBoard ? "[data-board-select]" : isGallery ? "[data-gallery-select]" : "[data-log-select]";
-    const cardSelector = isBoard ? ".board-line-item" : isGallery ? ".gallery-card" : ".log-post";
-    document.querySelectorAll(selector).forEach((input) => {
-      input.checked = false;
-      input.closest(cardSelector)?.classList.remove("is-delete-selected");
-    });
-  });
-
-  document.getElementById(`deleteSelected${prefix}Btn`)?.addEventListener("click", async () => {
-    const ids = Array.from(selectedIds);
-    if (!ids.length) return;
-    if (!window.confirm(`선택한 게시물 ${ids.length}개를 삭제하시겠습니까?`)) return;
-    await deletePosts(ids, "체크 삭제", skin?.type || resolveBoardSkinType(currentBoard));
-  });
-
-  document.getElementById(`deleteAll${prefix}Btn`)?.addEventListener("click", async () => {
-    const allPosts = await loadPosts(currentCategory);
-    if (!allPosts.length) return;
-    const label = currentCategory ? "현재 카테고리 전체" : "현재 게시판 전체";
-    if (!window.confirm(`${label} 게시물 ${allPosts.length}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
-    await deletePosts(allPosts.map((post) => post.id), "전체 삭제", skin?.type || resolveBoardSkinType(currentBoard));
-  });
+  await renderBoardAdminToolsUnified(skin);
 }
 
 async function renderBoardAdminToolsUnified(skin) {
@@ -949,95 +926,7 @@ async function renderBoardAdminToolsUnified(skin) {
     else setLogDeleteStatus("");
     await renderBoardAdminToolsUnified(currentSkin);
     const selector = isBoard ? "[data-board-select]" : isGallery ? "[data-gallery-select]" : "[data-log-select]";
-    const cardSelector = isBoard ? ".board-line-item" : isGallery ? ".gallery-card" : ".log-post";
-    document.querySelectorAll(selector).forEach((input) => {
-      input.checked = false;
-      input.closest(cardSelector)?.classList.remove("is-delete-selected");
-    });
-  });
-
-  document.getElementById(`deleteSelected${prefix}Btn`)?.addEventListener("click", async () => {
-    const ids = Array.from(selectedIds);
-    if (!ids.length) return;
-    if (!window.confirm(`선택한 게시물 ${ids.length}개를 삭제하시겠습니까?`)) return;
-    await deletePosts(ids, "체크 삭제", skin?.type || resolveBoardSkinType(currentBoard));
-  });
-
-  document.getElementById(`deleteAll${prefix}Btn`)?.addEventListener("click", async () => {
-    const allPosts = await loadPosts(currentCategory);
-    if (!allPosts.length) return;
-    const label = currentCategory ? "현재 카테고리 전체" : "현재 게시판 전체";
-    if (!window.confirm(`${label} 게시물 ${allPosts.length}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
-    await deletePosts(allPosts.map((post) => post.id), "전체 삭제", skin?.type || resolveBoardSkinType(currentBoard));
-  });
-}
-
-async function renderBoardAdminTools(skin) {
-  if (!boardAdminToolsEl) return;
-
-  const variant = skin?.capabilities?.board?.deleteModeVariant || "none";
-  const isGallery = variant === "gallery";
-  const isLog = variant === "log";
-  if (variant === "none") {
-    boardAdminToolsEl.classList.add("hidden");
-    boardAdminToolsEl.innerHTML = "";
-    return;
-  }
-
-  const auth = await getAuthSnapshot();
-  const isAdmin = Boolean(auth?.isAdmin);
-  boardAdminToolsEl.classList.toggle("hidden", !isAdmin);
-  if (!isAdmin) {
-    boardAdminToolsEl.innerHTML = "";
-    return;
-  }
-
-  const deleteMode = isGallery ? galleryDeleteMode : logDeleteMode;
-  const currentPosts = isGallery ? currentGalleryPosts : currentLogPosts;
-  const selectedIds = isGallery ? selectedGalleryPostIds : selectedLogPostIds;
-  const status = isGallery ? galleryDeleteStatus : logDeleteStatus;
-  const currentCount = currentPosts.length;
-  const selectedCount = Array.from(selectedIds).filter((postId) => currentPosts.some((post) => post.id === postId)).length;
-  const prefix = isGallery ? "gallery" : "log";
-  const label = isGallery ? "카드별 수정과 삭제, 체크 삭제" : "로그 번호 주변에 수정과 삭제 버튼";
-
-  boardAdminToolsEl.innerHTML = `
-    <div class="gallery-admin-tools card-lite">
-      <div class="formRow gallery-admin-tools-row">
-        <button class="btn ${deleteMode ? "primary" : ""}" type="button" id="toggle${prefix}DeleteModeBtn">
-          ADMIN
-        </button>
-        ${deleteMode ? `
-          <span class="muted small">현재 페이지 ${currentCount}개 / 선택 ${selectedCount}개</span>
-          <button class="btn" type="button" id="deleteSelected${prefix}Btn" ${selectedCount ? "" : "disabled"}>체크 삭제</button>
-          <button class="btn" type="button" id="deleteAll${prefix}Btn" ${currentCount ? "" : "disabled"}>전체 삭제</button>
-          <button class="btn" type="button" id="clear${prefix}SelectionBtn" ${selectedCount ? "" : "disabled"}>선택 해제</button>
-        ` : ""}
-      </div>
-      ${renderDeleteStatus(status)}
-    </div>
-  `;
-
-  document.getElementById(`toggle${prefix}DeleteModeBtn`)?.addEventListener("click", async () => {
-    if (isGallery) {
-      galleryDeleteMode = !galleryDeleteMode;
-      setGalleryDeleteStatus("");
-      if (!galleryDeleteMode) selectedGalleryPostIds.clear();
-    } else {
-      logDeleteMode = !logDeleteMode;
-      setLogDeleteStatus("");
-      if (!logDeleteMode) selectedLogPostIds.clear();
-    }
-    await renderBoardBySkin();
-  });
-
-  document.getElementById(`clear${prefix}SelectionBtn`)?.addEventListener("click", async () => {
-    selectedIds.clear();
-    if (isGallery) setGalleryDeleteStatus("");
-    else setLogDeleteStatus("");
-    await renderBoardAdminToolsCompact(currentSkin);
-    const selector = isGallery ? "[data-gallery-select]" : "[data-log-select]";
-    const cardSelector = isGallery ? ".gallery-card" : ".log-post";
+    const cardSelector = isBoard ? ".board-line-item, .profile-card" : isGallery ? ".gallery-card" : ".log-post";
     document.querySelectorAll(selector).forEach((input) => {
       input.checked = false;
       input.closest(cardSelector)?.classList.remove("is-delete-selected");
@@ -1062,8 +951,9 @@ async function renderBoardAdminTools(skin) {
 
 async function deletePosts(postIds, modeLabel, skinType) {
   const auth = await getAuthSnapshot();
+  const usesBoardDeleteState = skinType === "BOARD" || skinType === "PROFILE";
   if (!auth.isAdmin) {
-    if (skinType === "BOARD") setBoardDeleteStatus("관리자만 삭제할 수 있습니다.", true);
+    if (usesBoardDeleteState) setBoardDeleteStatus("관리자만 삭제할 수 있습니다.", true);
     if (skinType === "GALLERY") setGalleryDeleteStatus("관리자만 삭제할 수 있습니다.", true);
     if (skinType === "LOG") setLogDeleteStatus("관리자만 삭제할 수 있습니다.", true);
     await renderBoardAdminToolsCompact(currentSkin);
@@ -1073,7 +963,7 @@ async function deletePosts(postIds, modeLabel, skinType) {
   const uniqueIds = Array.from(new Set(postIds.filter(Boolean)));
   if (!uniqueIds.length) return;
 
-  if (skinType === "BOARD") setBoardDeleteStatus(`${modeLabel} 진행 중...`);
+  if (usesBoardDeleteState) setBoardDeleteStatus(`${modeLabel} 진행 중...`);
   if (skinType === "GALLERY") setGalleryDeleteStatus(`${modeLabel} 진행 중...`);
   if (skinType === "LOG") setLogDeleteStatus(`${modeLabel} 진행 중...`);
   await renderBoardAdminToolsCompact(currentSkin);
@@ -1089,13 +979,13 @@ async function deletePosts(postIds, modeLabel, skinType) {
     deletedCount = result.deletedPosts;
     resetGalleryPagination();
     const doneMessage = `${modeLabel} 완료 · ${deletedCount}개 삭제했습니다.`;
-    if (skinType === "BOARD") setBoardDeleteStatus(doneMessage);
+    if (usesBoardDeleteState) setBoardDeleteStatus(doneMessage);
     if (skinType === "GALLERY") setGalleryDeleteStatus(doneMessage);
     if (skinType === "LOG") setLogDeleteStatus(doneMessage);
     await renderBoardBySkin();
   } catch (error) {
     console.error("Failed to delete posts:", error);
-    if (skinType === "BOARD") setBoardDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
+    if (usesBoardDeleteState) setBoardDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
     if (skinType === "GALLERY") setGalleryDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
     if (skinType === "LOG") setLogDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
     await renderBoardAdminToolsCompact(currentSkin);
@@ -1139,7 +1029,9 @@ function renderCategoryFilter(categories) {
       currentCategory = button.dataset.category || null;
       currentPage = 1;
       resetGalleryPagination();
+      selectedBoardPostIds.clear();
       selectedGalleryPostIds.clear();
+      selectedLogPostIds.clear();
       await renderBoardBySkin();
     });
   });
@@ -1214,6 +1106,7 @@ function renderPagination() {
         if (nextPage < 1 || nextPage > totalPages) return;
 
         currentPage = nextPage;
+        selectedBoardPostIds.clear();
         selectedGalleryPostIds.clear();
         selectedLogPostIds.clear();
         await renderBoardBySkin();
@@ -1251,5 +1144,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-document.getElementById("year").textContent = new Date().getFullYear();
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 loadBoard();
