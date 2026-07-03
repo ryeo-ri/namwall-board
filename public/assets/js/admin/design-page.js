@@ -24,6 +24,7 @@ const COLOR_FIELDS = [
   { key: "textColor", picker: "textColorPicker", text: "textColorText" },
   { key: "accentColor", picker: "accentColorPicker", text: "accentColorText" },
   { key: "mutedColor", picker: "mutedColorPicker", text: "mutedColorText" },
+  { key: "btnColor", picker: "btnColorPicker", text: "btnColorText" },
   { key: "galleryCardBg", picker: "galleryCardBgPicker", text: "galleryCardBgText" }
 ];
 
@@ -89,6 +90,9 @@ function updatePreview() {
   document.getElementById("previewAccent").style.color = design.accentColor || "inherit";
   document.getElementById("previewMuted").style.color = design.mutedColor || DESIGN_DEFAULT_LABELS.mutedColor;
   document.getElementById("previewGalleryCard").style.background = design.galleryCardBg || "transparent";
+  const previewBtn = document.getElementById("previewBtn");
+  previewBtn.style.color = design.btnColor || design.textColor || DESIGN_DEFAULT_LABELS.textColor;
+  previewBtn.style.borderColor = previewBtn.style.color;
 
   loadPreviewFonts([headerFont, headingFont, bodyFont]);
 }

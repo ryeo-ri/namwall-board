@@ -75,6 +75,13 @@
                 </div>
               </div>
               <div class="field-group">
+                <label for="btnColorText">버튼 색 <span class="muted small">(테두리·글자, 기본은 글자색 따라감)</span></label>
+                <div class="formRow">
+                  <input type="color" id="btnColorPicker" value="#000000" style="flex:0 0 46px;min-height:34px;padding:2px;cursor:pointer;">
+                  <input id="btnColorText" placeholder="비우면 기본값 (글자색 따라감)" autocomplete="off" spellcheck="false">
+                </div>
+              </div>
+              <div class="field-group">
                 <label for="galleryCardBgText">갤러리 카드 배경 <span class="muted small">(기본 투명 — 이미지 로딩·비밀글 영역에 보임)</span></label>
                 <div class="formRow">
                   <input type="color" id="galleryCardBgPicker" value="#FFFFFF" style="flex:0 0 46px;min-height:34px;padding:2px;cursor:pointer;">
@@ -120,6 +127,7 @@
               <div id="previewHeading" style="font-weight:800;font-size:1.2rem;">게시판 제목 Heading</div>
               <div id="previewBody" style="font-size:14px;line-height:1.7;">본문 텍스트 미리보기입니다. 배경색과 글자색 대비를 확인하세요. <a id="previewAccent" href="#" onclick="return false" style="text-decoration:underline;">포인트색 링크</a></div>
               <div id="previewMuted" style="font-size:12px;">2026. 7. 3. · 보조 텍스트(날짜·메타)</div>
+              <div><span id="previewBtn" style="display:inline-block;border:1px solid currentcolor;padding:5px 12px;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">BUTTON</span></div>
               <div id="previewGalleryCard" style="border:1px dashed rgba(128,128,128,0.5);padding:10px 8px;font-size:11px;text-align:center;">갤러리 카드 배경</div>
             </div>
             <div class="formRow board-editor-save-row mt-md">

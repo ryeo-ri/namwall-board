@@ -356,7 +356,7 @@ textarea.textarea:focus{
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--site-text, var(--text)); /* 사용자 페이지(write 등)는 디자인 글자색 따라감 */
 }
 .field-group input{
   width: 100%;
@@ -449,7 +449,7 @@ textarea.textarea:focus{
   font-weight: 500;
   line-height: 1;
   letter-spacing: 0.01em;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   margin: 0;
   white-space: nowrap;
 }
@@ -472,7 +472,7 @@ textarea.textarea:focus{
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -480,7 +480,7 @@ textarea.textarea:focus{
   cursor: pointer;
 }
 .pagination-btn:hover{
-  color: var(--ink);
+  color: var(--site-text, var(--ink));
   text-decoration: underline;
   text-underline-offset: 0.25em;
 }
@@ -490,7 +490,7 @@ textarea.textarea:focus{
   text-underline-offset: 0.25em;
 }
 .pagination-btn:disabled{
-  color: rgba(28, 28, 28, 0.28);
+  color: var(--site-text-dim, rgba(28, 28, 28, 0.28));
   cursor: default;
   text-decoration: none;
 }
@@ -795,7 +795,7 @@ textarea.textarea:focus{
 .comment-author{
   font-weight: 600;
   font-size: 13px;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   white-space: nowrap;
 }
 .comment-content{
@@ -1014,7 +1014,7 @@ textarea.textarea:focus{
   line-height: 1.4;
 }
 .comment-named-link{
-  color: var(--olive-dk);
+  color: var(--site-accent, var(--olive-dk));
   font-weight: 400;
   text-decoration: none;
 }
@@ -1046,7 +1046,7 @@ textarea.textarea:focus{
 .write-head,
 .board-editor-head,
 .profile-hero-main{
-  color: var(--ink);
+  color: var(--site-text, var(--ink)); /* 사용자 페이지는 디자인 글자색 따라감 */
 }
 .board-actions{
   flex-shrink: 0;
@@ -1214,7 +1214,7 @@ body.site-page .board-admin-status.is-error{
   flex: 1;
 }
 .board-item-title a{
-  color: var(--text);
+  color: var(--site-text, var(--text));
   text-decoration: none;
 }
 .board-item-title a:hover{
@@ -1234,7 +1234,7 @@ body.site-page .board-admin-status.is-error{
   align-items: flex-start;
   gap: 10px;
   line-height: 1.7;
-  color: var(--text);
+  color: var(--site-text, var(--text));
 }
 .board-item-content p{
   margin: 0;
@@ -1382,7 +1382,7 @@ body.site-page .board-admin-status.is-error{
   align-items: center;
   font-weight: 600;
   font-size: 13px;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   white-space: nowrap;
 }
 .log-date{
@@ -1484,7 +1484,7 @@ body.site-page .board-admin-status.is-error{
   line-height: 1.4;
 }
 .log-body{
-  color: #111827;
+  color: var(--site-text, #111827);
   font-size: 15px;
   line-height: 1.85;
   word-break: break-word;
@@ -1508,7 +1508,7 @@ body.site-page .board-admin-status.is-error{
 }
 .log-named-link,
 .log-tag{
-  color: var(--olive-dk);
+  color: var(--site-accent, var(--olive-dk));
   font-weight: 400;
   text-decoration: none;
 }
@@ -1685,7 +1685,7 @@ body.site-page .board-admin-status.is-error{
   gap: 10px;
   padding: 22px 18px;
   text-align: center;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   background: var(--gallery-card-bg, transparent);
 }
 .gallery-secret-lock-label{
@@ -2429,7 +2429,7 @@ body.page-raw-board .page-frame{
   text-decoration: none;
 }
 .view-meta-board:hover{
-  color: var(--text);
+  color: var(--site-text, var(--text));
   text-decoration: underline;
 }
 .view-admin-tools{
@@ -2454,7 +2454,7 @@ body.page-raw-board .page-frame{
   cursor: pointer;
 }
 .view-meta-action:hover{
-  color: var(--text);
+  color: var(--site-text, var(--text));
   text-decoration: underline;
 }
 #viewTitle{
@@ -2594,7 +2594,7 @@ body.page-raw-board .page-frame{
 .write-label{
   font-size: 12px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--site-text, var(--text));
 }
 .write-static-field{
   display: grid;
@@ -2607,7 +2607,7 @@ body.page-raw-board .page-frame{
 .write-static-field strong{
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   word-break: break-word;
 }
 .write-static-field.inline{
@@ -3071,14 +3071,14 @@ body.page-raw-board .page-frame{
 .board-line-title{
   min-width: 0;
   flex: 1 1 auto;
-  color: var(--text);
+  color: var(--site-text, var(--text));
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .board-line-title:hover{
-  color: var(--accent);
+  color: var(--site-accent, var(--accent));
 }
 .board-line-date{
   flex: 0 0 auto;
@@ -3222,16 +3222,16 @@ body.site-page .profile-panel{
 }
 body.site-page .btn{
   border-radius: 0;
-  border-color: currentcolor;
+  border-color: var(--site-btn, currentcolor); /* 디자인 관리의 버튼 색 */
   background: transparent;
-  color: inherit;
+  color: var(--site-btn, inherit);
 }
 body.site-page .btn:hover{
   background: transparent;
 }
 body.site-page .btn.primary{
   background: transparent;
-  color: inherit;
+  color: var(--site-btn, inherit);
 }
 body.site-page input,
 body.site-page select,
@@ -3239,6 +3239,7 @@ body.site-page textarea{
   border-radius: 0;
   border: 0;
   background: transparent;
+  color: var(--site-text, var(--text));
   font-family: var(--font-kr);
 }
 body.site-page .tag,
