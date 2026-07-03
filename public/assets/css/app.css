@@ -1272,7 +1272,7 @@ body.site-page .board-admin-status.is-error{
   height: 100%;
   aspect-ratio: auto;
 }
-.board-tags{ display: flex; flex-wrap: wrap; gap: 4px; }
+.board-tags{ display: flex; flex-wrap: wrap; gap: 5px; }
 
 /* --------------------------------------------------------------------------
    6-3. log 스킨
@@ -1576,7 +1576,7 @@ body.site-page .board-admin-status.is-error{
 .log-tags{
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
 .log-tags-chips{
   margin-top: 10px;
@@ -1805,7 +1805,7 @@ body.site-page .board-admin-status.is-error{
   white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
-.gallery-tags{ display: flex; flex-wrap: wrap; gap: 4px; }
+.gallery-tags{ display: flex; flex-wrap: wrap; gap: 5px; }
 
 .gallery-admin-tools{
   border: 1px solid var(--line);
@@ -2062,7 +2062,7 @@ body.site-page .board-admin-status.is-error{
 .profile-card-tags{
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
 }
 .profile-hero-visual{
   position: relative;
@@ -2265,7 +2265,7 @@ body.site-page .board-admin-status.is-error{
 .profile-namecard-tags{
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
 }
 .profile-namecard-tags .tag{
   display: inline-flex;
@@ -2474,7 +2474,7 @@ body.page-raw-board .page-frame{
 .view-tags{
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
 }
 .view-image{
   width: 100%;
@@ -3040,7 +3040,7 @@ body.page-raw-board .page-frame{
 .search-tags{
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   margin-top: 10px;
 }
 
@@ -3204,7 +3204,7 @@ body.site-page .container{
 body.site-page main.container{
   width: min(calc(var(--board-page-w, var(--max-w)) + (2 * var(--site-page-pad-x)) + var(--board-page-extra-w, 0px)), 100%);
 }
-body.site-page .tag,
+/* 태그(.tag)는 본문 폰트를 그대로 상속 — 칩류만 제목 폰트 */
 body.site-page .summary-chip,
 body.site-page .skin-chip{
   font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
@@ -3573,11 +3573,10 @@ body.home-page .recent-update-board{
 body.home-page .tags-list{
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
-/* 홈 태그: 티켓 모양(site-page .tag)을 그대로 쓰되 타이포만 홈 스타일 */
+/* 홈 태그: 티켓 모양(site-page .tag)을 그대로 쓰되 크기만 홈 스타일 (폰트는 본문 상속) */
 body.home-page .tag{
-  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: 0.72rem;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -4132,7 +4131,7 @@ body.admin-login-page .admin-login-actions .btn{
     white-space: nowrap;
   }
   body.home-page .tags-list{
-    gap: 4px;
+    gap: 5px;
   }
   body.home-page #quickMenu .field-group{
     width: 100%;
