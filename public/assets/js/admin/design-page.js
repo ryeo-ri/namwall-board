@@ -24,7 +24,6 @@ const COLOR_FIELDS = [
   { key: "textColor", picker: "textColorPicker", text: "textColorText" },
   { key: "accentColor", picker: "accentColorPicker", text: "accentColorText" },
   { key: "mutedColor", picker: "mutedColorPicker", text: "mutedColorText" },
-  { key: "profileCardBg", picker: "profileCardBgPicker", text: "profileCardBgText" },
   { key: "galleryCardBg", picker: "galleryCardBgPicker", text: "galleryCardBgText" }
 ];
 
@@ -89,7 +88,6 @@ function updatePreview() {
   document.getElementById("previewMuted").style.fontFamily = `"${bodyFont}", "Noto Sans KR", sans-serif`;
   document.getElementById("previewAccent").style.color = design.accentColor || "inherit";
   document.getElementById("previewMuted").style.color = design.mutedColor || DESIGN_DEFAULT_LABELS.mutedColor;
-  document.getElementById("previewProfileCard").style.background = design.profileCardBg || "transparent";
   document.getElementById("previewGalleryCard").style.background = design.galleryCardBg || "transparent";
 
   loadPreviewFonts([headerFont, headingFont, bodyFont]);

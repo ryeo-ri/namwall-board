@@ -10,7 +10,6 @@ export const DESIGN_DEFAULT_LABELS = {
   textColor: "#000000",
   accentColor: "#000000",
   mutedColor: "#6B6B6B",
-  profileCardBg: "#FFFFFF", // 실제 기본은 투명 — 피커 표시용
   galleryCardBg: "#FFFFFF", // 실제 기본은 투명 — 피커 표시용
   headingFontFamily: "Pixelify Sans",
   bodyFontFamily: "Noto Sans KR"
@@ -24,7 +23,6 @@ export const DESIGN_PRESETS = {
       textColor: "",
       accentColor: "",
       mutedColor: "",
-      profileCardBg: "",
       galleryCardBg: ""
     }
   },
@@ -35,7 +33,6 @@ export const DESIGN_PRESETS = {
       textColor: "#1C1C1C",
       accentColor: "#4B4B4B",
       mutedColor: "#6B6B6B",
-      profileCardBg: "",
       galleryCardBg: ""
     }
   },
@@ -46,7 +43,6 @@ export const DESIGN_PRESETS = {
       textColor: "#EAEAEA",
       accentColor: "#FFFFFF",
       mutedColor: "#9A9A9A",
-      profileCardBg: "",
       galleryCardBg: ""
     }
   }
@@ -59,7 +55,6 @@ export function normalizeDesignSettings(raw = {}) {
     textColor: normalizeHexColor(data.textColor),
     accentColor: normalizeHexColor(data.accentColor),
     mutedColor: normalizeHexColor(data.mutedColor),
-    profileCardBg: normalizeHexColor(data.profileCardBg),
     galleryCardBg: normalizeHexColor(data.galleryCardBg),
     headingFontFamily: normalizeFontFamilyValue(data.headingFontFamily),
     bodyFontFamily: normalizeFontFamilyValue(data.bodyFontFamily)
@@ -92,7 +87,6 @@ export function applyDesignSettings(rawDesign) {
   setOrRemoveVar(body, "--site-text", design.textColor);
   setOrRemoveVar(body, "--site-accent", design.accentColor);
   setOrRemoveVar(body, "--muted", design.mutedColor);
-  setOrRemoveVar(body, "--profile-card-bg", design.profileCardBg);
   setOrRemoveVar(body, "--gallery-card-bg", design.galleryCardBg);
 
   applyCustomFont(body, "--font-pixel", HEADING_FONT_LINK_ID, design.headingFontFamily,

@@ -75,13 +75,6 @@
                 </div>
               </div>
               <div class="field-group">
-                <label for="profileCardBgText">프로필 카드 배경 <span class="muted small">(기본 투명 — 페이지 배경이 비침)</span></label>
-                <div class="formRow">
-                  <input type="color" id="profileCardBgPicker" value="#FFFFFF" style="flex:0 0 46px;min-height:34px;padding:2px;cursor:pointer;">
-                  <input id="profileCardBgText" placeholder="비우면 투명" autocomplete="off" spellcheck="false">
-                </div>
-              </div>
-              <div class="field-group">
                 <label for="galleryCardBgText">갤러리 카드 배경 <span class="muted small">(기본 투명 — 이미지 로딩·비밀글 영역에 보임)</span></label>
                 <div class="formRow">
                   <input type="color" id="galleryCardBgPicker" value="#FFFFFF" style="flex:0 0 46px;min-height:34px;padding:2px;cursor:pointer;">
@@ -127,10 +120,7 @@
               <div id="previewHeading" style="font-weight:800;font-size:1.2rem;">게시판 제목 Heading</div>
               <div id="previewBody" style="font-size:14px;line-height:1.7;">본문 텍스트 미리보기입니다. 배경색과 글자색 대비를 확인하세요. <a id="previewAccent" href="#" onclick="return false" style="text-decoration:underline;">포인트색 링크</a></div>
               <div id="previewMuted" style="font-size:12px;">2026. 7. 3. · 보조 텍스트(날짜·메타)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div id="previewProfileCard" style="border:1px dashed rgba(128,128,128,0.5);padding:10px 8px;font-size:11px;text-align:center;">프로필 카드</div>
-                <div id="previewGalleryCard" style="border:1px dashed rgba(128,128,128,0.5);padding:10px 8px;font-size:11px;text-align:center;">갤러리 카드</div>
-              </div>
+              <div id="previewGalleryCard" style="border:1px dashed rgba(128,128,128,0.5);padding:10px 8px;font-size:11px;text-align:center;">갤러리 카드 배경</div>
             </div>
             <div class="formRow board-editor-save-row mt-md">
               <button class="btn primary" id="saveDesignBtn" type="button">디자인 저장</button>

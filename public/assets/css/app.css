@@ -1939,7 +1939,7 @@ body.site-page .board-admin-status.is-error{
   padding: 0;
   aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: var(--profile-card-bg, transparent); /* 디자인 관리에서 지정 가능 */
+  background: transparent;
 }
 .profile-card-link{
   display: block;
@@ -1951,7 +1951,7 @@ body.site-page .board-admin-status.is-error{
 .profile-card-media{
   position: absolute;
   inset: 0;
-  background: var(--profile-card-bg, transparent);
+  background: transparent;
 }
 .profile-card-media .profile-media-image{
   object-fit: cover;
