@@ -24,8 +24,10 @@ const COLOR_FIELDS = [
   { key: "textColor", picker: "textColorPicker", text: "textColorText" },
   { key: "accentColor", picker: "accentColorPicker", text: "accentColorText" },
   { key: "mutedColor", picker: "mutedColorPicker", text: "mutedColorText" },
-  { key: "btnColor", picker: "btnColorPicker", text: "btnColorText" },
-  { key: "galleryCardBg", picker: "galleryCardBgPicker", text: "galleryCardBgText" }
+  { key: "galleryCardBg", picker: "galleryCardBgPicker", text: "galleryCardBgText" },
+  { key: "btnBorderColor", picker: "btnBorderColorPicker", text: "btnBorderColorText" },
+  { key: "btnTextColor", picker: "btnTextColorPicker", text: "btnTextColorText" },
+  { key: "btnBgColor", picker: "btnBgColorPicker", text: "btnBgColorText" }
 ];
 
 const headerFontInput = document.getElementById("headerFontInput");
@@ -91,8 +93,10 @@ function updatePreview() {
   document.getElementById("previewMuted").style.color = design.mutedColor || DESIGN_DEFAULT_LABELS.mutedColor;
   document.getElementById("previewGalleryCard").style.background = design.galleryCardBg || "transparent";
   const previewBtn = document.getElementById("previewBtn");
-  previewBtn.style.color = design.btnColor || design.textColor || DESIGN_DEFAULT_LABELS.textColor;
-  previewBtn.style.borderColor = previewBtn.style.color;
+  const btnFallback = design.textColor || DESIGN_DEFAULT_LABELS.textColor;
+  previewBtn.style.color = design.btnTextColor || btnFallback;
+  previewBtn.style.borderColor = design.btnBorderColor || btnFallback;
+  previewBtn.style.background = design.btnBgColor || "transparent";
 
   loadPreviewFonts([headerFont, headingFont, bodyFont]);
 }

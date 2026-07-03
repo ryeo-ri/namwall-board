@@ -10,7 +10,9 @@ export const DESIGN_DEFAULT_LABELS = {
   textColor: "#000000",
   accentColor: "#000000",
   mutedColor: "#6B6B6B",
-  btnColor: "#000000",      // 실제 기본은 글자색 따라감 — 피커 표시용
+  btnBorderColor: "#000000", // 실제 기본은 글자색 따라감 — 피커 표시용
+  btnTextColor: "#000000",   // 실제 기본은 글자색 따라감 — 피커 표시용
+  btnBgColor: "#FFFFFF",     // 실제 기본은 투명 — 피커 표시용
   galleryCardBg: "#FFFFFF", // 실제 기본은 투명 — 피커 표시용
   headingFontFamily: "Pixelify Sans",
   bodyFontFamily: "Noto Sans KR"
@@ -24,7 +26,9 @@ export const DESIGN_PRESETS = {
       textColor: "",
       accentColor: "",
       mutedColor: "",
-      btnColor: "",
+      btnBorderColor: "",
+      btnTextColor: "",
+      btnBgColor: "",
       galleryCardBg: ""
     }
   },
@@ -35,7 +39,9 @@ export const DESIGN_PRESETS = {
       textColor: "#1C1C1C",
       accentColor: "#4B4B4B",
       mutedColor: "#6B6B6B",
-      btnColor: "",
+      btnBorderColor: "",
+      btnTextColor: "",
+      btnBgColor: "",
       galleryCardBg: ""
     }
   },
@@ -46,7 +52,9 @@ export const DESIGN_PRESETS = {
       textColor: "#EAEAEA",
       accentColor: "#FFFFFF",
       mutedColor: "#9A9A9A",
-      btnColor: "",
+      btnBorderColor: "",
+      btnTextColor: "",
+      btnBgColor: "",
       galleryCardBg: ""
     }
   }
@@ -59,7 +67,10 @@ export function normalizeDesignSettings(raw = {}) {
     textColor: normalizeHexColor(data.textColor),
     accentColor: normalizeHexColor(data.accentColor),
     mutedColor: normalizeHexColor(data.mutedColor),
-    btnColor: normalizeHexColor(data.btnColor),
+    // btnColor 는 구버전 필드 — 테두리/글자 분리 전 값이라 둘 다에 폴백
+    btnBorderColor: normalizeHexColor(data.btnBorderColor) || normalizeHexColor(data.btnColor),
+    btnTextColor: normalizeHexColor(data.btnTextColor) || normalizeHexColor(data.btnColor),
+    btnBgColor: normalizeHexColor(data.btnBgColor),
     galleryCardBg: normalizeHexColor(data.galleryCardBg),
     headingFontFamily: normalizeFontFamilyValue(data.headingFontFamily),
     bodyFontFamily: normalizeFontFamilyValue(data.bodyFontFamily)
@@ -94,7 +105,9 @@ export function applyDesignSettings(rawDesign) {
   setOrRemoveVar(body, "--site-text-dim", design.textColor ? design.textColor + "48" : "");
   setOrRemoveVar(body, "--site-accent", design.accentColor);
   setOrRemoveVar(body, "--muted", design.mutedColor);
-  setOrRemoveVar(body, "--site-btn", design.btnColor);
+  setOrRemoveVar(body, "--site-btn-border", design.btnBorderColor);
+  setOrRemoveVar(body, "--site-btn-text", design.btnTextColor);
+  setOrRemoveVar(body, "--site-btn-bg", design.btnBgColor);
   setOrRemoveVar(body, "--gallery-card-bg", design.galleryCardBg);
 
   applyCustomFont(body, "--font-pixel", HEADING_FONT_LINK_ID, design.headingFontFamily,
