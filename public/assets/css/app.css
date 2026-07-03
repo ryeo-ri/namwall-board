@@ -3315,7 +3315,9 @@ body.site-page .board-description{
   font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   letter-spacing: 0.01em;
 }
-/* 섹션 제목(최근 업데이트·빠른 메뉴·검색·댓글 등)도 제목 폰트 적용 — 사용자 페이지만 */
+/* 섹션 제목(최근 업데이트·빠른 메뉴·검색·댓글 등)도 제목 폰트 적용 — 사용자 페이지만
+   (게시글 제목 #viewTitle 은 아래에서 본문 폰트로 예외 처리) */
+body.site-page h1,
 body.site-page h2,
 body.site-page h3{
   font-family: var(--font-heading, var(--font-pixel));
