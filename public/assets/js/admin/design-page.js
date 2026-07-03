@@ -23,7 +23,9 @@ const COLOR_FIELDS = [
   { key: "bgColor", picker: "bgColorPicker", text: "bgColorText" },
   { key: "textColor", picker: "textColorPicker", text: "textColorText" },
   { key: "accentColor", picker: "accentColorPicker", text: "accentColorText" },
-  { key: "mutedColor", picker: "mutedColorPicker", text: "mutedColorText" }
+  { key: "mutedColor", picker: "mutedColorPicker", text: "mutedColorText" },
+  { key: "profileCardBg", picker: "profileCardBgPicker", text: "profileCardBgText" },
+  { key: "galleryCardBg", picker: "galleryCardBgPicker", text: "galleryCardBgText" }
 ];
 
 const headerFontInput = document.getElementById("headerFontInput");
@@ -44,11 +46,12 @@ function readColorField(field) {
 }
 
 function readFormDesign() {
+  const colors = {};
+  COLOR_FIELDS.forEach((field) => {
+    colors[field.key] = readColorField(field);
+  });
   return normalizeDesignSettings({
-    bgColor: readColorField(COLOR_FIELDS[0]),
-    textColor: readColorField(COLOR_FIELDS[1]),
-    accentColor: readColorField(COLOR_FIELDS[2]),
-    mutedColor: readColorField(COLOR_FIELDS[3]),
+    ...colors,
     headingFontFamily: headingFontInput?.value,
     bodyFontFamily: bodyFontInput?.value
   });
@@ -86,6 +89,8 @@ function updatePreview() {
   document.getElementById("previewMuted").style.fontFamily = `"${bodyFont}", "Noto Sans KR", sans-serif`;
   document.getElementById("previewAccent").style.color = design.accentColor || "inherit";
   document.getElementById("previewMuted").style.color = design.mutedColor || DESIGN_DEFAULT_LABELS.mutedColor;
+  document.getElementById("previewProfileCard").style.background = design.profileCardBg || "transparent";
+  document.getElementById("previewGalleryCard").style.background = design.galleryCardBg || "transparent";
 
   loadPreviewFonts([headerFont, headingFont, bodyFont]);
 }

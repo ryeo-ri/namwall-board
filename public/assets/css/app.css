@@ -1633,7 +1633,7 @@ body.site-page .board-admin-status.is-error{
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--gallery-card-bg, transparent); /* 디자인 관리에서 지정 가능 */
   border: 0;
   padding: 0;
   cursor: zoom-in;
@@ -1668,13 +1668,13 @@ body.site-page .board-admin-status.is-error{
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: var(--gallery-card-bg, transparent);
   color: var(--muted);
   font-size: 14px;
 }
 .gallery-media-secret{
   min-height: 180px;
-  background: var(--bg);
+  background: var(--gallery-card-bg, transparent);
 }
 .gallery-secret-lock{
   min-height: 180px;
@@ -1686,7 +1686,7 @@ body.site-page .board-admin-status.is-error{
   padding: 22px 18px;
   text-align: center;
   color: var(--text);
-  background: var(--bg);
+  background: var(--gallery-card-bg, transparent);
 }
 .gallery-secret-lock-label{
   display: inline-flex;
@@ -1939,7 +1939,7 @@ body.site-page .board-admin-status.is-error{
   padding: 0;
   aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: var(--cream-lt);
+  background: var(--profile-card-bg, transparent); /* 디자인 관리에서 지정 가능 */
 }
 .profile-card-link{
   display: block;
@@ -1951,7 +1951,7 @@ body.site-page .board-admin-status.is-error{
 .profile-card-media{
   position: absolute;
   inset: 0;
-  background: var(--cream-lt);
+  background: var(--profile-card-bg, transparent);
 }
 .profile-card-media .profile-media-image{
   object-fit: cover;
