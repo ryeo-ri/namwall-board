@@ -1,11 +1,9 @@
-import { db } from "../core/firebase.js";
+import { app, db } from "../core/firebase.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import {
   collection,
   doc,
   getDocs,
-  orderBy,
-  query,
   serverTimestamp,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -26,26 +24,33 @@ function dateToString(value) {
   return d.toLocaleDateString("ko-KR");
 }
 
+function createdAtMillis(value) {
+  const d = value?.toDate ? value.toDate() : (value ? new Date(value) : null);
+  return d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+}
+
 async function loadAdmins() {
-  const q = query(collection(db, "admin_users"), orderBy("createdAt", "desc"));
-  const snap = await getDocs(q);
+  // Fetch without orderBy so admins whose doc lacks createdAt (e.g. the first
+  // bootstrap admin created directly in Firestore) are still listed.
+  const snap = await getDocs(collection(db, "admin_users"));
 
   if (snap.empty) {
     listEl.innerHTML = '<div class="notice">admin_users 문서가 없습니다.</div>';
     return;
   }
 
-  listEl.innerHTML = snap.docs.map((item) => {
-    const data = item.data();
-    return `
+  const admins = snap.docs
+    .map((item) => ({ id: item.id, ...item.data() }))
+    .sort((a, b) => createdAtMillis(b.createdAt) - createdAtMillis(a.createdAt));
+
+  listEl.innerHTML = admins.map((data) => `
       <article class="card">
-        <div><strong>${item.id}</strong></div>
-        <div class="muted small">nickname: ${escapeHtml(data.nickname || "")}</div>
+        <div><strong>${escapeHtml(data.id)}</strong></div>
+        <div class="muted small">nickname: ${escapeHtml(data.nickname || "(없음)")}</div>
         <div class="muted small">role: ${escapeHtml(data.role || "ADMIN")}</div>
         <div class="muted small">createdAt: ${dateToString(data.createdAt)}</div>
       </article>
-    `;
-  }).join("");
+    `).join("");
 }
 
 async function saveAdminProfile() {
@@ -75,6 +80,12 @@ function escapeHtml(text) {
 (async () => {
   const access = await ensureAdminPageAccess();
   if (!access.ok) return;
+
+  const projectId = app?.options?.projectId || "";
+  const consoleLink = document.getElementById("authConsoleLink");
+  if (consoleLink && projectId) {
+    consoleLink.href = `https://console.firebase.google.com/project/${encodeURIComponent(projectId)}/authentication/users`;
+  }
 
   document.getElementById("saveAdminProfileBtn")?.addEventListener("click", saveAdminProfile);
   await loadAdmins();

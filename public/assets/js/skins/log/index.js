@@ -32,12 +32,6 @@ export const skin = createSkinDefinition({
       defaultValue: "default"
     }
   },
-  postFields: [
-    { key: "logNo", label: "로그번호", type: "number" }
-  ],
-  renderWriteFields: [
-    { key: "logNo", label: "로그번호", type: "number" }
-  ],
   capabilities: {
     board: {
       deleteModeVariant: "log"

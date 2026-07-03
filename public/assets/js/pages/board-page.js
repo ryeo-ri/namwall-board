@@ -889,7 +889,7 @@ async function renderBoardAdminToolsUnified(skin) {
   boardAdminToolsEl.innerHTML = `
     <div class="board-admin-tools">
       <button class="btn board-admin-toggle-btn ${deleteMode ? "primary" : ""}" type="button" id="toggle${prefix}DeleteModeBtn">
-        ADMIN
+        ${deleteMode ? "관리자종료" : "ADMIN"}
       </button>
       ${deleteMode ? `
         ${isBoard ? "" : `<a class="btn board-admin-edit-btn" href="${boardEditUrl}">게시판수정</a>`}

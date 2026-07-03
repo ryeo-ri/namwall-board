@@ -25,12 +25,6 @@ export const skin = createSkinDefinition({
       help: "한 줄에 들어갈 카드 수입니다."
     }
   },
-  postFields: [
-    { key: "source", label: "출처", type: "text" }
-  ],
-  renderWriteFields: [
-    { key: "source", label: "출처", type: "text" }
-  ],
   capabilities: {
     board: {
       useCursorPagination: true,

@@ -68,6 +68,14 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function preserveLineBreaks(value) {
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
+}
+
+function sanitizeCommentHtml(value) {
+  return sanitizeHTML(preserveLineBreaks(value), { allowIframes: false });
+}
+
 function normalizeLink(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -207,7 +215,7 @@ function renderCommentForm(postId, context, writeState) {
 }
 function renderCommentBody(comment, context, auth) {
   const raw = String(comment.contentHtml || comment.content || "");
-  const html = sanitizeHTML(raw, { allowIframes: false });
+  const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: false }), context.boardId);
   const author = escapeHtml(comment.nickname || "익명");
   const dateStr = formatDateTime(comment.createdAt);
   const manuallyFolded = Boolean(comment.more);
@@ -273,7 +281,7 @@ function renderCommentBody(comment, context, auth) {
 }
 function renderCommentBodyV2(comment, context, auth) {
   const raw = String(comment.contentHtml || comment.content || "");
-  const html = sanitizeHTML(raw, { allowIframes: false });
+  const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: false }), context.boardId);
   const author = escapeHtml(comment.nickname || "익명");
   const dateStr = formatDateTime(comment.createdAt);
   const manuallyFolded = Boolean(comment.more);
@@ -504,7 +512,7 @@ function bindCommentEditSaveButtons(container, postId, context) {
 
       await updateDoc(doc(db, "posts", postId, "comments", commentId), {
         content,
-        contentHtml: escapeHtml(content).replace(/\r?\n/g, "<br>"),
+        contentHtml: sanitizeCommentHtml(content),
         updatedAt: serverTimestamp()
       });
 
@@ -582,7 +590,7 @@ function bindCommentSubmit(postId, container, context, writeState) {
     try {
       const auth = await getAuthSnapshot();
       const authorType = auth.isAdmin ? "ADMIN" : (isGuestUnlocked() ? "GUEST" : "PUBLIC");
-      const contentHtml = escapeHtml(content).replace(/\r?\n/g, "<br>");
+      const contentHtml = sanitizeCommentHtml(content);
       const commentPayload = {
         postId,
         boardId: context.boardId || context.board?.id || "",
@@ -673,6 +681,104 @@ function normalizeCommentContent(comment) {
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/gi, " ")
     .trim();
+}
+
+function enhanceCommentLinks(html = "", boardId = "") {
+  if (typeof document === "undefined" || !html) return html;
+
+  const root = document.createElement("div");
+  root.innerHTML = html;
+  const textNodes = [];
+  collectCommentTextNodes(root, textNodes);
+  textNodes.forEach((node) => replaceCommentTextNode(node, boardId));
+  return root.innerHTML;
+}
+
+function collectCommentTextNodes(node, result = []) {
+  Array.from(node.childNodes || []).forEach((child) => {
+    if (child.nodeType === Node.TEXT_NODE) {
+      if (shouldEnhanceCommentTextNode(child)) result.push(child);
+      return;
+    }
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      collectCommentTextNodes(child, result);
+    }
+  });
+  return result;
+}
+
+function shouldEnhanceCommentTextNode(node) {
+  let parent = node.parentElement;
+  while (parent) {
+    const tagName = parent.tagName?.toLowerCase();
+    if (["a", "code", "pre"].includes(tagName)) return false;
+    parent = parent.parentElement;
+  }
+  return true;
+}
+
+function replaceCommentTextNode(node, boardId = "") {
+  const text = node.nodeValue || "";
+  const tokenPattern = /\[([^\]\r\n]{1,80})\](https?:\/\/[^\s<>"']+)|#(\d+)/g;
+  if (!tokenPattern.test(text)) return;
+
+  tokenPattern.lastIndex = 0;
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
+  let match;
+
+  while ((match = tokenPattern.exec(text))) {
+    const [matchedText, label, rawUrl, logNo] = match;
+    if (match.index > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    }
+
+    if (rawUrl) {
+      fragment.appendChild(createCommentNamedLink(label, rawUrl, matchedText));
+    } else if (logNo) {
+      fragment.appendChild(createCommentLogLink(logNo, boardId));
+    }
+    lastIndex = match.index + matchedText.length;
+  }
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  node.replaceWith(fragment);
+}
+
+function createCommentNamedLink(label = "", rawUrl = "", fallbackText = "") {
+  const safeUrl = normalizeHttpUrl(rawUrl);
+  if (!safeUrl) return document.createTextNode(fallbackText);
+
+  const link = document.createElement("a");
+  link.href = safeUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.className = "comment-named-link";
+
+  const strong = document.createElement("strong");
+  strong.textContent = label;
+  link.appendChild(strong);
+  return link;
+}
+
+function createCommentLogLink(logNo = "", boardId = "") {
+  const link = document.createElement("a");
+  link.href = `/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
+  link.className = "log-tag comment-log-tag";
+  link.textContent = String(logNo);
+  return link;
+}
+
+function normalizeHttpUrl(value = "") {
+  try {
+    const url = new URL(String(value || "").trim());
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch (_error) {
+    return "";
+  }
 }
 
 function showCommentError(errorEl, message) {

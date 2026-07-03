@@ -13,13 +13,23 @@
 <link rel="stylesheet" href="/assets/css/app.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 </head>
 <body>
   <main class="container">
     <section class="card">
       <h2>관리자 프로필 목록</h2>
       <p class="muted small">Auth 계정 생성은 Firebase Console/Auth에서 수행하고, 여기서는 admin_users 프로필을 추가/수정합니다.</p>
+      <details class="notice small mt-sm" open>
+        <summary style="cursor:pointer;font-weight:700;">Auth 계정 생성 가이드</summary>
+        <ol style="margin:6px 0 10px;padding-left:18px;line-height:1.65;">
+          <li>Firebase Console에서 <strong>Authentication → Users</strong>로 이동해 <strong>사용자 추가</strong>(이메일·비밀번호)로 계정을 만듭니다.</li>
+          <li>생성된 계정의 <strong>UID</strong>를 복사합니다.</li>
+          <li>아래 폼에 <strong>UID·닉네임</strong>을 입력하고 <strong>관리자 프로필 저장</strong>을 누르면 <code>admin_users</code> 문서가 생성되어 관리자 권한이 부여됩니다.</li>
+          <li>그 계정으로 <a href="/admin/login.html">관리자 로그인</a> 하면 됩니다.</li>
+        </ol>
+        <a class="btn" id="authConsoleLink" href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console 열기</a>
+      </details>
       <div class="grid tight mt-sm">
         <input id="adminUidInput" placeholder="관리자 UID (Auth UID)">
         <input id="adminNicknameInput" placeholder="닉네임">

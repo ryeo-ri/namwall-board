@@ -40,15 +40,16 @@ export async function renderLogSkin(posts, board, options = {}) {
     </div>
   `;
 
-  setTimeout(async () => {
-    for (const post of posts) {
+  setTimeout(() => {
+    Promise.all(posts.map((post) => {
       const container = document.getElementById(`comments-${post.id}`);
-      if (container) await loadComments(post.id, container, {
+      if (!container) return null;
+      return loadComments(post.id, container, {
         boardId: board?.id || "",
         commentScope: board?.commentScope || "all",
         manageComments: deleteMode
       });
-    }
+    })).catch((error) => console.warn("Failed to load some log comments:", error));
   }, 100);
 
   return html;
@@ -74,10 +75,7 @@ function renderLogEntry(post, board, options = {}) {
     : `${createdAt.toLocaleDateString("ko-KR")} ${createdAt.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
 
   const sanitizedComment = sanitizeHTML(commentHtml, { allowIframes: true });
-  const commentWithTags = sanitizedComment.replace(
-    /#(\d+)/g,
-    `<a href="/board.html?bo=${encodeURIComponent(board.id)}&log=$1" class="log-tag">#$1</a>`
-  );
+  const commentWithLinks = enhanceLogCommentLinks(sanitizedComment, board.id);
   const tagChips = tags.length
     ? `<div class="log-tags log-tags-chips">${tags.map((tag) => `<a href="/search.html?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join("")}</div>`
     : "";
@@ -88,11 +86,25 @@ function renderLogEntry(post, board, options = {}) {
   const boardUrl = `/view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
   const hideCover = post.isSecret && !isAdmin && !unlockedSecretPostIds.has(post.id);
   const hasMedia = Boolean(hideCover || (cover.mode === "video" && cover.embedHtml) || cover.imageUrl);
-  const metaHtml = renderLogMeta(logNumber, dateStr, board.id);
+  const bodyPlain = String(sanitizedComment || "").replace(/<[^>]*>/g, "").replace(/ /g, " ").trim();
+  const hasBody = bodyPlain.length > 0;
+  const authorName = String(post.authorName || "").trim();
+  const metaHtml = renderLogMeta(logNumber, board.id);
   const commentsHtml = `<div id="${commentsContainerId}" class="comments-section log-comments"></div>`;
+  // Render the post body as the first comment-style entry inside the comment area.
+  const bodyCommentHtml = hasBody ? `
+          <div class="comments-section log-comments log-body-comment-wrap">
+            <article class="comment-item log-body-comment">
+              <div class="comment-header">
+                <div class="comment-meta-left"><span class="comment-author">${escapeHtml(authorName || "익명")}</span></div>
+                <div class="comment-meta-right"><span class="muted small">${escapeHtml(dateStr)}</span></div>
+              </div>
+              <div class="comment-content">${commentWithLinks}</div>
+            </article>
+          </div>
+  ` : "";
   const contentBits = `
           ${layout.commentPosition === "bottom" || !hasMedia ? tagChips : ""}
-          <div class="log-body">${commentWithTags}</div>
 
           ${extraAttachments.length ? `
             <div class="log-inline-gallery">
@@ -172,6 +184,7 @@ function renderLogEntry(post, board, options = {}) {
             ${contentBits}
           </div>
         </div>
+        ${bodyCommentHtml}
         ${commentsHtml}
       ` : `
         <div class="log-post-content${layout.imageWidth === "none" ? " is-unlimited-image" : ""}">
@@ -184,6 +197,7 @@ function renderLogEntry(post, board, options = {}) {
           <div class="log-content-column">
             ${!hasMedia ? tagChips : ""}
             ${contentBits}
+            ${bodyCommentHtml}
             ${commentsHtml}
           </div>
         </div>
@@ -207,15 +221,9 @@ function renderHeroImage(imageUrl, title) {
   `;
 }
 
-function renderLogMeta(logNumber, dateStr, boardId) {
-  const pieces = [];
-  if (logNumber) {
-    pieces.push(`<a href="/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(String(logNumber))}" class="log-number">${escapeHtml(String(logNumber))}</a>`);
-  }
-  if (dateStr) {
-    pieces.push(`<span class="log-date">${escapeHtml(dateStr)}</span>`);
-  }
-  return pieces.join("");
+function renderLogMeta(logNumber, boardId) {
+  if (!logNumber) return "";
+  return `<a href="/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(String(logNumber))}" class="log-number">${escapeHtml(String(logNumber))}</a>`;
 }
 
 function renderInlineAttachment(attachment) {
@@ -246,6 +254,104 @@ function renderInlineAttachment(attachment) {
       <img src="${escapeHtml(url)}" alt="${title}" loading="lazy">
     </button>
   `;
+}
+
+function enhanceLogCommentLinks(html = "", boardId = "") {
+  if (typeof document === "undefined" || !html) return html;
+
+  const root = document.createElement("div");
+  root.innerHTML = html;
+  const textNodes = [];
+  collectTextNodes(root, textNodes);
+  textNodes.forEach((node) => replaceLogTextNode(node, boardId));
+  return root.innerHTML;
+}
+
+function collectTextNodes(node, result = []) {
+  Array.from(node.childNodes || []).forEach((child) => {
+    if (child.nodeType === Node.TEXT_NODE) {
+      if (shouldEnhanceTextNode(child)) result.push(child);
+      return;
+    }
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      collectTextNodes(child, result);
+    }
+  });
+  return result;
+}
+
+function shouldEnhanceTextNode(node) {
+  let parent = node.parentElement;
+  while (parent) {
+    const tagName = parent.tagName?.toLowerCase();
+    if (["a", "code", "pre"].includes(tagName)) return false;
+    parent = parent.parentElement;
+  }
+  return true;
+}
+
+function replaceLogTextNode(node, boardId = "") {
+  const text = node.nodeValue || "";
+  const tokenPattern = /\[([^\]\r\n]{1,80})\](https?:\/\/[^\s<>"']+)|#(\d+)/g;
+  if (!tokenPattern.test(text)) return;
+
+  tokenPattern.lastIndex = 0;
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
+  let match;
+
+  while ((match = tokenPattern.exec(text))) {
+    const [matchedText, label, rawUrl, logNo] = match;
+    if (match.index > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    }
+
+    if (rawUrl) {
+      fragment.appendChild(createNamedLogLink(label, rawUrl, matchedText));
+    } else if (logNo) {
+      fragment.appendChild(createLogNumberLink(logNo, boardId));
+    }
+    lastIndex = match.index + matchedText.length;
+  }
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  node.replaceWith(fragment);
+}
+
+function createNamedLogLink(label = "", rawUrl = "", fallbackText = "") {
+  const safeUrl = normalizeHttpUrl(rawUrl);
+  if (!safeUrl) return document.createTextNode(fallbackText);
+
+  const link = document.createElement("a");
+  link.href = safeUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.className = "log-named-link";
+
+  const strong = document.createElement("strong");
+  strong.textContent = label;
+  link.appendChild(strong);
+  return link;
+}
+
+function createLogNumberLink(logNo = "", boardId = "") {
+  const link = document.createElement("a");
+  link.href = `/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
+  link.className = "log-tag";
+  link.textContent = String(logNo);
+  return link;
+}
+
+function normalizeHttpUrl(value = "") {
+  try {
+    const url = new URL(String(value || "").trim());
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch (_error) {
+    return "";
+  }
 }
 
 function deriveLogTitle(post, commentHtml, logNumber, dateStr) {
