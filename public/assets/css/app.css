@@ -3266,48 +3266,6 @@ body.site-page .skin-chip{
   line-height: 1;
   letter-spacing: 0.01em;
 }
-/* 태그: 가격표(티켓) 모양 — 왼쪽 노치(:after) + 구멍(:before), 호버 시 반전 */
-body.site-page .tag{
-  position: relative;
-  margin-left: 8px; /* 노치가 그려질 공간 */
-  padding: 0 9px;
-  border-radius: 0 3px 3px 0;
-  background: #fff;
-  color: var(--ink);
-  font-weight: 700;
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.35));
-  transition: background 0.2s, color 0.2s;
-}
-body.site-page .tag::after{
-  content: "";
-  position: absolute;
-  left: -8px;
-  top: 0;
-  width: 0;
-  height: 0;
-  border-right: 8px solid #fff;
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  transition: border-right-color 0.2s;
-}
-body.site-page .tag::before{
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 10px;
-  width: 4px;
-  height: 4px;
-  background: var(--site-accent, var(--ink));
-  border-radius: 50%;
-  z-index: 2;
-}
-body.site-page .tag:hover{
-  background: var(--site-accent, var(--ink));
-  color: var(--site-bg, #fff); /* 페이지 배경색 = 어떤 테마에서도 대비 확보 */
-}
-body.site-page .tag:hover::after{
-  border-right-color: var(--site-accent, var(--ink));
-}
 body.site-page .summary-title,
 body.site-page .board-title-row h1,
 body.site-page #viewTitle,
@@ -3361,7 +3319,8 @@ body.site-page .gallery-edit-button{
 body.site-page .log-body a,
 body.site-page .view-content-body a,
 body.site-page .board-item-title a:hover,
-body.site-page .search-title:hover{
+body.site-page .search-title:hover,
+body.site-page .tag:hover{
   color: var(--site-accent, inherit); /* 디자인 관리의 포인트색 */
 }
 body.site-page main.container.access-denied-shell{
@@ -3577,7 +3536,7 @@ body.home-page .tags-list{
   flex-wrap: wrap;
   gap: 5px;
 }
-/* 홈 태그: 티켓 모양(site-page .tag)을 그대로 쓰되 크기만 홈 스타일 (폰트는 본문 상속) */
+/* 홈 태그: 크기만 홈 스타일 (폰트는 본문 상속, 모양은 site-page 공통) */
 body.home-page .tag{
   font-size: 0.72rem;
   line-height: 1;
