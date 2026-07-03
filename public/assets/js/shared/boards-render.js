@@ -1,6 +1,7 @@
 import { db } from "../core/firebase.js";
 import { collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { isBoardMenuVisible, resolveBoardSkinType } from "../skins/registry.js";
+import { normalizeDesignSettings } from "./design.js";
 
 const NAV_CACHE_KEY = "archive_nav_cache_v2";
 const SITE_SETTINGS_CACHE_KEY = "archive_site_settings_cache_v3";
@@ -46,7 +47,8 @@ export async function loadSiteMainSettings() {
           headerFontFamily: "",
           homeImageWidth: "",
           homeImageHeight: "",
-          homeImages: []
+          homeImages: [],
+          design: normalizeDesignSettings({})
         };
 
     siteSettingsCache = settings;
@@ -281,7 +283,8 @@ function normalizeSiteMainSettings(data = {}) {
     headerFontFamily: normalizeFontFamilyValue(data.headerFontFamily),
     homeImageWidth: data.homeImageWidth || "",
     homeImageHeight: data.homeImageHeight || "",
-    homeImages: Array.isArray(data.homeImages) ? data.homeImages : []
+    homeImages: Array.isArray(data.homeImages) ? data.homeImages : [],
+    design: normalizeDesignSettings(data.design)
   };
 }
 

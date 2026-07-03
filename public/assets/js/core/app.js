@@ -1,5 +1,6 @@
 import { getAuthSnapshot, isGuestUnlocked } from "./state.js";
 import { getSiteTitle, loadSiteMainSettings, renderTopNav } from "../shared/boards-render.js";
+import { applyDesignSettings, readCachedDesign, writeCachedDesign } from "../shared/design.js";
 
 const HEADER_FONT_LINK_ID = "archiveHeaderFontLink";
 let appliedSiteTitleAsDocumentTitle = false;
@@ -10,6 +11,12 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 const cachedSiteTitle = readCachedSiteTitle();
 if (cachedSiteTitle) {
   applySiteTitle({ siteTitle: cachedSiteTitle });
+}
+
+// 디자인 설정: 캐시를 먼저 적용해 첫 페인트 깜빡임을 줄인다
+const cachedDesign = readCachedDesign();
+if (cachedDesign) {
+  applyDesignSettings(cachedDesign);
 }
 
 document.getElementById("quickSearchBtn")?.addEventListener("click", () => {
@@ -24,6 +31,8 @@ async function paintTopArea() {
     const settings = navEl ? await renderTopNav(navEl) : await loadSiteMainSettings();
     applyHeaderFont(settings);
     applySiteTitle(settings);
+    applyDesignSettings(settings.design);
+    writeCachedDesign(settings.design);
 
     const pillGuest = document.getElementById("pillGuest");
     if (pillGuest) pillGuest.textContent = `Guest: ${isGuestUnlocked() ? "ON" : "OFF"}`;
