@@ -3199,7 +3199,7 @@ body.site-page main.container{
 body.site-page .tag,
 body.site-page .summary-chip,
 body.site-page .skin-chip{
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   letter-spacing: 0.1em;
 }
 body.site-page .card,
@@ -3262,7 +3262,7 @@ body.site-page .summary-title,
 body.site-page .board-title-row h1,
 body.site-page #viewTitle,
 body.site-page .board-description{
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   letter-spacing: 0.01em;
 }
 /* view.html: 게시글 제목은 본문 폰트 사용 */
@@ -3323,14 +3323,14 @@ body.site-page .board-access-denied-card{
 }
 body.site-page .board-access-denied-card h1{
   margin: 0;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: clamp(1.8rem, 4vw, 2.9rem);
   line-height: 1.08;
   letter-spacing: 0.02em;
 }
 body.site-page .board-access-denied-kicker{
   margin: 0;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -3441,7 +3441,7 @@ body.home-page .home-hero-eyebrow{
   border: 0;
   background: transparent;
   color: inherit;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: 0.68rem;
   letter-spacing: 0.25em;
 }
@@ -3478,7 +3478,7 @@ body.home-page .home-hero-placeholder{
   color: inherit;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
 }
 body.home-page .grid.two.mt-md{
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -3489,7 +3489,7 @@ body.home-page .grid.two.mt-md > .card{
   min-height: 100%;
 }
 body.home-page .card h3{
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -3531,7 +3531,7 @@ body.home-page .tag{
   border: 0;
   border-radius: 999px;
   background: transparent;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: 0.72rem;
   font-weight: 500;
   line-height: 1;
@@ -3906,14 +3906,14 @@ body.admin-login-page .admin-login-head{
 }
 body.admin-login-page .admin-login-kicker{
   margin: 0 0 12px;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: 0.7rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 body.admin-login-page .admin-login-panel h1{
   margin: 0;
-  font-family: var(--font-pixel);
+  font-family: var(--font-heading, var(--font-pixel)); /* 디자인 관리의 제목 폰트 */
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   line-height: 1;
   letter-spacing: 0.02em;

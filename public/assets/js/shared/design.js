@@ -110,7 +110,8 @@ export function applyDesignSettings(rawDesign) {
   setOrRemoveVar(body, "--site-btn-bg", design.btnBgColor);
   setOrRemoveVar(body, "--gallery-card-bg", design.galleryCardBg);
 
-  applyCustomFont(body, "--font-pixel", HEADING_FONT_LINK_ID, design.headingFontFamily,
+  /* 제목 폰트는 --font-heading 으로만 적용 — 헤더(로고/내비)의 --font-pixel 폴백과 분리 */
+  applyCustomFont(body, "--font-heading", HEADING_FONT_LINK_ID, design.headingFontFamily,
     '"Pixelify Sans", "Noto Sans KR", sans-serif');
   applyCustomFont(body, "--font-kr", BODY_FONT_LINK_ID, design.bodyFontFamily,
     '"Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif');
