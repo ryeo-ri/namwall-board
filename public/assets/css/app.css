@@ -1337,6 +1337,14 @@ body.site-page .board-admin-status.is-error{
 .log-content-column-full{
   width: 100%;
 }
+/* 좌우 배치: 오른쪽 칼럼이 댓글로 시작하면 이미지 상단과 라인 맞춤 (위 여백 제거) */
+.log-post-content .log-content-column > .comments-section:first-child{
+  margin-top: 0;
+  padding-top: 0;
+}
+.log-post-content .log-content-column > .comments-section:first-child .comment-item:first-child{
+  padding-top: 0;
+}
 .log-feed.is-comment-bottom .log-post-content{
   display: block;
 }
