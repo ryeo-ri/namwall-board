@@ -88,18 +88,37 @@ export function sanitizeHTML(html, options = {}) {
   return result.innerHTML;
 }
 
+// 제어문자(탭/개행 등)를 제거해 "ja\tvascript:" 류 스킴 우회를 막는다.
+function stripControlChars(value) {
+  return String(value || "").replace(/[\u0000-\u001F\u007F]+/g, "");
+}
+
 function isSafeLink(value) {
-  const trimmed = String(value || "").trim().toLowerCase();
-  return Boolean(trimmed) && !trimmed.startsWith("javascript:");
+  const cleaned = stripControlChars(value).trim();
+  if (!cleaned) return false;
+  const lower = cleaned.toLowerCase();
+  // 스킴이 명시된 경우 허용 목록(http/https/mailto)만 통과.
+  // javascript:, data:, vbscript: 등은 차단.
+  if (/^[a-z][a-z0-9+.\-]*:/.test(lower)) {
+    return /^(https?:|mailto:)/.test(lower);
+  }
+  // 스킴 없음 = 상대경로/앵커/쿼리 → 허용
+  return true;
 }
 
 function isSafeMediaSource(value) {
-  const trimmed = String(value || "").trim().toLowerCase();
-  return Boolean(trimmed) && !trimmed.startsWith("javascript:") && !trimmed.startsWith("data:text/html");
+  const cleaned = stripControlChars(value).trim();
+  if (!cleaned) return false;
+  const lower = cleaned.toLowerCase();
+  if (/^[a-z][a-z0-9+.\-]*:/.test(lower)) {
+    // 이미지 소스는 http/https 와 data:image/* 만 허용 (data:text/html 등 차단)
+    return /^https?:/.test(lower) || /^data:image\//.test(lower);
+  }
+  return true;
 }
 
 function isSafeIframeSource(value) {
-  const trimmed = String(value || "").trim();
+  const trimmed = stripControlChars(value).trim();
   if (!trimmed) return false;
 
   try {
