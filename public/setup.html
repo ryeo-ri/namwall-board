@@ -26,8 +26,15 @@
       <ol class="setup-steps">
         <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase 콘솔</a>에서 <strong>프로젝트 생성</strong></li>
         <li><strong>빌드 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
-        <li><strong>빌드 → Firestore Database</strong> → 데이터베이스 만들기(서울 등)</li>
-        <li><strong>빌드 → Storage</strong> → 시작하기</li>
+        <li>
+          <strong>빌드 → Firestore Database</strong> → <strong>데이터베이스 만들기</strong>
+          <ul class="setup-substeps">
+            <li><strong>위치(리전)</strong>: <code>asia-northeast3 (서울)</code> 선택 — 한국 이용자면 서울이 가장 빠릅니다. <em>한 번 정하면 변경할 수 없으니</em> 서울로 지정하세요.</li>
+            <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 5단계에서 붙여넣습니다). "테스트 모드"는 30일 뒤 자동으로 잠기므로 권장하지 않습니다.</li>
+            <li><strong>만들기</strong>를 눌러 완료합니다.</li>
+          </ul>
+        </li>
+        <li><strong>빌드 → Storage</strong> → 시작하기 (위치는 Firestore와 동일하게 서울)</li>
         <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>. <strong>Storage → 규칙</strong>도 <code>storage.rules</code>로 동일하게</li>
         <li><strong>프로젝트 설정 → 웹 앱 추가</strong>에서 나오는 <code>firebaseConfig</code>를 복사</li>
       </ol>

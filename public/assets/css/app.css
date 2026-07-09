@@ -3360,7 +3360,16 @@ body.page-raw-board .page-frame{
   gap: 8px;
   line-height: 1.6;
 }
+.setup-substeps{
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.55;
+  color: var(--muted);
+}
 .setup-steps code,
+.setup-substeps code,
 .setup-config-note code{
   padding: 1px 5px;
   background: rgba(28, 28, 28, 0.06);
