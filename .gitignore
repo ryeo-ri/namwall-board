@@ -10,6 +10,10 @@ firebase-debug.*.log*
 # Firebase cache
 .firebase/
 
+# Firebase 서비스 계정 키 (절대 커밋 금지 — 관리자 전권)
+serviceAccountKey.json
+*serviceAccount*.json
+
 # Firebase config
 
 # Uncomment this if you'd like others to create their own Firebase project.
@@ -77,6 +81,7 @@ node_modules/
 
 # Local dev server & node tooling (not needed for static deploy)
 /server/
+/scripts/
 /package.json
 /package-lock.json
 
