@@ -54,6 +54,20 @@
               </div>
 
               <div class="field-group">
+                <div class="field-head">
+                  <label for="boardTitleImageInput">제목 이미지 (선택)</label>
+                  <div class="formRow">
+                    <button type="button" class="btn small" id="selectTitleImageBtn">파일 선택</button>
+                    <button type="button" class="btn small" id="clearTitleImageBtn">제거</button>
+                  </div>
+                </div>
+                <input id="boardTitleImageInput" placeholder="이미지 URL — 지정하면 게시판 상단에 제목 대신 표시" autocomplete="off" spellcheck="false">
+                <input id="boardTitleImageFile" type="file" accept="image/*" class="hidden">
+                <div class="muted small">파일을 선택하면 저장 시 업로드됩니다. URL을 직접 입력해도 됩니다.</div>
+                <div id="boardTitleImagePreview" class="previewGrid hidden"></div>
+              </div>
+
+              <div class="field-group">
                 <label for="boardDescInput">설명</label>
                 <input id="boardDescInput" placeholder="간단한 소개 문구">
               </div>

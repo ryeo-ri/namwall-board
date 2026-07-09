@@ -61,6 +61,13 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // 게시판 자산(제목 이미지 등) — 관리자 전용 업로드
+    match /board_assets/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && safeImageWrite();
+      allow delete: if isAdmin();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

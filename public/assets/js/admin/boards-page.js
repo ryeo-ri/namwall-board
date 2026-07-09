@@ -1,4 +1,4 @@
-﻿import { db } from "../core/firebase.js";
+﻿import { db, storage } from "../core/firebase.js";
 import { deleteBoardContent } from "../shared/post-maintenance.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
@@ -16,6 +16,11 @@ import {
   setDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 const boardPageParams = new URLSearchParams(window.location.search);
 const msgEl = document.getElementById("boardMsg");
 const listEl = document.getElementById("boardsList");
@@ -48,9 +53,13 @@ const pageModeInput = document.getElementById("pageModeInput");
 const pageHtmlInput = document.getElementById("pageHtmlInput");
 const pageIframeUrlInput = document.getElementById("pageIframeUrlInput");
 const pageHeightInput = document.getElementById("pageHeightInput");
+const titleImageInput = document.getElementById("boardTitleImageInput");
+const titleImageFileInput = document.getElementById("boardTitleImageFile");
+const titleImagePreviewEl = document.getElementById("boardTitleImagePreview");
 const skinCatalog = getSkinCatalog();
 let loadedBoards = [];
 let boardIdAutoMode = true;
+let stagedTitleImageFile = null;
 let pendingBoardEditId = String(boardPageParams.get("boardId") || boardPageParams.get("edit") || "").trim();
 let activeSkinOptionsType = "BOARD";
 let activeSkinOptionsSchema = {};
@@ -580,6 +589,7 @@ async function fillForm(board) {
   }
   if (autoBoardIdBtn) autoBoardIdBtn.disabled = true;
   document.getElementById("boardTitleInput").value = board.title || board.name || "";
+  setTitleImageValue(board.titleImageUrl || "");
   document.getElementById("boardDescInput").value = board.description || "";
   document.getElementById("pageSizeInput").value = toMenuOrder(board.pageSize, 12);
   document.getElementById("boardKindInput").value = skinType;
@@ -615,6 +625,7 @@ async function resetBoardForm() {
     boardIdInput.classList.remove("is-locked");
   }
   if (titleInput) titleInput.value = "";
+  setTitleImageValue("");
   if (descInput) descInput.value = "";
   if (kindInput) kindInput.value = "BOARD";
   if (pageSizeInput) pageSizeInput.value = 12;
@@ -643,6 +654,17 @@ async function saveBoard() {
   if (!data.boardId) data.boardId = getUniqueBoardId(data.title || "board");
   if (!data.title) return showMsg("게시판 제목을 입력하세요.", true);
 
+  let titleImageUrl = (titleImageInput?.value || "").trim();
+  if (stagedTitleImageFile) {
+    try {
+      titleImageUrl = await uploadTitleImageFile(data.boardId, stagedTitleImageFile);
+      setTitleImageValue(titleImageUrl);
+    } catch (error) {
+      console.error(error);
+      return showMsg(`제목 이미지 업로드 실패: ${error?.message || error}`, true);
+    }
+  }
+
   const ref = doc(db, "boards", data.boardId);
   const snap = await getDoc(ref);
   const skinOptions = {};
@@ -654,6 +676,7 @@ async function saveBoard() {
   const payload = {
     title: data.title,
     name: data.title,
+    titleImageUrl,
     description: data.description,
 
     skinType: data.skinType,
@@ -1164,6 +1187,41 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+/* 제목 이미지 (선택) — 파일은 저장 시 board_assets/{boardId}/ 로 업로드 */
+function updateTitleImagePreview() {
+  if (!titleImagePreviewEl) return;
+  const src = stagedTitleImageFile
+    ? URL.createObjectURL(stagedTitleImageFile)
+    : (titleImageInput?.value || "").trim();
+  if (!src) {
+    titleImagePreviewEl.classList.add("hidden");
+    titleImagePreviewEl.innerHTML = "";
+    return;
+  }
+  titleImagePreviewEl.classList.remove("hidden");
+  titleImagePreviewEl.innerHTML = `
+    <div class="previewItem">
+      <img class="previewImage" src="${escapeHtml(src)}" alt="제목 이미지 미리보기" style="object-fit: contain;">
+      <span class="previewName muted small">${stagedTitleImageFile ? escapeHtml(stagedTitleImageFile.name) + " (저장 시 업로드)" : "현재 이미지"}</span>
+    </div>
+  `;
+}
+
+function setTitleImageValue(url) {
+  stagedTitleImageFile = null;
+  if (titleImageFileInput) titleImageFileInput.value = "";
+  if (titleImageInput) titleImageInput.value = url || "";
+  updateTitleImagePreview();
+}
+
+async function uploadTitleImageFile(boardId, file) {
+  const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+  const path = `board_assets/${boardId}/title-${Date.now()}.${ext}`;
+  const fileRef = storageRef(storage, path);
+  await uploadBytes(fileRef, file, { contentType: file.type || "image/png" });
+  return getDownloadURL(fileRef);
+}
+
 function stripHtml(html) {
   return (html || "").toString().replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -1207,6 +1265,20 @@ function stripHtml(html) {
   });
   document.getElementById("saveBoardBtn")?.addEventListener("click", saveBoard);
   document.getElementById("migrateDocsBtn")?.addEventListener("click", migrateFirestoreDocs);
+  document.getElementById("selectTitleImageBtn")?.addEventListener("click", () => titleImageFileInput?.click());
+  document.getElementById("clearTitleImageBtn")?.addEventListener("click", () => setTitleImageValue(""));
+  titleImageFileInput?.addEventListener("change", () => {
+    const file = titleImageFileInput.files?.[0] || null;
+    if (file) {
+      stagedTitleImageFile = file;
+      updateTitleImagePreview();
+    }
+  });
+  titleImageInput?.addEventListener("input", () => {
+    stagedTitleImageFile = null;
+    if (titleImageFileInput) titleImageFileInput.value = "";
+    updateTitleImagePreview();
+  });
   [
     "boardDescInput",
     "boardKindInput",

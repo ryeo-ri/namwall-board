@@ -1092,6 +1092,20 @@ body.site-page .board-admin-status.is-error{
 .category-filter{ margin-top: 12px; }
 .board-search-sort{ margin-top: 12px; }
 
+/* 게시판 제목 이미지 (선택 — boards.titleImageUrl) */
+.board-title-image-wrap{
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.board-title-image{
+  display: block;
+  max-width: 100%;
+  max-height: 160px;
+  width: auto;
+  height: auto;
+}
+
 /* 비밀글 잠금 (gallery · log 공용) */
 .gallery-secret-lock-label .secret-lock-icon,
 .log-secret-lock-label .secret-lock-icon,
