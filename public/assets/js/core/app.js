@@ -1,5 +1,5 @@
 import { getAuthSnapshot, isGuestUnlocked } from "./state.js";
-import { getSiteTitle, loadSiteMainSettings, renderTopNav } from "../shared/boards-render.js";
+import { getSiteTitle, loadSiteMainSettings, readCachedSiteTitle, renderTopNav } from "../shared/boards-render.js";
 import { applyDesignSettings, readCachedDesign, writeCachedDesign } from "../shared/design.js";
 
 const HEADER_FONT_LINK_ID = "archiveHeaderFontLink";
@@ -116,15 +116,4 @@ function removeHeaderFontLink() {
 
 function escapeCssString(value) {
   return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function readCachedSiteTitle() {
-  try {
-    const raw = sessionStorage.getItem("archive_nav_cache_v1");
-    if (!raw) return "";
-    const parsed = JSON.parse(raw);
-    return parsed?.siteTitle || "";
-  } catch (_error) {
-    return "";
-  }
 }

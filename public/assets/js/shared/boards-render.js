@@ -199,6 +199,11 @@ function readNavCache() {
   }
 }
 
+// 첫 페인트용 캐시된 사이트 제목 (nav 캐시와 동일 키를 공유해 키 불일치 방지)
+export function readCachedSiteTitle() {
+  return readNavCache()?.siteTitle || "";
+}
+
 function writeNavCache(payload) {
   try {
     sessionStorage.setItem(NAV_CACHE_KEY, JSON.stringify({ ...payload, ts: Date.now() }));
