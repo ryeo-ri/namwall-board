@@ -27,10 +27,6 @@ function writeGuestState(state) {
   localStorage.setItem(GUEST_STATE_KEY, JSON.stringify(state));
 }
 
-export function getGuestState() {
-  return readGuestStateRaw();
-}
-
 export function clearGuestState() {
   localStorage.removeItem(GUEST_STATE_KEY);
 }

@@ -10,10 +10,10 @@ import {
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings } from "../shared/boards-render.js";
 import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
 import { findSkinTypeByAlias, getBoardAliasCandidates, getBoardSkinOption, getPostSkinData, getSkin, resolveBoardSkinType } from "../skins/registry.js";
-import { initLightbox } from "../shared/lightbox.js";
 import { deletePostsByIds } from "../shared/post-maintenance.js";
 import { canWriteToBoard, getAuthSnapshot, sha256Hex, verifyGuestCode } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
+import "../shared/lightbox.js"; // window.openLightbox 등록 (목록 이미지 확대용)
 
 const params = new URLSearchParams(window.location.search);
 const boardId = params.get("bo") || "log";
@@ -518,16 +518,8 @@ async function renderBoardBySkin() {
   currentSkin = currentSkin || await getSkin(currentBoard);
   const capabilities = currentSkin.capabilities;
   const contentEl = document.getElementById("boardContent");
-  const searchSortEl = document.getElementById("boardSearchSort");
   const auth = readAuthCache || await getAuthSnapshot();
   readAuthCache = auth;
-
-  if (capabilities.board.supportsSearchSort) {
-    searchSortEl?.classList.remove("hidden");
-    if (searchSortEl && !searchSortEl.querySelector("input")) renderBoardSearchSort();
-  } else {
-    searchSortEl?.classList.add("hidden");
-  }
 
   if (currentSkin.type === "PAGE") {
     await renderSinglePageBoard(contentEl, auth);
@@ -579,10 +571,6 @@ async function renderBoardBySkin() {
   };
 
   contentEl.innerHTML = await currentSkin.renderBoardList(pagedPosts, currentBoard, renderOptions);
-
-  if (capabilities.board.initLightbox) {
-    initLightbox(pagedPosts.map((post) => post.id));
-  }
 
   if (capabilities.board.deleteModeVariant === "board") {
     bindBoardDeleteActions(contentEl);
@@ -1035,37 +1023,6 @@ function renderCategoryFilter(categories) {
       await renderBoardBySkin();
     });
   });
-}
-
-function renderBoardSearchSort() {
-  const searchSortEl = document.getElementById("boardSearchSort");
-  if (!searchSortEl) return;
-
-  searchSortEl.innerHTML = `
-    <div class="formRow">
-      <input type="text" id="boardSearchInput" placeholder="제목/본문 검색" style="flex:1;">
-      <select id="boardSortSelect">
-        <option value="date-desc">최신순</option>
-        <option value="date-asc">오래된순</option>
-        <option value="title-asc">제목순</option>
-      </select>
-      <button class="btn" id="boardSearchBtn">적용</button>
-    </div>
-  `;
-
-  document.getElementById("boardSearchBtn")?.addEventListener("click", applyBoardSearchSort);
-  document.getElementById("boardSearchInput")?.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") applyBoardSearchSort();
-  });
-  document.getElementById("boardSortSelect")?.addEventListener("change", applyBoardSearchSort);
-}
-
-async function applyBoardSearchSort() {
-  const searchTerm = document.getElementById("boardSearchInput")?.value?.trim() || "";
-  const sort = document.getElementById("boardSortSelect")?.value || "date-desc";
-  window.setBoardSearch(searchTerm);
-  window.setBoardSort(sort);
-  await renderBoardBySkin();
 }
 
 function renderPagination() {

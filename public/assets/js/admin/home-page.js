@@ -149,8 +149,6 @@ function resolveIntroHtml(settings = {}) {
   return buildLegacyIntroHtml(settings);
 }
 
-function updateHomeSummary() {}
-
 function renderHomePendingPreview(files = []) {
   if (!homeImagePendingPreviewEl) return;
   const items = Array.isArray(files) ? files.filter(Boolean) : [];
@@ -218,7 +216,6 @@ function renderHomeImageItems() {
       const path = removed?.storagePath || removed?.path || "";
       if (path) removedHomeImagePaths.add(path);
       renderHomeImageItems();
-      updateHomeSummary();
     });
   });
 }
@@ -248,7 +245,6 @@ function fillHomeForm(settings) {
   removedHomeImagePaths = new Set();
   renderHomePendingPreview([]);
   renderHomeImageItems();
-  updateHomeSummary();
 }
 
 async function loadHomeSettings() {
@@ -363,7 +359,6 @@ async function saveHomeSettings() {
     removedHomeImagePaths = new Set();
     if (homeImagePathInput) homeImagePathInput.value = "";
     renderHomeImageItems();
-    updateHomeSummary();
     showMsg("홈 소개를 저장했습니다.");
   } catch (error) {
     console.error("Failed to save home settings:", error);
@@ -422,17 +417,4 @@ function handleHomeImageChange(event) {
   saveHomeImagesBtn?.addEventListener("click", saveHomeSettings);
   saveHomeBtn?.addEventListener("click", saveHomeSettings);
   resetHomeBtn?.addEventListener("click", resetHomeSettings);
-  [
-    siteTitleInput,
-    homeShowTextInput,
-    homeIntroInput,
-    homeIntroWidthInput,
-    homeHeaderWidthInput,
-    headerFontFamilyInput,
-    homeImageWidthInput,
-    homeImageHeightInput
-  ].forEach((el) => {
-    el?.addEventListener("input", updateHomeSummary);
-    el?.addEventListener("change", updateHomeSummary);
-  });
 })();

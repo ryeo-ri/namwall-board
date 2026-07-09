@@ -2,10 +2,8 @@
 
 const DEFAULT_CAPABILITIES = {
   board: {
-    supportsSearchSort: false,
     useCursorPagination: false,
-    deleteModeVariant: "none",
-    initLightbox: true
+    deleteModeVariant: "none"
   },
   detail: {
     supportsComments: true,

@@ -213,72 +213,6 @@ function renderCommentForm(postId, context, writeState) {
     </div>
   `;
 }
-function renderCommentBody(comment, context, auth) {
-  const raw = String(comment.contentHtml || comment.content || "");
-  const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: false }), context.boardId);
-  const author = escapeHtml(comment.nickname || "익명");
-  const dateStr = formatDateTime(comment.createdAt);
-  const manuallyFolded = Boolean(comment.more);
-  const foldable = manuallyFolded || estimateCommentFold(comment);
-  const bodyId = `comment-body-${comment.id}`;
-  const expanded = expandedCommentIds.has(comment.id);
-  const bodyClass = [
-    "comment-content",
-    manuallyFolded ? "is-manual-fold" : "is-auto-fold",
-    foldable && !expanded ? "is-folded" : ""
-  ].filter(Boolean).join(" ");
-  const canManage = auth?.isAdmin && context.manageComments;
-  const isSecret = Boolean(comment.isSecret);
-  const unlocked = isCommentSecretUnlocked(comment.id, auth);
-  const manageButtons = canManage ? `
-    <div class="comment-admin-actions">
-      <button type="button" class="btn small" data-edit-comment="${escapeHtml(comment.id)}" data-post="${escapeHtml(context.post.id)}">수정</button>
-      <button type="button" class="btn small" data-del-comment="${escapeHtml(comment.id)}" data-post="${escapeHtml(context.post.id)}">삭제</button>
-    </div>
-  ` : "";
-
-  if (isSecret && !unlocked) {
-    return `
-      <div class="comment-secret-lock">
-        <div class="comment-secret-unlock">
-          <input type="password" class="comment-secret-input" placeholder="비밀번호">
-          <button type="button" class="btn comment-secret-submit" data-comment-secret-submit="${escapeHtml(comment.id)}">확인</button>
-        </div>
-        <div class="comment-secret-error hidden" data-comment-secret-error="${escapeHtml(comment.id)}"></div>
-      </div>
-      ${manageButtons}
-    `;
-  }
-
-  return `
-    <div class="comment-header">
-      <div class="comment-meta-left">
-        <span class="comment-author">${author}</span>
-      </div>
-      <div class="comment-meta-right">
-        <span class="muted small">${escapeHtml(dateStr)}</span>
-        ${manageButtons}
-      </div>
-    </div>
-    ${foldable ? `
-      <button
-        type="button"
-        class="comment-more-btn"
-        data-comment-more="${escapeHtml(comment.id)}"
-        aria-controls="${bodyId}"
-        aria-expanded="${expanded ? "true" : "false"}"
-      >
-        ${expanded ? "접기" : "펼치기"}
-      </button>
-    ` : ""}
-    <div
-      class="${bodyClass}"
-      id="${bodyId}"
-      data-comment-body="${escapeHtml(comment.id)}"
-      data-collapsed="${foldable && !expanded ? "Y" : "N"}"
-    >${html}</div>
-  `;
-}
 function renderCommentBodyV2(comment, context, auth) {
   const raw = String(comment.contentHtml || comment.content || "");
   const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: false }), context.boardId);
@@ -506,7 +440,7 @@ function bindCommentEditSaveButtons(container, postId, context) {
       const textarea = container.querySelector(`[data-comment-edit-input="${CSS.escape(commentId)}"]`);
       const content = String(textarea?.value || commentEditDrafts.get(commentId) || "").trim();
       if (!content) {
-        window.alert("??? ??? ???.");
+        window.alert("내용을 입력해 주세요.");
         return;
       }
 
@@ -656,10 +590,6 @@ function bindCommentSubmit(postId, container, context, writeState) {
       submit();
     }
   });
-
-  window.submitComment = async function submitComment() {
-    await submit();
-  };
 }
 async function verifyCommentSecret(comment, password) {
   if (!comment?.isSecret) return true;

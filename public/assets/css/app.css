@@ -1090,7 +1090,6 @@ body.site-page .board-admin-status.is-error{
   color: var(--danger);
 }
 .category-filter{ margin-top: 12px; }
-.board-search-sort{ margin-top: 12px; }
 
 /* 게시판 제목 이미지 (선택 — boards.titleImageUrl): 헤더 메뉴에서 이름 대신 표시 */
 .nav-title-image{

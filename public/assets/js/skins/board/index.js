@@ -20,7 +20,6 @@ export const skin = createSkinDefinition({
   renderWriteFields: [],
   capabilities: {
     board: {
-      supportsSearchSort: false,
       deleteModeVariant: "board"
     },
     write: {

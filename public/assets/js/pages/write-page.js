@@ -36,7 +36,6 @@ import {
   findSkinTypeByAlias,
   getBoardAliasCandidates as getSkinBoardAliasCandidates,
   getPostSkinData,
-  isProfilePost,
   getSkin,
   resolveBoardSkinType
 } from "../skins/registry.js";
@@ -1597,7 +1596,6 @@ function buildGuestPostPayload(payload, status = "PUBLISHED") {
   if (guestPost.isSecret) {
     guestPost.secretSalt = payload.secretSalt || "";
     guestPost.secretHash = payload.secretHash || "";
-    if (payload.secretHint != null) guestPost.secretHint = payload.secretHint;
   }
   if (skinData.logNo != null && skinData.logNo !== "") guestPost.logNo = skinData.logNo;
   if (skinData.source != null && skinData.source !== "") guestPost.source = skinData.source;

@@ -176,14 +176,6 @@ export function getPostSkinData(post = {}) {
   return skinData;
 }
 
-export function getPostSkinField(post, key, fallback = undefined) {
-  const skinData = getPostSkinData(post);
-  if (Object.prototype.hasOwnProperty.call(skinData, key) && skinData[key] != null && skinData[key] !== "") {
-    return skinData[key];
-  }
-  return fallback;
-}
-
 export function getBoardAliasCandidates(rawBoardId, skinType = "") {
   const normalizedBoardId = String(rawBoardId || "").trim().toLowerCase();
   if (!normalizedBoardId) return [];

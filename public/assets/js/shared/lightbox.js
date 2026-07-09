@@ -1,8 +1,4 @@
-﻿export function initLightbox(postIds) {
-  return Array.isArray(postIds) ? postIds.length : 0;
-}
-
-window.openLightbox = function(imageUrl) {
+﻿window.openLightbox = function(imageUrl) {
   if (!imageUrl) return;
 
   window.closeLightbox?.();

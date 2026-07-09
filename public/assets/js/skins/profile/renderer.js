@@ -233,21 +233,6 @@ function renderProfileMedia(post, title, className = "", options = {}) {
   `;
 }
 
-function renderProfileHeadshot(imageUrl, title, className = "") {
-  const extraClass = className ? ` ${className}` : "";
-  const fallback = renderFallbackInitials(title);
-
-  if (!imageUrl) {
-    return `<div class="profile-avatar${extraClass}">${fallback}</div>`;
-  }
-
-  return `
-    <div class="profile-avatar${extraClass}">
-      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(`${title} 두상`)}" loading="lazy">
-    </div>
-  `;
-}
-
 function renderMetaChip(label, value) {
   const text = String(value || "").trim();
   if (!text) return "";
@@ -256,17 +241,6 @@ function renderMetaChip(label, value) {
       <span class="profile-chip-label">${escapeHtml(label)}</span>
       <span>${escapeHtml(text)}</span>
     </span>
-  `;
-}
-
-function renderFact(label, value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  return `
-    <div class="profile-fact">
-      <span class="profile-panel-label">${escapeHtml(label)}</span>
-      <div class="profile-panel-title">${renderTextBlock(text)}</div>
-    </div>
   `;
 }
 
@@ -282,31 +256,10 @@ function renderTextPanel(label, value, options = {}) {
   `;
 }
 
-function renderTags(tags) {
-  const list = Array.isArray(tags) ? tags.map((tag) => String(tag || "").trim()).filter(Boolean) : [];
-  if (!list.length) return "";
-  return `
-    <div class="profile-card-tags">
-      ${list.map((tag) => `<a class="tag" href="/search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`).join("")}
-    </div>
-  `;
-}
-
 function renderTextBlock(value) {
   const text = String(value || "").trim();
   if (!text) return "";
   return escapeHtml(text).replace(/\r?\n/g, "<br>");
-}
-
-function renderFallbackInitials(value) {
-  const letters = Array.from(String(value || "").trim()).filter(Boolean);
-  if (!letters.length) return "PR";
-  return escapeHtml(letters.slice(0, 2).join(""));
-}
-
-function formatDate(createdAt) {
-  const value = createdAt?.toDate ? createdAt.toDate() : (createdAt ? new Date(createdAt) : new Date());
-  return Number.isNaN(value.getTime()) ? "" : value.toLocaleDateString("ko-KR");
 }
 
 function toPlainText(value) {
