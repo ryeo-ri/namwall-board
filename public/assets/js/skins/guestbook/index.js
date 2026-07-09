@@ -13,16 +13,6 @@ export const skin = createSkinDefinition({
       step: 1,
       placeholder: "기본 800 / 100 이하는 %",
       help: "100 이하는 %, 그 이상은 px로 적용됩니다."
-    },
-    guestbookAccess: {
-      type: "select",
-      label: "작성 권한",
-      options: [
-        { value: "code", label: "게스트 코드 사용" },
-        { value: "open", label: "누구나 (이름+비밀번호)" }
-      ],
-      defaultValue: "code",
-      help: "누구나 모드는 firestore 규칙 배포가 필요합니다(validOpenGuestbookPostCreate)."
     }
   },
   capabilities: {

@@ -1,9 +1,8 @@
 import { sanitizeHTML } from "../../shared/html-sanitizer-v2.js";
 import { loadComments } from "../../shared/comments.js";
-import { getBoardSkinOption } from "../registry.js";
 import { createGuestbookEntry } from "../../shared/guest-post.js";
 import { deletePostsByIds } from "../../shared/post-maintenance.js";
-import { isGuestUnlocked, isGuestCooldownPassed, touchGuestCooldown, sha256Hex } from "../../core/state.js";
+import { isGuestCooldownPassed, touchGuestCooldown, sha256Hex } from "../../core/state.js";
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -17,23 +16,22 @@ function formatDateTime(createdAt) {
   return `${d.toLocaleDateString("ko-KR")} ${d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-function resolveAccessMode(board) {
-  return String(getBoardSkinOption(board, "guestbookAccess", "code")).toLowerCase() === "open" ? "open" : "code";
-}
-
 function getEntryBody(post) {
   const raw = post.commentHtml || post.contentHtml || post.contentText || "";
   return sanitizeHTML(raw, { allowIframes: false });
 }
 
-function renderForm(board, { isAdmin, accessMode }) {
-  const locked = accessMode === "code" && !isAdmin && !isGuestUnlocked();
-  const note = locked
-    ? `<div class="guestbook-form-note notice">게스트 코드를 입력하면 방명록을 남길 수 있습니다. (상단 GUEST 로그인)</div>`
-    : "";
+function canGuestWrite(board) {
+  return board?.allowGuestPost === true;
+}
+
+function renderForm(board, { isAdmin }) {
+  // 방명록은 항상 "누구나" 모드 — 실제 허용 여부는 게시판의 "게스트 허용"으로만 제어
+  if (!isAdmin && !canGuestWrite(board)) {
+    return `<div class="guestbook-form-note notice">관리자만 방명록을 남길 수 있습니다.</div>`;
+  }
   return `
     <form class="guestbook-form card" autocomplete="off">
-      ${note}
       <textarea class="guestbook-input" rows="3" placeholder="방명록 내용을 입력하세요"></textarea>
       <div class="guestbook-form-row">
         <label class="guestbook-secret-toggle"><input type="checkbox" class="gb-secret"> SECRET</label>
@@ -94,9 +92,8 @@ function renderEntry(post, { isAdmin, unlockedSecretPostIds }) {
 export async function renderGuestbook(posts, board, options = {}) {
   const isAdmin = Boolean(options.isAdmin);
   const unlockedSecretPostIds = new Set(options.unlockedSecretPostIds || []);
-  const accessMode = resolveAccessMode(board);
 
-  const formHtml = renderForm(board, { isAdmin, accessMode });
+  const formHtml = renderForm(board, { isAdmin });
   const listHtml = posts.length
     ? posts.map((post) => renderEntry(post, { isAdmin, unlockedSecretPostIds })).join("")
     : `<div class="notice guestbook-empty">아직 방명록이 없습니다. 첫 방명록을 남겨보세요!</div>`;
@@ -111,7 +108,7 @@ export async function renderGuestbook(posts, board, options = {}) {
   setTimeout(() => {
     const root = document.querySelector(".guestbook");
     if (!root) return;
-    bindForm(root, board, { isAdmin, accessMode });
+    bindForm(root, board, { isAdmin });
     if (isAdmin) bindAdminDelete(root);
     bindSecretUnlock(root, posts);
 
@@ -135,7 +132,7 @@ export async function renderGuestbook(posts, board, options = {}) {
   return html;
 }
 
-function bindForm(root, board, { isAdmin, accessMode }) {
+function bindForm(root, board, { isAdmin }) {
   const form = root.querySelector(".guestbook-form");
   if (!form) return;
   const msgEl = form.querySelector(".guestbook-form-msg");
@@ -157,9 +154,8 @@ function bindForm(root, board, { isAdmin, accessMode }) {
     if (!message.trim()) return showMsg("내용을 입력해 주세요.", true);
     if (isSecret && !password) return showMsg("비밀글은 비밀번호를 입력하세요.", true);
 
-    const open = accessMode === "open";
-    if (!isAdmin && !open && !isGuestUnlocked()) {
-      return showMsg("게스트 코드를 먼저 입력하세요. (상단 GUEST 로그인)", true);
+    if (!isAdmin && !canGuestWrite(board)) {
+      return showMsg("관리자만 방명록을 남길 수 있습니다.", true);
     }
     if (!isAdmin && !isGuestCooldownPassed(30)) {
       return showMsg("작성은 30초 후에 다시 가능합니다.", true);
@@ -175,7 +171,7 @@ function bindForm(root, board, { isAdmin, accessMode }) {
         isSecret,
         password,
         isAdmin,
-        open
+        open: true
       });
       if (!isAdmin) touchGuestCooldown();
       location.reload();

@@ -75,12 +75,11 @@ service cloud.firestore {
     }
 
     // 방명록(GUESTBOOK) "누구나" 모드: 게스트 코드/프루프 없이 글 생성 허용.
-    // 대상 게시판이 GUESTBOOK 스킨 + allowGuestPost + skinOptions.guestbookAccess == 'open' 일 때만.
+    // 대상 게시판이 GUESTBOOK 스킨 + "게스트 허용(allowGuestPost)" 일 때.
     function validOpenGuestbookPostCreate() {
       return exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId)) &&
         get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.allowGuestPost == true &&
         get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.skinType == 'GUESTBOOK' &&
-        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.get(['skinOptions', 'guestbookAccess'], 'code') == 'open' &&
         request.resource.data.skinType == 'GUESTBOOK' &&
         request.resource.data.authorType == 'GUEST' &&
         request.resource.data.isPublic == true &&
