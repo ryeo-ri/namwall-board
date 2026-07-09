@@ -35,8 +35,8 @@ function renderForm(board, { isAdmin }) {
       <textarea class="guestbook-input" rows="3" placeholder="방명록 내용을 입력하세요"></textarea>
       <div class="guestbook-form-row">
         <label class="guestbook-secret-toggle"><input type="checkbox" class="gb-secret"> SECRET</label>
-        <input class="gb-name" type="text" placeholder="NAME" maxlength="40">
-        <input class="gb-pass" type="password" placeholder="PASSWORD" maxlength="40">
+        <input class="gb-name" type="text" placeholder="NAME *" maxlength="40" required>
+        <input class="gb-pass hidden" type="password" placeholder="PASSWORD" maxlength="40">
         <input class="gb-hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button type="submit" class="btn primary gb-enter">ENTER</button>
       </div>
@@ -136,6 +136,8 @@ function bindForm(root, board, { isAdmin }) {
   const form = root.querySelector(".guestbook-form");
   if (!form) return;
   const msgEl = form.querySelector(".guestbook-form-msg");
+  const passInput = form.querySelector(".gb-pass");
+  const secretToggle = form.querySelector(".gb-secret");
   const showMsg = (text, isError = false) => {
     if (!msgEl) return;
     msgEl.classList.remove("hidden");
@@ -143,14 +145,22 @@ function bindForm(root, board, { isAdmin }) {
     msgEl.textContent = text;
   };
 
+  // 비밀번호 입력칸은 SECRET 체크 시에만 노출
+  secretToggle?.addEventListener("change", () => {
+    const on = secretToggle.checked;
+    passInput?.classList.toggle("hidden", !on);
+    if (!on && passInput) passInput.value = "";
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (form.querySelector(".gb-hp")?.value) return; // 허니팟
     const message = form.querySelector(".guestbook-input")?.value || "";
     const authorName = form.querySelector(".gb-name")?.value || "";
-    const password = form.querySelector(".gb-pass")?.value || "";
-    const isSecret = Boolean(form.querySelector(".gb-secret")?.checked);
+    const password = passInput?.value || "";
+    const isSecret = Boolean(secretToggle?.checked);
 
+    if (!authorName.trim()) return showMsg("이름을 입력해 주세요.", true);
     if (!message.trim()) return showMsg("내용을 입력해 주세요.", true);
     if (isSecret && !password) return showMsg("비밀글은 비밀번호를 입력하세요.", true);
 
