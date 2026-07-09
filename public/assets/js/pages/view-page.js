@@ -75,14 +75,15 @@ function renderAttachmentLinks(attachments) {
   `;
 }
 
-function renderInlineAttachments(attachments) {
+function renderInlineAttachments(attachments, align = "left") {
   if (!Array.isArray(attachments) || !attachments.length) return "";
   const imageItems = attachments.filter((item) => item?.url && isImageAttachment(item));
   const videoItems = attachments.filter((item) => isVideoAttachment(item));
   if (!imageItems.length && !videoItems.length) return "";
 
+  const alignValue = ["left", "center", "right"].includes(align) ? align : "left";
   return `
-    <div class="view-inline-gallery mt-md">
+    <div class="view-inline-gallery mt-md" data-align="${alignValue}">
       ${imageItems.map((item) => {
         const url = escapeHtml(item.url);
         const name = escapeHtml(item.name || "첨부 이미지");
@@ -261,7 +262,8 @@ async function loadPage() {
         document.getElementById("viewContent").innerHTML = '<div class="notice">비밀번호가 일치하지 않아 내용을 표시할 수 없습니다.</div>';
       } else {
         const body = post.contentHtml || post.commentHtml || post.contentText || "";
-        const inlineAttachments = renderInlineAttachments(post.extraAttachments || []);
+        const extraImageAlign = getBoardSkinOption(board, "extraImageAlign", "left");
+        const inlineAttachments = renderInlineAttachments(post.extraAttachments || [], extraImageAlign);
         const attachmentLinks = renderAttachmentLinks(post.extraAttachments || []);
         document.getElementById("viewContent").innerHTML =
           `<div class="view-content-body">${sanitizeHTML(body, { allowIframes: true })}</div>${inlineAttachments}${attachmentLinks}`;

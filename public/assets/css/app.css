@@ -2522,30 +2522,34 @@ body.page-raw-board .page-frame{
   height: auto;
   aspect-ratio: auto;
 }
+/* 추가 이미지: 한 장씩 줄바꿈 + 정렬 선택 (기본 좌측), 모서리 라운드 없음 */
 .view-inline-gallery{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
 }
+.view-inline-gallery[data-align="center"]{ align-items: center; }
+.view-inline-gallery[data-align="right"]{ align-items: flex-end; }
 .view-inline-video{
-  grid-column: 1 / -1;
+  width: 100%;
   display: grid;
   gap: 6px;
 }
 .view-inline-image{
-  display: block;
+  display: inline-block;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: zoom-in;
 }
 .view-inline-image img{
-  width: 100%;
-  height: 100%;
-  min-height: 180px;
+  width: auto;
+  max-width: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
-  border-radius: 10px;
+  border-radius: 0;
   background: #fff;
 }
 /* view.html: 댓글 폼은 항상 펼침 */
@@ -4201,9 +4205,6 @@ body.admin-login-page .admin-login-actions .btn{
 @media (max-width: 640px){
   .gallery-masonry{
     column-count: 1;
-  }
-  .view-inline-gallery{
-    grid-template-columns: 1fr;
   }
   .comment-form-top{
     grid-template-columns: 1fr;
