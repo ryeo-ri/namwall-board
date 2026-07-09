@@ -3332,26 +3332,13 @@ body.page-raw-board .page-frame{
 /* --------------------------------------------------------------------------
    6-9b. setup (첫 실행 설정 마법사)
    -------------------------------------------------------------------------- */
-.setup-hero{
-  display: grid;
-  gap: 6px;
-}
+/* 관리자 테마(테두리 카드) 위에서 동작. 설정 화면 배경도 관리자 페이지와 동일 */
 .setup-kicker{
-  margin: 0;
-  font-family: var(--font-pixel);
+  margin: 0 0 4px;
   font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--muted);
-}
-.setup-title{
-  margin: 0;
-  font-family: var(--font-pixel);
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-  line-height: 1.1;
-}
-.setup-h2{
-  font-size: 16px;
-  margin-bottom: 12px;
 }
 .setup-steps{
   margin: 0;
