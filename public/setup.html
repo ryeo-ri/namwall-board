@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사이트 설정</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="/assets/js/core/firebase.js">
+<link rel="modulepreload" href="/assets/js/pages/setup-page.js">
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+</head>
+<body class="site-page">
+  <main class="container">
+    <section class="card setup-hero">
+      <p class="setup-kicker">FIRST‑RUN SETUP</p>
+      <h1 class="setup-title">사이트 첫 설정</h1>
+      <p class="muted">이 화면은 첫 관리자가 등록되면 사라지고 홈이 활성화됩니다. 아래 순서대로 진행하세요.</p>
+    </section>
+
+    <section class="card mt-md">
+      <h2 class="setup-h2">1. Firebase 준비 (콘솔에서 클릭만)</h2>
+      <ol class="setup-steps">
+        <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase 콘솔</a>에서 <strong>프로젝트 생성</strong></li>
+        <li><strong>빌드 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
+        <li><strong>빌드 → Firestore Database</strong> → 데이터베이스 만들기(서울 등)</li>
+        <li><strong>빌드 → Storage</strong> → 시작하기</li>
+        <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>. <strong>Storage → 규칙</strong>도 <code>storage.rules</code>로 동일하게</li>
+        <li><strong>프로젝트 설정 → 웹 앱 추가</strong>에서 나오는 <code>firebaseConfig</code>를 복사</li>
+      </ol>
+      <div class="notice setup-config-note">
+        복사한 <code>firebaseConfig</code>를 <code>public/assets/js/core/firebase.js</code> 상단의 값과 교체한 뒤 사이트를 다시 업로드하세요.
+        이 값은 모든 방문자가 공유하므로 브라우저 입력이 아니라 파일에 넣어야 합니다.
+      </div>
+    </section>
+
+    <section class="card mt-md">
+      <h2 class="setup-h2">2. 연결 상태</h2>
+      <div id="connStatus" class="setup-status">
+        <span class="setup-status-dot" data-state="checking"></span>
+        <span id="connText">확인 중…</span>
+      </div>
+      <div id="connHelp" class="muted small mt-sm hidden"></div>
+    </section>
+
+    <section class="card mt-md" id="adminSection">
+      <h2 class="setup-h2">3. 첫 관리자 등록</h2>
+      <p class="muted small">Authentication에 이미 계정을 만들었다면 그 이메일·비밀번호를 입력하세요. 없으면 여기서 새로 만들어집니다.</p>
+      <div class="grid tight mt-sm">
+        <div class="field-group">
+          <label for="setupNickname">관리자 닉네임</label>
+          <input id="setupNickname" type="text" placeholder="예: 관리자" maxlength="40" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label for="setupEmail">이메일</label>
+          <input id="setupEmail" type="email" placeholder="admin@example.com" autocomplete="username">
+        </div>
+        <div class="field-group">
+          <label for="setupPassword">비밀번호 <span class="muted small">(6자 이상)</span></label>
+          <input id="setupPassword" type="password" placeholder="비밀번호" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="formRow mt-md">
+        <button class="btn primary" id="setupSubmitBtn" type="button">관리자 등록 &amp; 사이트 활성화</button>
+      </div>
+      <div id="setupMsg" class="notice hidden mt-sm"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/assets/js/pages/setup-page.js"></script>
+</body>
+</html>

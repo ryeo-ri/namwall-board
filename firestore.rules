@@ -243,6 +243,15 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 첫 실행 설정 완료 표식(sentinel). 공개 읽기로 미설정 여부를 판단.
+    // 최초 1회만 로그인 사용자에게 생성 허용, 이후 관리자만 변경.
+    match /site_settings/bootstrap {
+      allow read: if true;
+      allow create: if signedIn() &&
+        !exists(/databases/$(database)/documents/site_settings/bootstrap);
+      allow update, delete: if isAdmin();
+    }
+
     match /boards/{boardId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -311,7 +320,11 @@ service cloud.firestore {
 
     match /admin_users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
-      allow write: if isAdmin();
+      // 최초 1회 부트스트랩: bootstrap 표식이 아직 없을 때, 로그인한 본인 uid만 자가 등록 허용
+      allow create: if isAdmin() ||
+        (signedIn() && request.auth.uid == uid &&
+          !exists(/databases/$(database)/documents/site_settings/bootstrap));
+      allow update, delete: if isAdmin();
     }
 
     match /{document=**} {
