@@ -1752,6 +1752,13 @@ body.site-page .board-admin-status.is-error{
   margin-top: 10px;
   padding-top: 0;
 }
+/* 방명록 댓글: 열면 입력창이 항상 펼쳐지도록 (토글 숨김) */
+.guestbook-comments .comment-form-head{
+  display: none;
+}
+.guestbook-comments .comment-form-body{
+  display: block !important;
+}
 .guestbook-empty{
   text-align: center;
 }
