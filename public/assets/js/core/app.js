@@ -9,8 +9,15 @@ const BOOTSTRAP_FLAG = "archive_bootstrapped_v1";
 let appliedSiteTitleAsDocumentTitle = false;
 
 // 첫 실행 게이트: 설정(첫 관리자)이 끝나기 전이면 공개 페이지 → /setup.html
-// 안전 원칙: "읽기 성공 + 문서 없음"(확정적 미설정)일 때만 이동한다.
-// 연결/규칙 오류 등 불확정 상태에서는 기존 동작을 유지해 운영 중 사이트를 깨지 않는다.
+// 판정 순서:
+//  1) site_settings/main 존재 → 이미 운영 중(옛 규칙에서도 공개 읽기 가능) → 통과
+//  2) main 없음 + bootstrap 표식 존재 → 마법사 직후(홈 설정 전) → 통과
+//  3) 둘 다 없음(읽기 성공) → 확정적 미설정 → /setup.html
+//  4) 읽기 오류(연결/규칙 불확정) → 리다이렉트 없이 그대로 진행(운영 사이트 보호)
+// 이렇게 하면 운영 중 사이트는 실패하는 읽기 없이 첫 판정에서 바로 통과한다.
+function cacheBootstrapped() {
+  try { localStorage.setItem(BOOTSTRAP_FLAG, "1"); } catch (_error) { /* ignore */ }
+}
 async function ensureBootstrapped() {
   try {
     if (localStorage.getItem(BOOTSTRAP_FLAG) === "1") return true;
@@ -18,16 +25,15 @@ async function ensureBootstrapped() {
     // localStorage 불가 시 아래에서 서버 확인
   }
   try {
-    const snap = await getDoc(doc(db, "site_settings", "bootstrap"));
-    if (snap.exists()) {
-      try { localStorage.setItem(BOOTSTRAP_FLAG, "1"); } catch (_error) { /* ignore */ }
-      return true;
-    }
-    // 읽기 성공 + 문서 없음 = 아직 설정 전 → 설정 화면으로
+    const mainSnap = await getDoc(doc(db, "site_settings", "main"));
+    if (mainSnap.exists()) { cacheBootstrapped(); return true; }
+
+    const bootSnap = await getDoc(doc(db, "site_settings", "bootstrap"));
+    if (bootSnap.exists()) { cacheBootstrapped(); return true; }
+
     location.replace("/setup.html");
     return false;
   } catch (_error) {
-    // 연결 실패/규칙 미배포 등 불확정 → 리다이렉트하지 않고 그대로 진행
     return true;
   }
 }
