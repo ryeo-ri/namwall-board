@@ -157,7 +157,13 @@ export async function renderTopNav(navEl) {
     });
 
   const html = menuBoards
-    .map((board) => `<a href="${escapeHtml(getBoardMenuHref(board))}">${escapeHtml(board.title || board.id)}</a>`)
+    .map((board) => {
+      const titleImageUrl = String(board.titleImageUrl || "").trim();
+      const label = titleImageUrl
+        ? `<img src="${escapeHtml(titleImageUrl)}" alt="${escapeHtml(board.title || board.id)}" class="nav-title-image">`
+        : escapeHtml(board.title || board.id);
+      return `<a href="${escapeHtml(getBoardMenuHref(board))}">${label}</a>`;
+    })
     .join("");
 
   writeNavCache({ html, siteTitle: settings.siteTitle });

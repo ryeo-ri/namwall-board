@@ -255,7 +255,6 @@ async function loadBoard() {
 
     document.getElementById("boardTitle").textContent = currentBoard.title || currentBoard.name || boardId;
     document.getElementById("boardDescription").textContent = currentBoard.description || "";
-    renderBoardTitleImage(currentBoard);
     setDocumentTitle(currentBoard.title || boardId);
 
     const writeBtn = document.getElementById("writeBtn");
@@ -1143,22 +1142,6 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text || "";
   return div.innerHTML;
-}
-
-// 게시판 제목 이미지(선택): 지정 시 게시판 상단에 배너로 표시
-function renderBoardTitleImage(board) {
-  const header = document.querySelector(".board-header");
-  if (!header) return;
-  header.querySelector(".board-title-image-wrap")?.remove();
-
-  const imageUrl = String(board?.titleImageUrl || "").trim();
-  if (!imageUrl) return;
-
-  const titleText = board.title || board.name || board.id || "";
-  const wrap = document.createElement("div");
-  wrap.className = "board-title-image-wrap";
-  wrap.innerHTML = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(titleText)}" class="board-title-image">`;
-  header.prepend(wrap);
 }
 
 const yearEl = document.getElementById("year");
