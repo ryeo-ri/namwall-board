@@ -767,9 +767,35 @@ textarea.textarea:focus{
 .comment-admin-actions{
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-left: 8px;
+}
+/* 댓글 수정·삭제: 방명록과 같은 작은 텍스트 링크 스타일 (수정=보조색, 삭제=위험색) */
+.comment-admin-actions .btn,
+body.site-page .comment-admin-actions .btn{
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1;
+  cursor: pointer;
+}
+.comment-admin-actions .btn:hover,
+body.site-page .comment-admin-actions .btn:hover{
+  background: transparent;
+  text-decoration: underline;
+}
+.comment-admin-actions [data-del-comment],
+body.site-page .comment-admin-actions [data-del-comment]{
+  color: var(--danger);
 }
 .comment-edit-panel{
   display: grid;
@@ -1146,28 +1172,34 @@ body.site-page .board-admin-status.is-error{
 }
 
 /* 관리 버튼 · 삭제 모드 (gallery · log 공용) */
+/* 관리 버튼(수정·삭제): 방명록의 작은 텍스트 링크 스타일로 통일 */
 .log-manage-button,
 .gallery-manage-button{
-  min-width: 48px;
-  min-height: 24px;
-  padding: 0 9px;
-  border: 1px solid var(--danger-line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--danger);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 400;
   line-height: 1;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  cursor: pointer;
+}
+.log-manage-button:hover,
+.gallery-manage-button:hover{
+  text-decoration: underline;
 }
 .log-edit-button,
 .gallery-edit-button{
-  border-color: rgba(28, 28, 28, 0.2);
-  color: var(--olive-dk);
+  border: 0;
+  color: var(--muted);
 }
 .log-delete-check,
 .gallery-delete-check{
@@ -3494,8 +3526,8 @@ body.site-page .log-number{
 }
 body.site-page .log-edit-button,
 body.site-page .gallery-edit-button{
-  border-color: currentcolor;
-  color: inherit;
+  border: 0;
+  color: var(--muted);
 }
 body.site-page .log-body a,
 body.site-page .view-content-body a,
