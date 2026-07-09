@@ -1035,8 +1035,8 @@ function renderPagination() {
   const pages = isDisabled ? [] : getPaginationPages(currentPage, totalPages);
   const paginationHtml = isDisabled ? "" : `
     <div class="pagination-list" aria-label="pagination">
-      <button type="button" class="pagination-btn pagination-arrow" data-page="1" ${currentPage <= 1 ? "disabled" : ""} aria-label="泥??섏씠吏">&laquo;</button>
-      <button type="button" class="pagination-btn pagination-arrow" data-page="${currentPage - 1}" ${currentPage <= 1 ? "disabled" : ""} aria-label="?댁쟾 ?섏씠吏">&lsaquo;</button>
+      <button type="button" class="pagination-btn pagination-arrow" data-page="1" ${currentPage <= 1 ? "disabled" : ""} aria-label="첫 페이지">&laquo;</button>
+      <button type="button" class="pagination-btn pagination-arrow" data-page="${currentPage - 1}" ${currentPage <= 1 ? "disabled" : ""} aria-label="이전 페이지">&lsaquo;</button>
       ${pages.map((page) => `
         <button
           type="button"
@@ -1045,8 +1045,8 @@ function renderPagination() {
           ${page === currentPage ? `aria-current="page"` : ""}
         >${page}</button>
       `).join("")}
-      <button type="button" class="pagination-btn pagination-arrow" data-page="${currentPage + 1}" ${currentPage >= totalPages ? "disabled" : ""} aria-label="?ㅼ쓬 ?섏씠吏">&rsaquo;</button>
-      <button type="button" class="pagination-btn pagination-arrow" data-page="${totalPages}" ${currentPage >= totalPages ? "disabled" : ""} aria-label="留덉?留??섏씠吏">&raquo;</button>
+      <button type="button" class="pagination-btn pagination-arrow" data-page="${currentPage + 1}" ${currentPage >= totalPages ? "disabled" : ""} aria-label="다음 페이지">&rsaquo;</button>
+      <button type="button" class="pagination-btn pagination-arrow" data-page="${totalPages}" ${currentPage >= totalPages ? "disabled" : ""} aria-label="마지막 페이지">&raquo;</button>
     </div>
   `;
 
