@@ -259,8 +259,13 @@ async function loadBoard() {
 
     const writeBtn = document.getElementById("writeBtn");
     if (writeBtn) {
-      writeBtn.href = `/write.html?bo=${encodeURIComponent(boardId)}`;
-      await bindWriteButton(writeBtn);
+      // 방명록은 목록 페이지의 인라인 폼으로 작성하므로 상단 WRITE 버튼 숨김
+      if (currentSkin?.type === "GUESTBOOK") {
+        writeBtn.style.display = "none";
+      } else {
+        writeBtn.href = `/write.html?bo=${encodeURIComponent(boardId)}`;
+        await bindWriteButton(writeBtn);
+      }
     }
 
     resetGalleryPagination();

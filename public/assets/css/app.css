@@ -1591,6 +1591,172 @@ body.site-page .board-admin-status.is-error{
 }
 
 /* --------------------------------------------------------------------------
+   6-3b. guestbook 스킨 (인라인 작성 폼 + 항목별 댓글)
+   -------------------------------------------------------------------------- */
+.guestbook{
+  display: grid;
+  gap: 14px;
+}
+.guestbook-form{
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+.guestbook-form-note{
+  margin: 0;
+}
+.guestbook-input{
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  font-family: var(--font-kr);
+  line-height: 1.6;
+  resize: vertical;
+}
+.guestbook-form-row{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.guestbook-secret-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.guestbook-secret-toggle input[type="checkbox"]{
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.guestbook-form-row .gb-name{
+  flex: 0 1 130px;
+  min-width: 90px;
+  min-height: 34px;
+}
+.guestbook-form-row .gb-pass{
+  flex: 0 1 130px;
+  min-width: 90px;
+  min-height: 34px;
+}
+.guestbook-form-row .gb-hp{
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.guestbook-form-row .gb-enter{
+  flex: 0 0 auto;
+}
+.guestbook-list{
+  display: grid;
+  gap: 14px;
+}
+.guestbook-item{
+  padding: 16px 18px;
+}
+.guestbook-item-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.guestbook-author{
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+.guestbook-item-right{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.guestbook-date{
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.guestbook-delete{
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  cursor: pointer;
+}
+.guestbook-delete:hover{
+  text-decoration: underline;
+}
+.guestbook-body{
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+.guestbook-secret{
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.guestbook-secret-unlock{
+  display: inline-flex;
+  gap: 6px;
+}
+.guestbook-secret-input{
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.guestbook-secret-submit{
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.guestbook-secret-error{
+  color: var(--danger);
+  font-size: 11px;
+}
+.guestbook-comments{
+  margin-top: 12px;
+}
+.guestbook-comments-summary{
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  list-style: none;
+}
+.guestbook-comments-summary::-webkit-details-marker{
+  display: none;
+}
+.guestbook-comments-caret{
+  font-size: 10px;
+}
+.guestbook-comments .comments-section{
+  margin-top: 10px;
+  padding-top: 0;
+}
+.guestbook-empty{
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
    6-4. gallery 스킨
    -------------------------------------------------------------------------- */
 .gallery-masonry{

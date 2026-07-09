@@ -5,6 +5,7 @@ const SKIN_CATALOG = [
   { type: "LOG", folder: "log", aliases: ["log"], description: "Log feed" },
   { type: "GALLERY", folder: "gallery", aliases: ["gal", "gallery"], description: "Gallery board" },
   { type: "PROFILE", folder: "profile", aliases: ["profile"], description: "Profile board" },
+  { type: "GUESTBOOK", folder: "guestbook", aliases: ["guestbook", "gb"], description: "Guestbook" },
   { type: "PAGE", folder: "page", aliases: ["page"], description: "Free page" }
 ];
 

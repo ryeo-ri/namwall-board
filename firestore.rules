@@ -74,6 +74,56 @@ service cloud.firestore {
         ]);
     }
 
+    // 방명록(GUESTBOOK) "누구나" 모드: 게스트 코드/프루프 없이 글 생성 허용.
+    // 대상 게시판이 GUESTBOOK 스킨 + allowGuestPost + skinOptions.guestbookAccess == 'open' 일 때만.
+    function validOpenGuestbookPostCreate() {
+      return exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId)) &&
+        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.allowGuestPost == true &&
+        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.skinType == 'GUESTBOOK' &&
+        get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.get(['skinOptions', 'guestbookAccess'], 'code') == 'open' &&
+        request.resource.data.skinType == 'GUESTBOOK' &&
+        request.resource.data.authorType == 'GUEST' &&
+        request.resource.data.isPublic == true &&
+        request.resource.data.isSecret is bool &&
+        request.resource.data.status is string &&
+        (
+          (
+            request.resource.data.isSecret == true &&
+            (request.resource.data.status == 'PUBLISHED' || request.resource.data.status == 'SECRET')
+          ) ||
+          (request.resource.data.isSecret == false && request.resource.data.status == 'PUBLISHED')
+        ) &&
+        request.resource.data.keys().hasOnly([
+          'boardId',
+          'skinType',
+          'title',
+          'tags',
+          'imageUrl',
+          'thumbnailAttachment',
+          'extraAttachments',
+          'authorType',
+          'authorName',
+          'isPublic',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'contentText',
+          'contentIsHtml',
+          'contentHtml',
+          'commentHtml',
+          'logNo',
+          'isSecret',
+          'secretHash',
+          'secretSalt',
+          'secretHint',
+          'source',
+          'thumbnailMode',
+          'thumbnailEmbedHtml',
+          'thumbnailEmbedSrc',
+          'skinData'
+        ]);
+    }
+
     function validGuestProofCreate(postId) {
       return guestCodeReady() &&
         request.resource.data.postId == postId &&
@@ -206,7 +256,7 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read: if isAdmin() || publicPost();
-      allow create: if isAdmin() || validGuestPostCreate(postId);
+      allow create: if isAdmin() || validGuestPostCreate(postId) || validOpenGuestbookPostCreate();
       allow update, delete: if isAdmin();
 
       match /comments/{commentId} {
