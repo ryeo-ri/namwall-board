@@ -262,7 +262,7 @@ async function loadPage() {
         document.getElementById("viewContent").innerHTML = '<div class="notice">비밀번호가 일치하지 않아 내용을 표시할 수 없습니다.</div>';
       } else {
         const body = post.contentHtml || post.commentHtml || post.contentText || "";
-        const extraImageAlign = getBoardSkinOption(board, "extraImageAlign", "left");
+        const extraImageAlign = skinData.extraImageAlign || "left"; // 게시물별 설정
         const inlineAttachments = renderInlineAttachments(post.extraAttachments || [], extraImageAlign);
         const attachmentLinks = renderAttachmentLinks(post.extraAttachments || []);
         document.getElementById("viewContent").innerHTML =

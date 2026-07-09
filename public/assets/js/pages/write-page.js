@@ -83,6 +83,8 @@ const extraFileInput = document.getElementById("extraFileInput");
 
 const logNumberInput = document.getElementById("logNumberInput");
 const sourceInput = document.getElementById("sourceInput");
+const extraImageAlignInput = document.getElementById("extraImageAlignInput");
+const extraImageAlignFieldEl = document.getElementById("extraImageAlignField");
 const visibilityInput = document.getElementById("visibilityInput");
 const htmlModeInput = document.getElementById("htmlModeInput");
 const secretPwWrap = document.getElementById("secretPwWrap");
@@ -481,6 +483,8 @@ async function setSkinFields() {
   if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields || hideContentFields);
   if (visibilityFieldsEl) visibilityFieldsEl.classList.toggle("hidden", isPageSkin);
   if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin);
+  // 추가 이미지 정렬: 인라인 갤러리를 쓰는 스킨(BOARD 등)만 노출, 프로필·페이지는 숨김
+  if (extraImageAlignFieldEl) extraImageAlignFieldEl.classList.toggle("hidden", isPageSkin || isProfileSkin);
   if (tagFieldsEl) tagFieldsEl.classList.toggle("hidden", isPageSkin);
   profileSkinFieldsHelpEl?.classList.toggle("hidden", !isProfileSkin);
   if (logNumberInput) {
@@ -1297,6 +1301,11 @@ async function loadEditPost() {
   logNumberInput.value = skinData.logNo || post.logNo || post.logNumber || "";
   syncLogTitleFromNumber(skinData.logNo || post.logNo || post.logNumber || post.title || "");
   sourceInput.value = skinData.source || "";
+  if (extraImageAlignInput) {
+    extraImageAlignInput.value = ["left", "center", "right"].includes(skinData.extraImageAlign)
+      ? skinData.extraImageAlign
+      : "left";
+  }
   if (visibilityInput) {
     visibilityInput.value = post.isSecret ? "secret" : (post.isPublic === false ? "private" : "public");
   }
@@ -1474,6 +1483,14 @@ async function buildPayload() {
     skinData.source = sourceInput.value.trim();
   } else {
     delete skinData.source;
+  }
+
+  // 추가 이미지 정렬 (게시물별) — 좌측이 기본이라 기본값이면 저장하지 않음
+  const alignValue = extraImageAlignInput?.value;
+  if (["center", "right"].includes(alignValue)) {
+    skinData.extraImageAlign = alignValue;
+  } else {
+    delete skinData.extraImageAlign;
   }
 
   if (getSkinPostFields(skin).length || typeof skin.buildSkinData === "function") {
