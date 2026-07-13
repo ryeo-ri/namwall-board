@@ -8,15 +8,19 @@ const HEADER_FONT_LINK_ID = "archiveHeaderFontLink";
 const BOOTSTRAP_FLAG = "archive_bootstrapped_v1";
 let appliedSiteTitleAsDocumentTitle = false;
 
-// 첫 실행 게이트: 설정(첫 관리자)이 끝나기 전이면 공개 페이지 → /setup.html
+// 첫 실행 게이트: 첫 관리자 등록 전(미설치)이면 공개 페이지 → /setup.html
 // 판정 순서:
-//  1) site_settings/main 존재 → 이미 운영 중(옛 규칙에서도 공개 읽기 가능) → 통과
+//  1) site_settings/main 존재 → 이미 운영 중(옛 규칙에서도 공개 읽기) → 통과
 //  2) main 없음 + bootstrap 표식 존재 → 마법사 직후(홈 설정 전) → 통과
-//  3) 둘 다 없음(읽기 성공) → 확정적 미설정 → /setup.html
-//  4) 읽기 오류(연결/규칙 불확정) → 리다이렉트 없이 그대로 진행(운영 사이트 보호)
-// 이렇게 하면 운영 중 사이트는 실패하는 읽기 없이 첫 판정에서 바로 통과한다.
+//  3) 둘 다 없음(읽기 성공) → 미설치 → /setup.html
+//  4) 읽기 오류 → 미설치/미설정 프로젝트로 간주 → /setup.html
+//     (운영 사이트의 main은 옛 규칙에서도 공개 읽기라 이 경로로 오지 않음 → 안전)
 function cacheBootstrapped() {
   try { localStorage.setItem(BOOTSTRAP_FLAG, "1"); } catch (_error) { /* ignore */ }
+}
+function goToSetup() {
+  if (!location.pathname.endsWith("/setup.html")) location.replace("/setup.html");
+  return false;
 }
 async function ensureBootstrapped() {
   try {
@@ -31,10 +35,11 @@ async function ensureBootstrapped() {
     const bootSnap = await getDoc(doc(db, "site_settings", "bootstrap"));
     if (bootSnap.exists()) { cacheBootstrapped(); return true; }
 
-    location.replace("/setup.html");
-    return false;
+    return goToSetup();
   } catch (_error) {
-    return true;
+    // main조차 읽지 못함 = 규칙 미배포/잠금(갓 만든 프로젝트) 또는 잘못된 설정
+    // → 설정 마법사로 유도 (연결 진단 안내 표시)
+    return goToSetup();
   }
 }
 
