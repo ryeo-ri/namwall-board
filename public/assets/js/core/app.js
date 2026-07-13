@@ -19,7 +19,7 @@ function cacheBootstrapped() {
   try { localStorage.setItem(BOOTSTRAP_FLAG, "1"); } catch (_error) { /* ignore */ }
 }
 function goToSetup() {
-  if (!location.pathname.endsWith("/setup.html")) location.replace("/setup.html");
+  if (!location.pathname.endsWith("/setup.html")) location.replace("setup.html");
   return false;
 }
 async function ensureBootstrapped() {
@@ -49,7 +49,7 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 document.getElementById("quickSearchBtn")?.addEventListener("click", () => {
   const tag = (document.getElementById("quickTag")?.value || "").trim();
   if (!tag) return;
-  location.href = `/search.html?tag=${encodeURIComponent(tag)}`;
+  location.href = `search.html?tag=${encodeURIComponent(tag)}`;
 });
 
 // 설정 완료 확인 후에만 헤더/디자인을 그린다 (미설정이면 setup.html로 이동)

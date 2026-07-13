@@ -1546,7 +1546,7 @@ async function savePost() {
 
     await uploadSelectedImages(getSelectedBoard()?.id || preselectBoardId || "board");
     const payload = await buildPayload();
-    const nextLocation = `/board.html?bo=${encodeURIComponent(payload.boardId)}`;
+    const nextLocation = `board.html?bo=${encodeURIComponent(payload.boardId)}`;
 
     if (!authState.isAdmin) {
       const refDoc = await createGuestPost(payload);

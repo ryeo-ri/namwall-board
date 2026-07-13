@@ -248,7 +248,7 @@ async function loadBoard() {
       currentSkin = await getSkin("BOARD");
     }
     if (currentSkin?.type === "PAGE") {
-      location.replace(`/page.html?bo=${encodeURIComponent(currentBoard.id || boardId)}`);
+      location.replace(`page.html?bo=${encodeURIComponent(currentBoard.id || boardId)}`);
       return;
     }
     applyBoardWidth(currentBoard);
@@ -263,7 +263,7 @@ async function loadBoard() {
       if (currentSkin?.type === "GUESTBOOK") {
         writeBtn.style.display = "none";
       } else {
-        writeBtn.href = `/write.html?bo=${encodeURIComponent(boardId)}`;
+        writeBtn.href = `write.html?bo=${encodeURIComponent(boardId)}`;
         await bindWriteButton(writeBtn);
       }
     }
@@ -294,7 +294,7 @@ async function loadBoard() {
       `<div class="notice">
         <div>게시판을 불러오지 못했습니다.${message}</div>
         <div class="actionRow" style="margin-top:8px;">
-          <a class="btn" href="/admin/login.html">로그인</a>
+          <a class="btn" href="admin/login.html">로그인</a>
           <button class="btn" type="button" onclick="location.reload()">다시 시도</button>
         </div>
       </div>`;
@@ -639,7 +639,7 @@ async function renderSinglePageBoard(contentEl, auth = {}) {
   contentEl.innerHTML = `
     <div class="notice page-empty-notice">
       <div>연결된 PAGE가 아직 없습니다.</div>
-      ${canWrite ? `<div class="actionRow" style="margin-top:8px;"><a class="btn primary" href="/admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}">페이지 작성</a></div>` : ""}
+      ${canWrite ? `<div class="actionRow" style="margin-top:8px;"><a class="btn primary" href="admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}">페이지 작성</a></div>` : ""}
     </div>
   `;
   await renderBoardAdminToolsCompact(currentSkin);
@@ -877,7 +877,7 @@ async function renderBoardAdminToolsUnified(skin) {
   const currentCount = currentPosts.length;
   const selectedCount = Array.from(selectedIds).filter((postId) => currentPosts.some((post) => post.id === postId)).length;
   const prefix = isBoard ? "board" : isGallery ? "gallery" : "log";
-  const boardEditUrl = `/admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}`;
+  const boardEditUrl = `admin/boards.html?boardId=${encodeURIComponent(currentBoard?.id || boardId)}`;
 
   boardAdminToolsEl.innerHTML = `
     <div class="board-admin-tools">

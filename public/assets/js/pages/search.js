@@ -59,7 +59,7 @@ async function runSearch() {
   const next = new URLSearchParams();
   if (queryText) next.set("q", queryText);
   if (tagFilter) next.set("tag", tagInput.value.trim());
-  history.replaceState(null, "", `/search.html?${next.toString()}`);
+  history.replaceState(null, "", `search.html?${next.toString()}`);
 
   try {
     const auth = await getAuthSnapshot();
@@ -109,7 +109,7 @@ async function runSearch() {
       const title = escapeHtml(post.title || skinData.logNo || post.logNo || post.contentText || "(제목 없음)");
       const content = (post.contentText || post.contentHtml || post.commentHtml || post.comment || "").replace(/<[^>]*>/g, " ");
       const excerpt = escapeHtml(content.length > 200 ? `${content.substring(0, 200)}...` : content);
-      const tagsHtml = (post.tags || []).map((t) => `<a class="tag" href="/search.html?q=${encodeURIComponent(t)}&tag=${encodeURIComponent(t)}">${escapeHtml(t)}</a>`).join("");
+      const tagsHtml = (post.tags || []).map((t) => `<a class="tag" href="search.html?q=${encodeURIComponent(t)}&tag=${encodeURIComponent(t)}">${escapeHtml(t)}</a>`).join("");
       const cover = getPostCoverMedia(post);
       const hasVideoCover = cover.mode === "video" && cover.embedHtml;
       const thumbUrl = cover.imageUrl || "";
@@ -123,7 +123,7 @@ async function runSearch() {
               <span>${escapeHtml(metaDate)}</span>
               <span>${escapeHtml(boardName)}${logLabel}</span>
             </div>
-            <a href="/view.html?id=${post.id}&bo=${encodeURIComponent(boardId)}" class="search-title">${title}</a>
+            <a href="view.html?id=${post.id}&bo=${encodeURIComponent(boardId)}" class="search-title">${title}</a>
             ${excerpt ? `<p class="search-excerpt">${excerpt}</p>` : ""}
             ${tagsHtml ? `<div class="search-tags">${tagsHtml}</div>` : ""}
           </div>
@@ -132,7 +132,7 @@ async function runSearch() {
               ${renderPostVideoFrame(cover.embedHtml, "search-thumb-video-frame")}
             </div>
           ` : thumbUrl ? `
-            <a class="search-thumb" href="/view.html?id=${post.id}&bo=${encodeURIComponent(boardId)}" aria-label="${title}">
+            <a class="search-thumb" href="view.html?id=${post.id}&bo=${encodeURIComponent(boardId)}" aria-label="${title}">
               <img src="${escapeHtml(thumbUrl)}" alt="${title}" loading="lazy">
             </a>
           ` : ""}

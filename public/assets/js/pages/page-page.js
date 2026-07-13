@@ -100,7 +100,7 @@ async function loadPage() {
 
     const board = { id: boardSnap.id, ...boardSnap.data() };
     if (resolveBoardSkinType(board) !== "PAGE") {
-      location.replace(`/board.html?bo=${encodeURIComponent(board.id)}`);
+      location.replace(`board.html?bo=${encodeURIComponent(board.id)}`);
       return;
     }
 
@@ -118,7 +118,7 @@ async function loadPage() {
     const pageData = board.pageData && typeof board.pageData === "object" ? board.pageData : null;
     if (!pageData?.html && !pageData?.iframeUrl) {
       const adminLink = auth?.isAdmin
-        ? `<div class="actionRow" style="margin-top:8px;"><a class="btn primary" href="/admin/boards.html?boardId=${encodeURIComponent(board.id)}">페이지 작성</a></div>`
+        ? `<div class="actionRow" style="margin-top:8px;"><a class="btn primary" href="admin/boards.html?boardId=${encodeURIComponent(board.id)}">페이지 작성</a></div>`
         : "";
       renderNotice(`
         <div class="notice page-empty-notice">

@@ -3,17 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
   <title>게시판</title>
   <link rel="preconnect" href="https://r2.naru.pub">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-  <link rel="modulepreload" href="/assets/js/core/app.js">
-  <link rel="modulepreload" href="/assets/js/core/firebase.js">
-  <link rel="modulepreload" href="/assets/js/core/state.js">
-  <link rel="modulepreload" href="/assets/js/shared/boards-render.js">
-  <link rel="modulepreload" href="/assets/js/skins/registry.js">
-  <link rel="modulepreload" href="/assets/js/pages/board-page.js">
-  <link rel="stylesheet" href="/assets/css/app.css">
+  <link rel="modulepreload" href="assets/js/core/app.js">
+  <link rel="modulepreload" href="assets/js/core/firebase.js">
+  <link rel="modulepreload" href="assets/js/core/state.js">
+  <link rel="modulepreload" href="assets/js/shared/boards-render.js">
+  <link rel="modulepreload" href="assets/js/skins/registry.js">
+  <link rel="modulepreload" href="assets/js/pages/board-page.js">
+  <link rel="stylesheet" href="assets/css/app.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -22,7 +23,7 @@
   <div class="header">
     <div class="container">
       <div class="row">
-        <a class="brand" href="/index.html">
+        <a class="brand" href="index.html">
           <span class="dot"></span><span id="siteTitle"></span>
         </a>
         <nav class="nav" id="topNav">
@@ -39,7 +40,7 @@
           <p class="muted small" id="boardDescription"></p>
         </div>
         <div class="board-actions">
-          <a class="btn primary" href="/write.html" id="writeBtn">WRITE</a>
+          <a class="btn primary" href="write.html" id="writeBtn">WRITE</a>
           <div id="boardAdminTools" class="hidden"></div>
         </div>
       </div>
@@ -63,7 +64,7 @@
     </div>
   </div>
 
-  <script type="module" src="/assets/js/core/app.js"></script>
-  <script type="module" src="/assets/js/pages/board-page.js"></script>
+  <script type="module" src="assets/js/core/app.js"></script>
+  <script type="module" src="assets/js/pages/board-page.js"></script>
 </body>
 </html>

@@ -177,8 +177,8 @@ export async function renderTopNav(navEl) {
 function getBoardMenuHref(board = {}) {
   const boardId = encodeURIComponent(board.id || "");
   return resolveBoardSkinType(board) === "PAGE"
-    ? `/page.html?bo=${boardId}`
-    : `/board.html?bo=${boardId}`;
+    ? `page.html?bo=${boardId}`
+    : `board.html?bo=${boardId}`;
 }
 
 function escapeHtml(text) {

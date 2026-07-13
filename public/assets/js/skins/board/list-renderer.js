@@ -11,7 +11,7 @@ export function renderBoardList(posts, board = {}, options = {}) {
       ${posts.map((post) => {
         const title = escapeHtml(post.title || "(제목 없음)");
         const dateStr = toDate(post.createdAt).toLocaleDateString("ko-KR");
-        const boardUrl = `/view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
+        const boardUrl = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
         const postId = String(post.id || "");
         const isSelected = selectedPostIds.has(postId);
 

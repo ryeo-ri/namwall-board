@@ -153,12 +153,12 @@ export async function getAuthSnapshot() {
 export async function ensureAdminPageAccess() {
   const state = await getAuthSnapshot();
   if (!state.user) {
-    location.href = "/admin/login.html";
+    location.href = "admin/login.html";
     return { ok: false, reason: "not-logged-in" };
   }
   if (!state.isAdmin) {
     await signOut(auth);
-    location.href = "/admin/login.html";
+    location.href = "admin/login.html";
     return { ok: false, reason: "not-admin" };
   }
   return { ok: true, user: state.user };

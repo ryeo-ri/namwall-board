@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
   <title>관리자 로그인</title>
   <link rel="preconnect" href="https://r2.naru.pub">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-  <link rel="modulepreload" href="/assets/js/core/firebase.js">
-  <link rel="modulepreload" href="/assets/js/core/state.js">
-  <link rel="modulepreload" href="/assets/js/admin/login-page.js">
-  <link rel="stylesheet" href="/assets/css/app.css">
+  <link rel="modulepreload" href="assets/js/core/firebase.js">
+  <link rel="modulepreload" href="assets/js/core/state.js">
+  <link rel="modulepreload" href="assets/js/admin/login-page.js">
+  <link rel="stylesheet" href="assets/css/app.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -39,12 +40,12 @@
       <div class="formRow mt-md admin-login-actions">
         <button class="btn primary" id="adminLoginBtn">로그인</button>
         <button class="btn" id="adminLogoutBtn">로그아웃</button>
-        <a class="btn" href="/index.html">홈</a>
+        <a class="btn" href="index.html">홈</a>
       </div>
       <div id="adminMsg" class="notice hidden mt-md"></div>
     </section>
   </main>
 
-  <script type="module" src="/assets/js/admin/login-page.js"></script>
+  <script type="module" src="assets/js/admin/login-page.js"></script>
 </body>
 </html>

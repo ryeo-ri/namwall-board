@@ -696,7 +696,7 @@ function createCommentNamedLink(label = "", rawUrl = "", fallbackText = "") {
 
 function createCommentLogLink(logNo = "", boardId = "") {
   const link = document.createElement("a");
-  link.href = `/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
+  link.href = `board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
   link.className = "log-tag comment-log-tag";
   link.textContent = String(logNo);
   return link;

@@ -38,7 +38,7 @@ function showMsg(text, isError = false) {
   msgEl.textContent = text;
 }
 
-function markBootstrappedAndGoHome(target = "/admin/index.html") {
+function markBootstrappedAndGoHome(target = "admin/index.html") {
   try { localStorage.setItem(BOOTSTRAP_FLAG, "1"); } catch (_error) { /* ignore */ }
   location.replace(target);
 }
@@ -49,7 +49,7 @@ async function checkConnection() {
     if (snap.exists()) {
       setConn("ok", "이미 설정이 완료된 사이트입니다.");
       showMsg("설정이 이미 끝났습니다. 홈으로 이동합니다.");
-      setTimeout(() => markBootstrappedAndGoHome("/"), 1200);
+      setTimeout(() => markBootstrappedAndGoHome("index.html"), 1200);
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
@@ -80,7 +80,7 @@ async function submitSetup() {
     const existing = await getDoc(bootstrapRef);
     if (existing.exists()) {
       showMsg("이미 설정이 완료되었습니다. 홈으로 이동합니다.");
-      setTimeout(() => markBootstrappedAndGoHome("/"), 1000);
+      setTimeout(() => markBootstrappedAndGoHome("index.html"), 1000);
       return;
     }
 
@@ -110,7 +110,7 @@ async function submitSetup() {
     });
 
     showMsg("설정 완료! 관리자 대시보드로 이동합니다.");
-    setTimeout(() => markBootstrappedAndGoHome("/admin/index.html"), 900);
+    setTimeout(() => markBootstrappedAndGoHome("admin/index.html"), 900);
   } catch (error) {
     console.error("setup failed:", error);
     showMsg(mapSetupError(error), true);

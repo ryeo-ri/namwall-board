@@ -38,7 +38,7 @@ export function renderProfileView(post = {}, board = {}, options = {}) {
   const tagChips = (post.tags || [])
     .map((tag) => String(tag || "").trim())
     .filter(Boolean)
-    .map((tag) => `<a class="tag" href="/search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`)
+    .map((tag) => `<a class="tag" href="search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`)
     .join("");
   const namecardPhoto = profile.headImage
     ? `<button type="button" class="profile-namecard-photo profile-namecard-photo-button" onclick="openLightbox('${escapeJsString(profile.headImage)}')" aria-label="${escapeHtml(`${title} 두상 원본 보기`)}"><img src="${escapeHtml(profile.headImage)}" alt="${escapeHtml(`${title} 두상`)}" loading="lazy"></button>`
@@ -129,7 +129,7 @@ function renderProfileCard(post, board, options) {
   const profile = normalizeProfile(post);
   const title = profile.nameKo || post.title || "(이름 없음)";
   const titleHtml = escapeHtml(title);
-  const boardUrl = `/view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
+  const boardUrl = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}`;
   const mediaHtml = renderProfileCardMedia(post, title);
   const postId = String(post.id || "");
   const safePostId = escapeHtml(postId);

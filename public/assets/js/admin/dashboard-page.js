@@ -16,7 +16,7 @@ async function init() {
 
 document.getElementById("logoutBtn")?.addEventListener("click", async () => {
   await logoutAdmin();
-  location.href = "/admin/login.html";
+  location.href = "admin/login.html";
 });
 
 init();

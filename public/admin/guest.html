@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
 <title>게스트 코드 관리</title>
 <link rel="preconnect" href="https://r2.naru.pub">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-<link rel="modulepreload" href="/assets/js/core/firebase.js">
-<link rel="modulepreload" href="/assets/js/core/state.js">
-<link rel="modulepreload" href="/assets/js/admin/guest-page.js">
-<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="modulepreload" href="assets/js/core/firebase.js">
+<link rel="modulepreload" href="assets/js/core/state.js">
+<link rel="modulepreload" href="assets/js/admin/guest-page.js">
+<link rel="stylesheet" href="assets/css/app.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -29,12 +30,12 @@
       </div>
       <div class="formRow mt-sm">
         <button class="btn primary" id="saveGuestCodeBtn">코드 갱신</button>
-        <a class="btn" href="/admin/index.html">대시보드</a>
+        <a class="btn" href="admin/index.html">대시보드</a>
       </div>
       <div id="guestMsg" class="notice hidden mt-sm"></div>
     </section>
   </main>
 
-  <script type="module" src="/assets/js/admin/guest-page.js"></script>
+  <script type="module" src="assets/js/admin/guest-page.js"></script>
 </body>
 </html>

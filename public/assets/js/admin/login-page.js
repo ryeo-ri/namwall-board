@@ -32,7 +32,7 @@ async function onLogin() {
     }
 
     showMsg("관리자 로그인 성공");
-    location.href = "/admin/index.html";
+    location.href = "admin/index.html";
   } catch (error) {
     showMsg(`로그인 실패: ${error.message}`, true);
   }
@@ -52,7 +52,7 @@ document.getElementById("adminPassword")?.addEventListener("keydown", (e) => {
 (async () => {
   const state = await getAuthSnapshot();
   if (state.isAdmin) {
-    location.href = "/admin/index.html";
+    location.href = "admin/index.html";
     return;
   }
   showMsg("관리자 계정으로 로그인하세요.");

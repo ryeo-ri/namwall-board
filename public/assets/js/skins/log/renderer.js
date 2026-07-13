@@ -77,13 +77,13 @@ function renderLogEntry(post, board, options = {}) {
   const sanitizedComment = sanitizeHTML(commentHtml, { allowIframes: true });
   const commentWithLinks = enhanceLogCommentLinks(sanitizedComment, board.id);
   const tagChips = tags.length
-    ? `<div class="log-tags log-tags-chips">${tags.map((tag) => `<a href="/search.html?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join("")}</div>`
+    ? `<div class="log-tags log-tags-chips">${tags.map((tag) => `<a href="search.html?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join("")}</div>`
     : "";
 
   const title = escapeHtml(deriveLogTitle(post, commentHtml, logNumber, dateStr));
   const commentsContainerId = `comments-${post.id}`;
   const isSelected = selectedPostIds.has(post.id);
-  const boardUrl = `/view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
+  const boardUrl = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
   const hideCover = post.isSecret && !isAdmin && !unlockedSecretPostIds.has(post.id);
   const hasMedia = Boolean(hideCover || (cover.mode === "video" && cover.embedHtml) || cover.imageUrl);
   const bodyPlain = String(sanitizedComment || "").replace(/<[^>]*>/g, "").replace(/ /g, " ").trim();
@@ -167,7 +167,7 @@ function renderLogEntry(post, board, options = {}) {
           ${metaHtml}
           ${deleteMode ? `
             <div class="log-manage-actions">
-              <a class="log-manage-button log-edit-button" href="/write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board.id || "log")}" aria-label="게시물 수정">수정</a>
+              <a class="log-manage-button log-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId || board.id || "log")}" aria-label="게시물 수정">수정</a>
               <button type="button" class="log-manage-button log-delete-button" data-log-delete="${escapeHtml(post.id)}" aria-label="게시물 삭제">삭제</button>
             </div>
           ` : ""}
@@ -223,7 +223,7 @@ function renderHeroImage(imageUrl, title) {
 
 function renderLogMeta(logNumber, boardId) {
   if (!logNumber) return "";
-  return `<a href="/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(String(logNumber))}" class="log-number">${escapeHtml(String(logNumber))}</a>`;
+  return `<a href="board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(String(logNumber))}" class="log-number">${escapeHtml(String(logNumber))}</a>`;
 }
 
 function renderInlineAttachment(attachment) {
@@ -339,7 +339,7 @@ function createNamedLogLink(label = "", rawUrl = "", fallbackText = "") {
 
 function createLogNumberLink(logNo = "", boardId = "") {
   const link = document.createElement("a");
-  link.href = `/board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
+  link.href = `board.html?bo=${encodeURIComponent(boardId)}&log=${encodeURIComponent(logNo)}`;
   link.className = "log-tag";
   link.textContent = String(logNo);
   return link;

@@ -31,8 +31,8 @@ export function renderAdminOnlyBoardNotice(boardTitle = "") {
       ${safeTitle ? `<p class="muted small board-access-denied-board-title">${escapeHtml(safeTitle)}</p>` : ""}
       <p class="muted">이 게시판은 관리자 로그인 후에만 볼 수 있습니다.</p>
       <div class="formRow board-access-denied-actions mt-md">
-        <a class="btn primary" href="/admin/login.html">관리자 로그인</a>
-        <a class="btn" href="/index.html">홈으로</a>
+        <a class="btn primary" href="admin/login.html">관리자 로그인</a>
+        <a class="btn" href="index.html">홈으로</a>
       </div>
     </section>
   `;

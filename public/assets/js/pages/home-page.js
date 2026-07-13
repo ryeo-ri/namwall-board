@@ -83,7 +83,7 @@ export async function renderQuickMenu() {
 
   if (auth.isAdmin) {
     container.innerHTML = `
-      <a class="btn primary" href="/admin/index.html">관리자 대시보드</a>
+      <a class="btn primary" href="admin/index.html">관리자 대시보드</a>
       <button type="button" class="btn" id="homeAdminLogoutBtn">관리자 로그아웃</button>
     `;
     document.getElementById("homeAdminLogoutBtn")?.addEventListener("click", async () => {
@@ -98,7 +98,7 @@ export async function renderQuickMenu() {
   if (guestUnlocked) {
     container.innerHTML = `
       <button type="button" class="btn" id="homeGuestStatusBtn" disabled aria-disabled="true">게스트 접속중</button>
-      <a class="btn" href="/admin/login.html">관리자 로그인</a>
+      <a class="btn" href="admin/login.html">관리자 로그인</a>
     `;
     await syncHomeStatus();
     return;
@@ -112,7 +112,7 @@ export async function renderQuickMenu() {
       </div>
       <div class="notice small hidden mt-sm" id="homeGuestMsg"></div>
     </div>
-    <a class="btn" href="/admin/login.html">관리자 로그인</a>
+    <a class="btn" href="admin/login.html">관리자 로그인</a>
   `;
 
   const guestBtn = document.getElementById("homeGuestLoginBtn");
@@ -264,7 +264,7 @@ export async function loadRecentUpdates() {
       const boardName = boardTitleMap.get(boardId.toLowerCase()) || boardId || "게시판";
       const dateSource = getRecentDateValue(post);
       const dateStr = dateSource ? dateSource.toLocaleDateString("ko-KR") : "";
-      const boardUrl = `/board.html?bo=${encodeURIComponent(boardId || "board")}`;
+      const boardUrl = `board.html?bo=${encodeURIComponent(boardId || "board")}`;
 
       return `
         <a href="${boardUrl}" class="recent-item recent-update-item">
@@ -310,7 +310,7 @@ export async function loadRecentTags() {
     }
 
     const tagsHTML = topTags
-      .map((tag) => `<a href="/search.html?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`)
+      .map((tag) => `<a href="search.html?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`)
       .join("");
 
     container.innerHTML = `<div class="tags-list">${tagsHTML}</div>`;

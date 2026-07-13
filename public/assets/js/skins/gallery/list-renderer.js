@@ -40,7 +40,7 @@ export function renderGalleryList(posts, board, options = {}) {
                         <span class="gallery-delete-date">${escapeHtml(dateStr)}</span>
                       </div>
                       <div class="gallery-manage-actions">
-                        <a class="gallery-manage-button gallery-edit-button" href="/write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
+                        <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
                         <button type="button" class="gallery-manage-button gallery-delete-button" data-gallery-delete="${postId}" aria-label="게시물 삭제">삭제</button>
                       </div>
                     </div>
@@ -74,7 +74,7 @@ export function renderGalleryList(posts, board, options = {}) {
                         <span class="gallery-delete-date">${escapeHtml(dateStr)}</span>
                       </div>
                       <div class="gallery-manage-actions">
-                        <a class="gallery-manage-button gallery-edit-button" href="/write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
+                        <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
                         <button type="button" class="gallery-manage-button gallery-delete-button" data-gallery-delete="${postId}" aria-label="게시물 삭제">삭제</button>
                       </div>
                     </div>
@@ -101,7 +101,7 @@ export function renderGalleryList(posts, board, options = {}) {
                           <span class="gallery-delete-date">${escapeHtml(dateStr)}</span>
                         </div>
                         <div class="gallery-manage-actions">
-                          <a class="gallery-manage-button gallery-edit-button" href="/write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
+                          <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
                           <button type="button" class="gallery-manage-button gallery-delete-button" data-gallery-delete="${postId}" aria-label="게시물 삭제">삭제</button>
                         </div>
                       </div>

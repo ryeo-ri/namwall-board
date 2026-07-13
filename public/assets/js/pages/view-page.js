@@ -139,7 +139,7 @@ function renderBoardAccessDeniedPage(board = {}, fallbackBoardId = "") {
   const mainEl = document.querySelector("main.container");
   const viewNavEl = document.getElementById("viewNav");
   if (viewNavEl) {
-    viewNavEl.innerHTML = `<a href="/admin/login.html">관리자 로그인</a>`;
+    viewNavEl.innerHTML = `<a href="admin/login.html">관리자 로그인</a>`;
   }
   if (!mainEl) return;
 
@@ -191,14 +191,14 @@ async function loadPage() {
       if (boardSnap.exists()) {
         board = { id: boardSnap.id, ...boardSnap.data() };
       }
-      document.getElementById("viewNav").innerHTML = `<a href="/board.html?bo=${encodeURIComponent(boardId)}">목록으로</a>`;
+      document.getElementById("viewNav").innerHTML = `<a href="board.html?bo=${encodeURIComponent(boardId)}">목록으로</a>`;
     } catch (boardError) {
       const permissionDenied = boardError?.code === "permission-denied" || /permission/i.test(boardError?.message || "");
       if (permissionDenied) {
         renderBoardAccessDeniedPage({ title: boardId }, boardId);
         return;
       }
-      document.getElementById("viewNav").innerHTML = `<a href="/board.html?bo=${encodeURIComponent(boardId)}">목록으로</a>`;
+      document.getElementById("viewNav").innerHTML = `<a href="board.html?bo=${encodeURIComponent(boardId)}">목록으로</a>`;
     }
 
     const auth = await getAuthSnapshot();
@@ -220,7 +220,7 @@ async function loadPage() {
     renderAdminTools(auth, post, boardId);
     const secretUnlocked = await unlockSecretIfNeeded(post, auth.isAdmin);
     if (skin?.type === "BOARD" && post.isSecret && !secretUnlocked) {
-      location.replace(`/board.html?bo=${encodeURIComponent(boardId)}`);
+      location.replace(`board.html?bo=${encodeURIComponent(boardId)}`);
       return;
     }
     const skinData = getPostSkinData(post);
@@ -234,10 +234,10 @@ async function loadPage() {
     document.getElementById("viewMeta").innerHTML = `
       <span class="view-meta-date">${escapeHtml(dateToString(post.createdAt) || "날짜 없음")}</span>
       <span class="view-meta-dot">·</span>
-      <a class="view-meta-board" href="/board.html?bo=${encodeURIComponent(boardId)}">${escapeHtml(boardLabel)}</a>
+      <a class="view-meta-board" href="board.html?bo=${encodeURIComponent(boardId)}">${escapeHtml(boardLabel)}</a>
     `;
 
-    const tags = (post.tags || []).map((tag) => `<a class="tag" href="/search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`).join("");
+    const tags = (post.tags || []).map((tag) => `<a class="tag" href="search.html?tag=${encodeURIComponent(tag)}">${escapeHtml(tag)}</a>`).join("");
     document.getElementById("viewTags").innerHTML = tags;
 
     if (typeof skin?.renderDetail === "function") {
@@ -303,7 +303,7 @@ async function loadPage() {
       ? `
         <div class="notice">
           <div>비공개 게시물은 관리자만 볼 수 있습니다.</div>
-          <div class="mt-sm"><a class="btn" href="/admin/login.html">로그인</a></div>
+          <div class="mt-sm"><a class="btn" href="admin/login.html">로그인</a></div>
         </div>
       `
       : '<div class="notice">게시물을 불러오는 중 오류가 발생했습니다.</div>';
@@ -321,7 +321,7 @@ function renderAdminTools(auth, post, boardId) {
 
   viewAdminToolsEl.classList.remove("hidden");
   viewAdminToolsEl.innerHTML = `
-    <a class="view-meta-action" href="/write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="게시물 수정">수정</a>
+    <a class="view-meta-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="게시물 수정">수정</a>
     <button type="button" class="view-meta-action" id="deleteViewPostBtn" aria-label="게시물 삭제">삭제</button>
   `;
 
@@ -331,7 +331,7 @@ function renderAdminTools(auth, post, boardId) {
 
     try {
       await deletePostsByIds([post.id]);
-      location.href = `/board.html?bo=${encodeURIComponent(boardId)}`;
+      location.href = `board.html?bo=${encodeURIComponent(boardId)}`;
     } catch (error) {
       console.error("Failed to delete post from view page:", error);
       window.alert(error.message || "게시물 삭제 중 오류가 발생했습니다.");

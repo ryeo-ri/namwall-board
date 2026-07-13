@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
 <title>관리자 프로필</title>
 <link rel="preconnect" href="https://r2.naru.pub">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-<link rel="modulepreload" href="/assets/js/core/firebase.js">
-<link rel="modulepreload" href="/assets/js/core/state.js">
-<link rel="modulepreload" href="/assets/js/admin/admins-page.js">
-<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="modulepreload" href="assets/js/core/firebase.js">
+<link rel="modulepreload" href="assets/js/core/state.js">
+<link rel="modulepreload" href="assets/js/admin/admins-page.js">
+<link rel="stylesheet" href="assets/css/app.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -26,7 +27,7 @@
           <li>Firebase Console에서 <strong>Authentication → Users</strong>로 이동해 <strong>사용자 추가</strong>(이메일·비밀번호)로 계정을 만듭니다.</li>
           <li>생성된 계정의 <strong>UID</strong>를 복사합니다.</li>
           <li>아래 폼에 <strong>UID·닉네임</strong>을 입력하고 <strong>관리자 프로필 저장</strong>을 누르면 <code>admin_users</code> 문서가 생성되어 관리자 권한이 부여됩니다.</li>
-          <li>그 계정으로 <a href="/admin/login.html">관리자 로그인</a> 하면 됩니다.</li>
+          <li>그 계정으로 <a href="admin/login.html">관리자 로그인</a> 하면 됩니다.</li>
         </ol>
         <a class="btn" id="authConsoleLink" href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console 열기</a>
       </details>
@@ -44,11 +45,11 @@
       <div id="adminProfileMsg" class="notice hidden mt-sm"></div>
       <div id="adminsList" class="grid tight mt-sm"></div>
       <div class="formRow mt-sm">
-        <a class="btn" href="/admin/index.html">대시보드</a>
+        <a class="btn" href="admin/index.html">대시보드</a>
       </div>
     </section>
   </main>
 
-  <script type="module" src="/assets/js/admin/admins-page.js"></script>
+  <script type="module" src="assets/js/admin/admins-page.js"></script>
 </body>
 </html>
