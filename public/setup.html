@@ -54,16 +54,17 @@
             </ul>
           </li>
           <li><strong>보안 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
+          <li>
+            <strong>설정 → 일반 → 내 앱 → 웹 앱에 Firebase 추가</strong>
+            <ul class="setup-substeps">
+              <li>웹 앱의 이름은 자유롭게 등록.</li>
+              <li><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</li>
+            </ul>
+          </li>
         </ol>
 
         <div class="setup-config-guide mt-md">
-          <p class="setup-lead"><strong>프로젝트 설정 → 웹 앱 추가</strong>에서 나오는 <code>firebaseConfig</code>를 복사</p>
-          <ul class="setup-substeps">
-            <li><strong>설정 → 일반 → 내 앱 → 웹 앱에 Firebase 추가</strong></li>
-            <li>웹 앱의 이름은 자유롭게 등록.</li>
-            <li><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</li>
-          </ul>
-          <p class="setup-lead mt-sm">파일 중 <code>assets/js/core/firebase.js</code> 수정.</p>
+          <p class="setup-lead">파일 중 <code>assets/js/core/firebase.js</code> 수정.</p>
           <pre class="setup-code">const firebaseConfig = {
   apiKey:
   authDomain:
