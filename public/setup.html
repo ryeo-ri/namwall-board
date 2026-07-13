@@ -28,26 +28,54 @@
       <div class="settings-block mt-md">
         <div class="settings-block-head">
           <strong>1. Firebase 준비</strong>
-          <span class="muted small">콘솔에서 클릭만</span>
+          <a class="btn small" href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase 콘솔 바로가기</a>
         </div>
+
+        <p class="setup-lead"><strong>새 프로젝트 만들기</strong> → 프로젝트 이름 입력 → <strong>프로젝트 생성</strong></p>
+        <p class="setup-lead muted">좌측메뉴에서 설정해야 할 것이 3가지 있습니다.</p>
+
         <ol class="setup-steps">
-          <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase 콘솔</a>에서 <strong>프로젝트 생성</strong></li>
-          <li><strong>빌드 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
           <li>
-            <strong>빌드 → Firestore Database</strong> → <strong>데이터베이스 만들기</strong>
+            <strong>데이터베이스 및 스토리지 → Firestore → 데이터베이스 만들기</strong>
             <ul class="setup-substeps">
-              <li><strong>위치(리전)</strong>: <code>asia-northeast3 (서울)</code> 선택 — 한국 이용자면 서울이 가장 빠릅니다. <em>한 번 정하면 변경할 수 없으니</em> 서울로 지정하세요.</li>
-              <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 5단계에서 붙여넣습니다). "테스트 모드"는 30일 뒤 자동으로 잠기므로 권장하지 않습니다.</li>
+              <li><strong>위치(리전)</strong>: <code>asia-northeast3 (서울)</code> 선택 — 다른 지역을 선택하여도 괜찮으나 가까운 지역으로 하는 것이 좋습니다. <em>한 번 정하면 변경할 수 없으니 주의.</em></li>
+              <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 아래에서 붙여넣습니다). "테스트 모드"는 30일 뒤 자동으로 잠기므로 권장하지 않음.</li>
               <li><strong>만들기</strong>를 눌러 완료합니다.</li>
+              <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
             </ul>
           </li>
-          <li><strong>빌드 → Storage</strong> → 시작하기 (위치는 Firestore와 동일하게 서울)</li>
-          <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>. <strong>Storage → 규칙</strong>도 <code>storage.rules</code>로 동일하게</li>
-          <li><strong>프로젝트 설정 → 웹 앱 추가</strong>에서 나오는 <code>firebaseConfig</code>를 복사</li>
+          <li>
+            <strong>데이터베이스 및 스토리지 → Storage → 시작하기</strong>
+            <ul class="setup-substeps">
+              <li><strong>모든 위치</strong>: <code>asia-northeast3 (서울)</code></li>
+              <li>해당 위치로 하더라도 무료기준을 넘지 않으면 무료로 이용할 수 있습니다. 개인홈페이지 용도로는 무료범위로 충분히 사용가능합니다!</li>
+              <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택.</li>
+              <li><strong>Storage → 규칙</strong>도 <code>storage.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
+            </ul>
+          </li>
+          <li><strong>보안 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
         </ol>
-        <div class="notice notice-muted setup-config-note">
-          복사한 <code>firebaseConfig</code>를 <code>assets/js/core/firebase.js</code> 상단 값과 교체한 뒤 사이트를 다시 업로드하세요.
-          이 값은 모든 방문자가 공유하므로 브라우저 입력이 아니라 파일에 넣어야 합니다.
+
+        <div class="setup-config-guide mt-md">
+          <p class="setup-lead"><strong>프로젝트 설정 → 웹 앱 추가</strong>에서 나오는 <code>firebaseConfig</code>를 복사</p>
+          <ul class="setup-substeps">
+            <li><strong>설정 → 일반 → 내 앱 → 웹 앱에 Firebase 추가</strong></li>
+            <li>웹 앱의 이름은 자유롭게 등록.</li>
+            <li><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</li>
+          </ul>
+          <p class="setup-lead mt-sm">파일 중 <code>assets/js/core/firebase.js</code> 수정.</p>
+          <pre class="setup-code">const firebaseConfig = {
+  apiKey:
+  authDomain:
+  projectId:
+  storageBucket:
+  messagingSenderId:
+  appId:
+};</pre>
+          <div class="notice setup-config-note">
+            <code>firebaseConfig</code> 값을 복사한 값으로 교체한 뒤 다시 업로드 해주세요.
+            창을 새로고침 하여 하단의 연결 상태를 확인합니다.
+          </div>
         </div>
       </div>
 
