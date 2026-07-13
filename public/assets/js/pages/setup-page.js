@@ -1,7 +1,7 @@
 // 첫 실행 설정 마법사 — 첫 관리자 등록 + bootstrap 표식 기록으로 사이트 활성화.
 // 규칙(firestore.rules)의 admin_users create / site_settings/bootstrap create 예외가
 // bootstrap 표식이 없을 때 최초 1회만 열려 있어 동작한다.
-import { auth, db } from "../core/firebase.js";
+import { auth, db, configMissing } from "../core/firebase.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
@@ -14,7 +14,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const BOOTSTRAP_FLAG = "archive_bootstrapped_v1";
-const bootstrapRef = doc(db, "site_settings", "bootstrap");
+// db가 아직 초기화되지 않았을 수 있으므로(설정 미기입) 참조는 지연 생성
+const getBootstrapRef = () => doc(db, "site_settings", "bootstrap");
 
 const connTextEl = document.getElementById("connText");
 const connDotEl = document.querySelector(".setup-status-dot");
@@ -45,7 +46,7 @@ function markBootstrappedAndGoHome(target = "admin/index.html") {
 
 async function checkConnection() {
   try {
-    const snap = await getDoc(bootstrapRef);
+    const snap = await getDoc(getBootstrapRef());
     if (snap.exists()) {
       setConn("ok", "이미 설정이 완료된 사이트입니다.");
       showMsg("설정이 이미 끝났습니다. 홈으로 이동합니다.");
@@ -77,7 +78,7 @@ async function submitSetup() {
 
   try {
     // 이미 표식이 있으면(경쟁/재방문) 중단
-    const existing = await getDoc(bootstrapRef);
+    const existing = await getDoc(getBootstrapRef());
     if (existing.exists()) {
       showMsg("이미 설정이 완료되었습니다. 홈으로 이동합니다.");
       setTimeout(() => markBootstrappedAndGoHome("index.html"), 1000);
@@ -104,7 +105,7 @@ async function submitSetup() {
       role: "ADMIN",
       createdAt: serverTimestamp()
     });
-    await setDoc(bootstrapRef, {
+    await setDoc(getBootstrapRef(), {
       adminUid: uid,
       initializedAt: serverTimestamp()
     });
@@ -135,4 +136,15 @@ function mapSetupError(error) {
 }
 
 submitBtn?.addEventListener("click", submitSetup);
-checkConnection();
+
+if (configMissing) {
+  // firebaseConfig 미기입: 연결 시도 없이 안내만 표시하고 등록 잠금
+  setConn(
+    "error",
+    "firebaseConfig가 아직 비어 있습니다.",
+    "위 1단계(6번)에서 복사한 <code>firebaseConfig</code>를 <code>assets/js/core/firebase.js</code> 파일에 붙여넣고 사이트를 다시 업로드한 뒤, 이 페이지를 새로고침하세요."
+  );
+  if (submitBtn) submitBtn.disabled = true;
+} else {
+  checkConnection();
+}

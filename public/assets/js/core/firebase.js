@@ -14,7 +14,21 @@ const firebaseConfig = {
   measurementId: "G-4BJLMW6596"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// config 미기입 가드: 값이 비어 있으면 초기화하지 않고 설정 안내(setup.html)로 보낸다.
+export const configMissing = !(firebaseConfig.apiKey && firebaseConfig.projectId);
+
+let app = null;
+let auth = null;
+let db = null;
+let storage = null;
+
+if (!configMissing) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} else if (!location.pathname.endsWith("/setup.html")) {
+  location.replace("setup.html"); // <base> 기준 상대 해석 (서브경로 지원)
+}
+
+export { app, auth, db, storage };
