@@ -83,7 +83,7 @@ function renderEntry(post, { isAdmin, unlockedSecretPostIds }) {
       </div>
       ${bodyBlock}
       <details class="guestbook-comments">
-        <summary class="guestbook-comments-summary">댓글 <span class="guestbook-comments-caret">▽</span></summary>
+        <summary class="guestbook-comments-summary">댓글 <span class="guestbook-comments-caret">▼</span></summary>
         <div id="comments-${id}" class="comments-section"></div>
       </details>
     </article>
@@ -125,7 +125,7 @@ export async function renderGuestbook(posts, board, options = {}) {
         const details = container.closest(".guestbook-comments");
         const summary = details?.querySelector(".guestbook-comments-summary");
         const count = container.querySelectorAll(".comment-item").length;
-        if (summary) summary.innerHTML = `댓글 ${count} <span class="guestbook-comments-caret">▽</span>`;
+        if (summary) summary.innerHTML = `댓글 ${count} <span class="guestbook-comments-caret">▼</span>`;
       });
     })).catch((error) => console.warn("Failed to load guestbook comments:", error));
   }, 60);

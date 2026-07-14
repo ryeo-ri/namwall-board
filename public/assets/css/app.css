@@ -1758,14 +1758,20 @@ body.site-page .board-admin-status.is-error{
 }
 .guestbook-secret-unlock{
   display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 6px;
 }
 .guestbook-secret-input{
+  flex: 0 1 140px;   /* 기본 input flex(1 1 220px) 덮어써 컴팩트하게 */
+  min-width: 0;
   min-height: 30px;
   padding: 4px 8px;
   font-size: 12px;
 }
 .guestbook-secret-submit{
+  flex: 0 0 auto;    /* 확인 버튼은 줄바꿈되지 않게 고정 */
+  white-space: nowrap;
   min-height: 30px;
   padding: 4px 10px;
   font-size: 11px;
