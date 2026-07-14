@@ -227,7 +227,7 @@ body.site-page .header .row{ min-height: 64px; } /* 로드 시 CLS 방지용 내
   justify-content: center;
   gap: 6px;
   box-sizing: border-box;
-  min-height: 24px;   /* 컨트롤 높이 기준: 기본 24px / 컴팩트(.small) 20px */
+  min-height: 26px;   /* 컨트롤 높이 기준: 기본 26px / 컴팩트(.small) 24px */
   padding: 0 10px;
   border-radius: 4px;
   border: 1px solid var(--cream-dk);
@@ -244,7 +244,7 @@ body.site-page .header .row{ min-height: 64px; } /* 로드 시 CLS 방지용 내
   opacity: 0.65;
 }
 .btn.small{
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -664,7 +664,7 @@ textarea.textarea:focus{
   gap: 6px;
 }
 .overlay-modal-input .overlay-actions .btn{
-  min-height: 24px;
+  min-height: 26px;
   min-width: 58px;
   padding: 0 10px;
   border-radius: 0;
@@ -1019,7 +1019,7 @@ body.site-page .comment-admin-actions [data-del-comment]{
 }
 .comment-secret-input{
   width: min(124px, 100%);
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   border: 1px solid var(--line-strong);
   border-radius: 0;
@@ -1030,7 +1030,7 @@ body.site-page .comment-admin-actions [data-del-comment]{
 .comment-secret-submit{
   flex: 0 0 auto;
   min-width: 58px;
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   white-space: nowrap;
   line-height: 1;
@@ -1140,7 +1140,7 @@ body.site-page .board-admin-status.is-error{
 .gallery-secret-input,
 .log-secret-input{
   padding: 0 8px;
-  min-height: 20px;
+  min-height: 24px;
   font-size: 12px;
 }
 .gallery-secret-unlock,
@@ -1153,7 +1153,7 @@ body.site-page .board-admin-status.is-error{
 .log-secret-submit{
   flex: 0 0 auto;
   min-width: 58px;
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   white-space: nowrap;
   line-height: 1;
@@ -1673,13 +1673,13 @@ body.site-page .board-admin-status.is-error{
 .guestbook-form-row .gb-name{
   flex: 0 1 130px;
   min-width: 90px;
-  min-height: 24px;
+  min-height: 26px;
   padding: 0 8px;
 }
 .guestbook-form-row .gb-pass{
   flex: 0 1 130px;
   min-width: 90px;
-  min-height: 24px;
+  min-height: 26px;
   padding: 0 8px;
 }
 .guestbook-form-row .gb-hp{
@@ -1767,7 +1767,7 @@ body.site-page .board-admin-status.is-error{
 .guestbook-secret-input{
   flex: 0 1 140px;   /* 기본 input flex(1 1 220px) 덮어써 컴팩트하게 */
   min-width: 0;
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   font-size: 12px;
 }
@@ -1775,7 +1775,7 @@ body.site-page .board-admin-status.is-error{
   flex: 0 0 auto;    /* 확인 버튼은 줄바꿈되지 않게 고정 */
   white-space: nowrap;
   min-width: 58px;
-  min-height: 20px;
+  min-height: 24px;
   padding: 0 8px;
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -3337,7 +3337,7 @@ body.profile-write-page .write-skin-image-preview-item .previewImage{
 .write-page #boardSelect,
 .write-page input,
 .write-page select{
-  min-height: 24px;
+  min-height: 26px;
   padding: 0 8px;
 }
 .write-page input[type="radio"],
@@ -3359,11 +3359,13 @@ body.profile-write-page .write-skin-image-preview-item .previewImage{
 .write-page .btn{
   border-radius: 0;
 }
-/* 파일 선택/해제 버튼: 컴팩트(20px) — 썸네일·추가 이미지·스킨 이미지 공통 */
+/* 파일 선택/해제 버튼: 컴팩트(24px) — 썸네일·추가 이미지·스킨 이미지·스크립트 공통 */
 .write-page .write-file-row .btn,
 .write-page .write-extra-dropzone .btn,
-.write-page .write-skin-image-dropzone .btn{
-  min-height: 20px;
+.write-page .write-skin-image-dropzone .btn,
+.write-page .script-import-dropzone .btn{
+  align-self: center;   /* grid dropzone의 stretch로 버튼이 늘어나지 않게 */
+  min-height: 24px;
   padding: 0 8px;
   font-size: 11px;
   letter-spacing: 0.06em;
