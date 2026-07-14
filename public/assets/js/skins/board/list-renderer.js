@@ -1,3 +1,5 @@
+import { renderLockIcon } from "../../shared/secret-icon.js";
+
 export function renderBoardList(posts, board = {}, options = {}) {
   const deleteMode = Boolean(options.deleteMode);
   const selectedPostIds = new Set(options.selectedPostIds || []);
@@ -22,7 +24,7 @@ export function renderBoardList(posts, board = {}, options = {}) {
                 <input type="checkbox" data-board-select="${escapeHtml(postId)}" ${isSelected ? "checked" : ""}>
               </label>
             ` : ""}
-            <a href="${boardUrl}" class="board-line-title">${title}</a>
+            <a href="${boardUrl}" class="board-line-title">${post.isSecret ? renderLockIcon("board-line-lock-icon") : ""}${title}</a>
             <span class="board-line-date">${escapeHtml(dateStr)}</span>
           </article>
         `;

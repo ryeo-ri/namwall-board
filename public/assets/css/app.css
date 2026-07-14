@@ -1745,6 +1745,17 @@ body.site-page .board-admin-status.is-error{
   color: var(--muted);
   font-size: 13px;
 }
+.guestbook-secret-label{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.guestbook-secret-label .guestbook-secret-lock-icon{
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  fill: none;
+}
 .guestbook-secret-unlock{
   display: inline-flex;
   gap: 6px;
@@ -2373,6 +2384,11 @@ body.site-page .board-admin-status.is-error{
   justify-content: stretch;
   align-content: start;
   gap: 16px;
+  background: transparent; /* 상세: 네임카드 뒤 흰 배경 제거 */
+}
+/* 상세 네임카드: 채도를 낮춘 흑백 (사진 포함) */
+.profile-view-hero .profile-namecard{
+  filter: grayscale(1);
 }
 .profile-view-hero .profile-panel-title{
   word-break: break-word;
@@ -3321,6 +3337,15 @@ body.page-raw-board .page-frame{
 }
 .board-line-title:hover{
   color: var(--site-accent, var(--accent));
+}
+/* 비밀글 자물쇠(공용 픽토그램) — 목록 제목 앞 */
+.board-line-title .board-line-lock-icon{
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  stroke: currentColor;
+  fill: none;
 }
 .board-line-date{
   flex: 0 0 auto;

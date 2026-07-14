@@ -1,5 +1,6 @@
 import { sanitizeHTML } from "../../shared/html-sanitizer-v2.js";
 import { loadComments } from "../../shared/comments.js";
+import { renderLockIcon } from "../../shared/secret-icon.js";
 import { createGuestbookEntry } from "../../shared/guest-post.js";
 import { deletePostsByIds } from "../../shared/post-maintenance.js";
 import { isGuestCooldownPassed, touchGuestCooldown, sha256Hex } from "../../core/state.js";
@@ -60,7 +61,7 @@ function renderEntry(post, { isAdmin, unlockedSecretPostIds }) {
   const bodyBlock = (isSecret && !unlocked)
     ? `
       <div class="guestbook-secret" data-gb-secret="${id}">
-        <span class="guestbook-secret-label">🔒 비밀글입니다</span>
+        <span class="guestbook-secret-label">${renderLockIcon("guestbook-secret-lock-icon")} 비밀글입니다</span>
         <span class="guestbook-secret-unlock">
           <input type="password" class="guestbook-secret-input" placeholder="비밀번호">
           <button type="button" class="btn guestbook-secret-submit" data-gb-secret-submit="${id}">확인</button>

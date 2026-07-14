@@ -38,9 +38,9 @@
           <li>
             <strong>데이터베이스 및 스토리지 → Firestore → 데이터베이스 만들기</strong>
             <ul class="setup-substeps">
-              <li><strong>위치(리전)</strong>: <code>asia-northeast3 (서울)</code> 선택 — 다른 지역을 선택하여도 괜찮으나 가까운 지역으로 하는 것이 좋습니다. <em>한 번 정하면 변경할 수 없으니 주의.</em></li>
-              <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 아래에서 붙여넣습니다). "테스트 모드"는 30일 뒤 자동으로 잠기므로 권장하지 않음.</li>
-              <li><strong>만들기</strong>를 눌러 완료합니다.</li>
+              <li><strong>위치(리전)</strong>: <code>asia-northeast3 (서울)</code> 선택 — 다른 지역을 선택하여도 괜찮으나 가까운 지역으로 하는 것이 좋습니다. 한 번 정하면 변경할 수 없으니 주의.</li>
+              <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 나중에 설정합니다.) 테스트 모드는 30일 뒤 자동으로 잠기므로 권장하지 않음.</li>
+              <li>만들기를 눌러 완료합니다.</li>
               <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
             </ul>
           </li>
@@ -48,23 +48,21 @@
             <strong>데이터베이스 및 스토리지 → Storage → 시작하기</strong>
             <ul class="setup-substeps">
               <li><strong>모든 위치</strong>: <code>asia-northeast3 (서울)</code></li>
-              <li>해당 위치로 하더라도 무료기준을 넘지 않으면 무료로 이용할 수 있습니다. 개인홈페이지 용도로는 무료범위로 충분히 사용가능합니다!</li>
+              <li>해당 위치로 하더라도 무료기준을 넘지 않으면 청구되지 않습니다. 개인홈페이지 용도로는 무료범위로 충분히 사용가능합니다!</li>
               <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택.</li>
               <li><strong>Storage → 규칙</strong>도 <code>storage.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
             </ul>
           </li>
           <li><strong>보안 → Authentication</strong> → 시작하기 → <strong>이메일/비밀번호</strong> 사용 설정</li>
-          <li>
-            <strong>설정 → 일반 → 내 앱 → 웹 앱에 Firebase 추가</strong>
-            <ul class="setup-substeps">
-              <li>웹 앱의 이름은 자유롭게 등록.</li>
-              <li><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</li>
-            </ul>
-          </li>
         </ol>
 
         <div class="setup-config-guide mt-md">
-          <p class="setup-lead">파일 중 <code>assets/js/core/firebase.js</code> 수정.</p>
+           <strong>설정 → 일반 → 내 앱 → 웹 앱에 Firebase 추가</strong>
+          <p></p>
+              <p>웹 앱의 이름은 자유롭게 등록.</p>
+              <p><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</p>
+
+          <p class="setup-lead"> <code>assets/js/core/firebase.js</code> 파일 수정.</p>
           <pre class="setup-code">const firebaseConfig = {
   apiKey:
   authDomain:

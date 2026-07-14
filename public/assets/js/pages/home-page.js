@@ -266,10 +266,15 @@ export async function loadRecentUpdates() {
       const dateStr = dateSource ? dateSource.toLocaleDateString("ko-KR") : "";
       const boardUrl = `board.html?bo=${encodeURIComponent(boardId || "board")}`;
 
+      // 제목이 있으면 제목, 없으면 게시판 메뉴명. LOG는 제목이 자동 번호라 게시판명 유지.
+      const rawTitle = String(post.title || "").trim();
+      const isLogPost = String(post.skinType || "").trim().toUpperCase() === "LOG";
+      const label = (!isLogPost && rawTitle) ? rawTitle : boardName;
+
       return `
         <a href="${boardUrl}" class="recent-item recent-update-item">
           <span class="recent-update-date">${escapeHtml(dateStr)}</span>
-          <span class="recent-update-board">${escapeHtml(boardName)}</span>
+          <span class="recent-update-board">${escapeHtml(label)}</span>
         </a>
       `;
     }).join("");
