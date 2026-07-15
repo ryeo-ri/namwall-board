@@ -13,6 +13,7 @@ import { deleteObject, getDownloadURL, ref, uploadBytes } from "https://www.gsta
 
 const msgEl = document.getElementById("homeMsg");
 const siteTitleInput = document.getElementById("siteTitleInput");
+const homePublicInput = document.getElementById("homePublicInput");
 const homeShowTextInput = document.getElementById("homeShowTextInput");
 const homeIntroInput = document.getElementById("homeIntroHtmlInput");
 const homeIntroWidthInput = document.getElementById("homeIntroWidthInput");
@@ -33,6 +34,7 @@ const resetHomeBtn = document.getElementById("resetHomeBtn");
 
 let homeSettings = {
   siteTitle: "NAMWALL",
+  homeIsPublic: true,
   homeIntroHtml: "",
   homeIntroWidth: "",
   homeShowText: false,
@@ -235,6 +237,7 @@ function renderHomeImageItems() {
 function fillHomeForm(settings) {
   homeSettings = {
     siteTitle: settings?.siteTitle || "NAMWALL",
+    homeIsPublic: settings?.homeIsPublic !== false,
     homeIntroHtml: resolveIntroHtml(settings),
     homeIntroWidth: normalizePixelValue(settings?.homeIntroWidth),
     homeShowText: settings?.homeShowText === true,
@@ -246,6 +249,7 @@ function fillHomeForm(settings) {
   };
 
   if (siteTitleInput) siteTitleInput.value = homeSettings.siteTitle;
+  if (homePublicInput) homePublicInput.checked = homeSettings.homeIsPublic;
   if (homeShowTextInput) homeShowTextInput.checked = homeSettings.homeShowText;
   if (homeIntroInput) homeIntroInput.value = homeSettings.homeIntroHtml;
   if (homeIntroWidthInput) homeIntroWidthInput.value = homeSettings.homeIntroWidth;
@@ -311,6 +315,7 @@ async function uploadHomeImageFile(file) {
 async function saveHomeSettings() {
   try {
     const siteTitle = (siteTitleInput?.value || "").trim() || "NAMWALL";
+    const homeIsPublic = homePublicInput?.checked !== false;
     const homeIntroHtml = (homeIntroInput?.value || "").trim();
     const homeIntroWidth = normalizePixelValue(homeIntroWidthInput?.value);
     const homeShowText = !!homeShowTextInput?.checked;
@@ -329,6 +334,7 @@ async function saveHomeSettings() {
 
     await setDoc(refDoc, {
       siteTitle,
+      homeIsPublic,
       homeIntroHtml,
       homeIntroWidth,
       homeTitle: "",
@@ -359,6 +365,7 @@ async function saveHomeSettings() {
 
     homeSettings = {
       siteTitle,
+      homeIsPublic,
       homeIntroHtml,
       homeIntroWidth,
       homeShowText,
@@ -381,6 +388,7 @@ async function saveHomeSettings() {
 function resetHomeSettings() {
   fillHomeForm({
     siteTitle: "NAMWALL",
+    homeIsPublic: true,
     homeIntroHtml: "",
     homeIntroWidth: "",
     homeShowText: false,

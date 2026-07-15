@@ -37,6 +37,7 @@ export async function loadSiteMainSettings() {
       ? normalizeSiteMainSettings(snap.data() || {})
       : {
           siteTitle: DEFAULT_SITE_TITLE,
+          homeIsPublic: true,
           homeIntroHtml: "",
           homeIntroWidth: "",
           homeTitle: "",
@@ -284,6 +285,7 @@ function normalizeSiteMainSettings(data = {}) {
   const hasHomeIntroHtml = Object.prototype.hasOwnProperty.call(data, "homeIntroHtml");
   return {
     siteTitle: getSiteTitle(data),
+    homeIsPublic: data.homeIsPublic !== false,
     homeIntroHtml: hasHomeIntroHtml ? String(data.homeIntroHtml || "") : buildLegacyHomeIntroHtml(data),
     homeIntroWidth: data.homeIntroWidth || "",
     homeTitle: data.homeTitle || "",

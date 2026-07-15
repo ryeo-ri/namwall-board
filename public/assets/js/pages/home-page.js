@@ -1,7 +1,7 @@
 import { db } from "../core/firebase.js";
 import { formatResponsiveWidth, loadBoardTitleMap, loadSiteMainSettings } from "../shared/boards-render.js";
 import { sanitizeHTML } from "../shared/html-sanitizer-v2.js";
-import { collection, getDocs, limit, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuthSnapshot, isGuestUnlocked, logoutAdmin, verifyGuestCode } from "../core/state.js";
 import { isProfilePost } from "../skins/registry.js";
 
@@ -22,6 +22,81 @@ async function getHomeSettings() {
       });
   }
   return homeSettingsPromise;
+}
+
+export async function initializeHomePage() {
+  try {
+    const [settings, auth] = await Promise.all([
+      getHomeSettings(),
+      getAuthSnapshot()
+    ]);
+    const settingsSnapshot = await getDoc(doc(db, "site_settings", "main"));
+    const homeIsPublic = settingsSnapshot.exists()
+      ? settingsSnapshot.data()?.homeIsPublic !== false
+      : true;
+
+    if (!homeIsPublic && !auth?.isAdmin && !isGuestUnlocked()) {
+      renderHomeAccessGate(settings);
+      return;
+    }
+
+    document.body?.classList.remove("home-access-pending", "home-access-locked");
+    await Promise.all([
+      loadHomeIntro(),
+      renderQuickMenu(),
+      loadRecentUpdates(),
+      loadRecentTags()
+    ]);
+  } catch (error) {
+    console.error("홈페이지 접근 확인 실패:", error);
+    renderHomeAccessError();
+  }
+}
+
+function renderHomeAccessGate(settings = {}) {
+  const main = document.querySelector("body.home-page > main.container");
+  if (!main) return;
+
+  document.body?.classList.remove("home-access-pending");
+  document.body?.classList.add("home-access-locked");
+  main.innerHTML = `
+    <section class="home-access-gate" aria-labelledby="homeAccessTitle">
+      <h1 id="homeAccessTitle">${escapeHtml(settings.siteTitle || "NAMWALL")}</h1>
+      <p class="home-access-gate-copy">비공개 홈페이지입니다. 게스트 코드를 입력해 주세요.</p>
+      <div class="field-group">
+        <div class="formRow">
+          <input id="homeGuestCodeInput" type="password" placeholder="게스트 코드" autocomplete="current-password">
+          <button type="button" class="btn primary" id="homeGuestLoginBtn">확인</button>
+        </div>
+        <div class="notice small hidden mt-sm" id="homeGuestMsg" aria-live="polite"></div>
+      </div>
+      <a class="home-access-admin-link" href="admin/login.html">관리자 로그인</a>
+    </section>
+  `;
+
+  const guestBtn = document.getElementById("homeGuestLoginBtn");
+  const guestInput = document.getElementById("homeGuestCodeInput");
+  guestBtn?.addEventListener("click", submitGuestCode);
+  guestInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submitGuestCode();
+  });
+  requestAnimationFrame(() => guestInput?.focus());
+}
+
+function renderHomeAccessError() {
+  const main = document.querySelector("body.home-page > main.container");
+  if (!main) return;
+
+  document.body?.classList.remove("home-access-pending");
+  document.body?.classList.add("home-access-locked");
+  main.innerHTML = `
+    <section class="home-access-gate" aria-labelledby="homeAccessErrorTitle">
+      <h1 id="homeAccessErrorTitle">NAMWALL</h1>
+      <p class="home-access-gate-copy">홈페이지 공개 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+      <button type="button" class="btn" id="homeAccessRetryBtn">다시 시도</button>
+    </section>
+  `;
+  document.getElementById("homeAccessRetryBtn")?.addEventListener("click", () => location.reload());
 }
 
 export async function loadHomeIntro() {
@@ -154,6 +229,10 @@ async function submitGuestCode() {
   }
 
   showGuestMessage("게스트 코드 확인 완료");
+  if (document.body?.classList.contains("home-access-locked")) {
+    location.reload();
+    return;
+  }
   await syncHomeStatus();
   await renderQuickMenu();
 }
@@ -296,15 +375,14 @@ export async function loadRecentTags() {
 
     const auth = await getAuthSnapshot();
     const posts = await getRecentHomePosts(auth.isAdmin);
-    const tagCounts = {};
+    const tagCounts = new Map();
     posts.forEach((post) => {
-      const tags = post.tags || [];
-      tags.forEach((tag) => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      normalizePostTags(post.tags).forEach((tag) => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
       });
     });
 
-    const topTags = Object.entries(tagCounts)
+    const topTags = [...tagCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([tag]) => tag);
@@ -321,7 +399,22 @@ export async function loadRecentTags() {
     container.innerHTML = `<div class="tags-list">${tagsHTML}</div>`;
   } catch (error) {
     console.error("최근 태그 로드 실패:", error);
+    const container = document.getElementById("recentTags");
+    if (container) {
+      container.innerHTML = '<div class="notice small">최근 태그를 불러오지 못했습니다.</div>';
+    }
   }
+}
+
+function normalizePostTags(value) {
+  const tags = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+  return tags
+    .map((tag) => String(tag || "").trim())
+    .filter(Boolean);
 }
 
 function pickRandomHomeImage(images) {
@@ -360,13 +453,29 @@ async function getRecentHomePosts(isAdmin) {
 
   const promise = (async () => {
     const postsCollection = collection(db, "posts");
-    const source = isAdmin
-      ? query(postsCollection, orderBy("updatedAt", "desc"), limit(30))
-      : query(postsCollection, where("isPublic", "==", true), orderBy("updatedAt", "desc"), limit(30));
-    const snapshot = await getDocs(source);
+    let snapshot;
+    if (isAdmin) {
+      snapshot = await getDocs(query(postsCollection, orderBy("updatedAt", "desc"), limit(30)));
+    } else {
+      try {
+        snapshot = await getDocs(query(
+          postsCollection,
+          where("isPublic", "==", true),
+          orderBy("updatedAt", "desc"),
+          limit(30)
+        ));
+      } catch (error) {
+        if (!isMissingIndexError(error)) throw error;
+        console.warn("최근 글 복합 인덱스가 준비되지 않아 공개 글 조회로 대체합니다.", error);
+        snapshot = await getDocs(query(postsCollection, where("isPublic", "==", true)));
+      }
+    }
+
     const posts = snapshot.docs
       .map((item) => ({ id: item.id, ...item.data() }))
-      .filter((post) => (isAdmin || post.isPublic !== false) && !isProfilePost(post));
+      .filter((post) => (isAdmin || post.isPublic !== false) && !isProfilePost(post))
+      .sort((a, b) => getRecentPostTime(b) - getRecentPostTime(a))
+      .slice(0, 30);
     recentPostsCache.set(cacheKey, posts);
     return posts;
   })().finally(() => {
@@ -377,10 +486,18 @@ async function getRecentHomePosts(isAdmin) {
   return promise;
 }
 
+function isMissingIndexError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return code.includes("failed-precondition") || message.includes("index");
+}
+
+function getRecentPostTime(post) {
+  return getRecentDateValue(post)?.getTime() || 0;
+}
+
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = String(text ?? "");
   return div.innerHTML;
 }
-
-renderQuickMenu();

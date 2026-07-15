@@ -113,7 +113,7 @@ body.home-page .home-hero-placeholder{
 .container{
   width: min(var(--max-w), 100%);
   margin: 0 auto;
-  padding: 24px 18px 36px;
+  padding: 24px 14px 36px;
 }
 
 .row{
@@ -129,7 +129,7 @@ body.home-page .home-hero-placeholder{
   z-index: 20;
   backdrop-filter: blur(10px);
 }
-.header .container{ padding: 12px 18px; }
+.header .container{ padding: 12px 14px; }
 .header .row{ justify-content: space-between; gap: 16px; }
 body.site-page .header .row{ min-height: 64px; } /* 로드 시 CLS 방지용 내비 높이 확보 */
 
@@ -190,8 +190,18 @@ body.site-page .header .row{ min-height: 64px; } /* 로드 시 CLS 방지용 내
   font-family: var(--header-font, var(--font-pixel));
 }
 
+body.site-page{
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+body.site-page > main.container{
+  flex: 1 0 auto;
+}
 .footer{
-  padding: 18px 2px 0;
+  width: 100%;
+  margin-top: auto;
+  padding: 18px;
 }
 
 /* ==========================================================================
@@ -3841,7 +3851,7 @@ body.home-page{
   font-family: var(--font-kr);
 }
 body.site-page{
-  --site-page-pad-x: clamp(16px, 4vw, 56px);
+  --site-page-pad-x: clamp(12px, 3vw, 40px);
   background: var(--site-bg, transparent); /* 기본: 캔버스(흰색) 노출 */
   color: var(--site-text, #000);
   font-family: var(--font-kr);
@@ -4033,8 +4043,8 @@ body.site-page .gallery-admin-tools .notice{
    -------------------------------------------------------------------------- */
 body.home-page .container{
   width: min(var(--max-w), 100%);
-  padding-left: clamp(16px, 4vw, 56px);
-  padding-right: clamp(16px, 4vw, 56px);
+  padding-left: clamp(12px, 3vw, 40px);
+  padding-right: clamp(12px, 3vw, 40px);
 }
 body.home-page .header .container{
   width: min(var(--home-header-width, var(--max-w)), 100%);
@@ -4197,6 +4207,53 @@ body.home-page .tag{
 }
 body.home-page .footer{
   padding-top: 0;
+}
+
+body.home-access-pending .header,
+body.home-access-pending > main,
+body.home-access-pending > .footer{
+  visibility: hidden;
+}
+body.home-access-locked .header{
+  display: none;
+}
+body.home-access-locked > main.container{
+  width: 100%;
+  max-width: none;
+  display: grid;
+  place-items: center;
+  padding: 24px 18px;
+}
+.home-access-gate{
+  width: min(420px, 100%);
+  padding: 28px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+.home-access-gate h1{
+  margin: 0 0 10px;
+  font-family: var(--header-font, var(--font-pixel));
+  font-size: 1.45rem;
+  letter-spacing: 0.08em;
+}
+.home-access-gate-copy{
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.home-access-gate .formRow{
+  flex-wrap: nowrap;
+}
+.home-access-gate .formRow input{
+  min-width: 0;
+}
+.home-access-admin-link{
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .home-intro-input{
@@ -5866,6 +5923,32 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
 }
 
 @media (max-width: 640px){
+  body.script-view-page main.container{
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.script-view-page .view-card{
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.script-view-page .view-head{
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  body.script-view-page .script-session-info{
+    padding: 20px 12px;
+  }
+  body.script-view-page .script-messages{
+    padding: 28px 5px 38px;
+  }
+  body.script-view-page .script-message{
+    padding-left: 34px;
+  }
+  body.script-view-page .script-message.desc,
+  body.script-view-page .script-message.emote{
+    padding-left: 6px;
+    padding-right: 6px;
+  }
   .script-import-result{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

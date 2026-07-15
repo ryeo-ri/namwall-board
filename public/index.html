@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
   <script>try{var h=localStorage.getItem("archive_home_intro_h_v1");if(h)document.documentElement.style.setProperty("--home-intro-reserved",h);}catch(e){}</script>
 </head>
-<body class="site-page home-page">
+<body class="site-page home-page home-access-pending">
   <div class="header">
     <div class="container">
       <div class="row">
@@ -72,17 +72,16 @@
       </aside>
     </div>
 
-    <div class="footer">
-      <div class="muted small">© NAMWALL</div>
-    </div>
   </main>
+
+  <footer class="footer">
+    <div class="muted small">© NAMWALL</div>
+  </footer>
 
   <script type="module" src="assets/js/core/app.js"></script>
   <script type="module">
-    import { loadHomeIntro, loadRecentUpdates, loadRecentTags } from "./assets/js/pages/home-page.js";
-    loadHomeIntro();
-    loadRecentUpdates();
-    loadRecentTags();
+    import { initializeHomePage } from "./assets/js/pages/home-page.js";
+    initializeHomePage();
   </script>
 </body>
 </html>
