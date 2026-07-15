@@ -71,18 +71,18 @@
           <div class="write-thumb-head">
             <div class="write-label">대표이미지</div>
             <div class="write-mode-row">
-              <label><input type="radio" name="thumbMode" value="url" id="thumbModeUrl" checked> URL</label>
-              <label><input type="radio" name="thumbMode" value="file" id="thumbModeFile"> 파일</label>
+              <label><input type="radio" name="thumbMode" value="file" id="thumbModeFile" checked> 파일</label>
+              <label><input type="radio" name="thumbMode" value="url" id="thumbModeUrl"> URL</label>
               <label><input type="radio" name="thumbMode" value="video" id="thumbModeVideo"> VIDEO</label>
             </div>
           </div>
           <div class="write-thumb-panel">
-            <div id="thumbUrlFields" class="write-field-block">
+            <div id="thumbUrlFields" class="write-field-block hidden">
               <label class="muted small" for="imageUrlInput">이미지 URL</label>
               <input id="imageUrlInput" placeholder="https://...">
             </div>
 
-            <div id="thumbFileFields" class="write-field-block hidden">
+            <div id="thumbFileFields" class="write-field-block">
               <div class="write-thumb-dropzone" id="thumbDropZone" tabindex="0" role="button" aria-label="썸네일 이미지 파일 선택">
                 <div class="formRow write-file-row">
                   <button type="button" class="btn" id="selectThumbFileBtn">파일 선택</button>
@@ -162,13 +162,13 @@
 
         <details class="write-extra-details" id="extraFields">
           <summary>
-            <span>추가 이미지</span>
+            <span>추가 이미지 <span class="write-extra-caret" aria-hidden="true">▼</span></span>
             <span class="write-extra-count" id="extraItemCount" aria-live="polite"></span>
           </summary>
           <div class="write-extra-body">
             <div class="write-mode-row">
-              <label><input type="radio" name="extraMode" value="url" id="extraModeUrl"> URL</label>
               <label><input type="radio" name="extraMode" value="file" id="extraModeFile" checked> 파일</label>
+              <label><input type="radio" name="extraMode" value="url" id="extraModeUrl"> URL</label>
               <label><input type="radio" name="extraMode" value="video" id="extraModeVideo"> VIDEO</label>
             </div>
 
@@ -197,7 +197,7 @@
             <div id="extraItems" class="previewGrid write-extra-list mt-sm"></div>
             <div class="notice hidden mt-sm" id="uploadMsg"></div>
 
-            <div id="extraImageAlignField" class="write-field-block mt-sm">
+            <div id="extraImageAlignField" class="write-field-block mt-sm hidden">
               <label class="muted small" for="extraImageAlignInput">추가 이미지 정렬 <span class="muted small">(한 장씩 줄바꿈되어 표시)</span></label>
               <select id="extraImageAlignInput" class="write-align-select">
                 <option value="left">좌측</option>

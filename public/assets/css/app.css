@@ -3094,9 +3094,22 @@ body.page-raw-board .page-frame{
   display: flex;
   align-items: center;
   gap: 6px;
+  list-style: none;
   font-weight: 700;
   cursor: pointer;
   font-size: 12px;
+}
+.write-extra-details > summary::-webkit-details-marker{
+  display: none;
+}
+.write-extra-caret{
+  display: inline-block;
+  font-size: 9px;
+  transform-origin: center;
+  transition: transform 0.16s ease;
+}
+.write-extra-details[open] > summary .write-extra-caret{
+  transform: rotate(180deg);
 }
 .write-extra-details > summary:focus,
 .write-extra-details > summary:focus-visible{
@@ -4058,7 +4071,6 @@ body.home-page main.container{
 }
 body.home-page #homeIntro{
   margin: 0;
-  min-height: var(--home-intro-reserved, 0px); /* 캐시된 높이로 CLS 방지 */
 }
 body.home-page #homeIntro.home-intro-image-only{
   width: min(var(--home-intro-width, 100%), 100%);

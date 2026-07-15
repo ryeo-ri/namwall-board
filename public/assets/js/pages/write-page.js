@@ -596,8 +596,8 @@ async function setSkinFields() {
   if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields || hideContentFields);
   if (visibilityFieldsEl) visibilityFieldsEl.classList.toggle("hidden", isPageSkin);
   if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin || isScriptSkin);
-  // 추가 이미지 정렬: 인라인 갤러리를 쓰는 스킨(BOARD 등)만 노출, 프로필·페이지는 숨김
-  if (extraImageAlignFieldEl) extraImageAlignFieldEl.classList.toggle("hidden", isPageSkin || isProfileSkin || isScriptSkin);
+  // 추가 이미지 정렬은 BOARD 스킨에서만 사용한다.
+  if (extraImageAlignFieldEl) extraImageAlignFieldEl.classList.toggle("hidden", skin.type !== "BOARD");
   if (tagFieldsEl) tagFieldsEl.classList.toggle("hidden", isPageSkin);
   profileSkinFieldsHelpEl?.classList.toggle("hidden", !isProfileSkin);
   if (logNumberInput) {
@@ -1503,8 +1503,10 @@ async function loadEditPost() {
     thumbModeVideoRadio.checked = true;
   } else if (post.thumbnailAttachment?.url && thumbModeFileRadio) {
     thumbModeFileRadio.checked = true;
-  } else if (thumbModeUrlRadio) {
+  } else if (post.imageUrl && thumbModeUrlRadio) {
     thumbModeUrlRadio.checked = true;
+  } else if (thumbModeFileRadio) {
+    thumbModeFileRadio.checked = true;
   }
   updateSecretPasswordVisibility();
 
@@ -1523,8 +1525,6 @@ async function loadEditPost() {
     });
   } else if (thumbModeFileRadio?.checked && uploadedThumbnail?.url) {
     renderThumbPreview(uploadedThumbnail);
-  } else if (thumbModeUrlRadio) {
-    thumbModeUrlRadio.checked = true;
   }
 
   extraItems = uploadedExtraAttachments.map((file) => ({
@@ -1658,9 +1658,9 @@ async function buildPayload() {
     delete skinData.source;
   }
 
-  // 추가 이미지 정렬 (게시물별) — 좌측이 기본이라 기본값이면 저장하지 않음
+  // 추가 이미지 정렬은 BOARD 게시물에만 저장한다. 좌측은 기본값이라 생략한다.
   const alignValue = extraImageAlignInput?.value;
-  if (["center", "right"].includes(alignValue)) {
+  if (skinType === "BOARD" && ["center", "right"].includes(alignValue)) {
     skinData.extraImageAlign = alignValue;
   } else {
     delete skinData.extraImageAlign;

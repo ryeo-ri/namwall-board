@@ -25,6 +25,7 @@ async function getHomeSettings() {
 }
 
 export async function initializeHomePage() {
+  clearLegacyHomeIntroHeightCache();
   try {
     const [settings, auth] = await Promise.all([
       getHomeSettings(),
@@ -40,9 +41,10 @@ export async function initializeHomePage() {
       return;
     }
 
+    // 홈 소개의 실제 구조를 먼저 만든 뒤 화면을 공개해 초기 레이아웃 이동을 막는다.
+    await loadHomeIntro();
     document.body?.classList.remove("home-access-pending", "home-access-locked");
     await Promise.all([
-      loadHomeIntro(),
       renderQuickMenu(),
       loadRecentUpdates(),
       loadRecentTags()
@@ -50,6 +52,15 @@ export async function initializeHomePage() {
   } catch (error) {
     console.error("홈페이지 접근 확인 실패:", error);
     renderHomeAccessError();
+  }
+}
+
+function clearLegacyHomeIntroHeightCache() {
+  document.documentElement?.style.removeProperty("--home-intro-reserved");
+  try {
+    localStorage.removeItem("archive_home_intro_h_v1");
+  } catch (_error) {
+    // 저장소 접근이 막힌 환경에서는 현재 페이지의 CSS 변수 제거만 적용한다.
   }
 }
 
@@ -120,7 +131,6 @@ export async function loadHomeIntro() {
         ${image ? `<img src="${escapeHtml(image.url)}" alt="${escapeHtml(imageAlt)}" class="home-hero-image">` : `<div class="home-hero-placeholder"></div>`}
       </section>
     `;
-    cacheHomeIntroHeight(container);
   } catch (error) {
     console.error("홈 소개 로드 실패:", error);
     applyHomeHeaderWidth({});
@@ -133,18 +143,6 @@ export async function loadHomeIntro() {
       </section>
     `;
   }
-}
-
-function cacheHomeIntroHeight(container) {
-  if (!container) return;
-  requestAnimationFrame(() => {
-    try {
-      const height = Math.round(container.getBoundingClientRect().height);
-      if (height > 0) localStorage.setItem("archive_home_intro_h_v1", `${height}px`);
-    } catch (_error) {
-      // ignore
-    }
-  });
 }
 
 export async function renderQuickMenu() {
