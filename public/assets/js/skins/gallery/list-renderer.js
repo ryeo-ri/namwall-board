@@ -23,7 +23,6 @@ export function renderGalleryList(posts, board, options = {}) {
         const postId = escapeHtml(rawPostId);
         const isSelected = selectedPostIds.has(rawPostId);
         const isSecret = Boolean(post.isSecret);
-        const isPrivate = post.isPublic === false;
         const isUnlocked = isAdmin || !isSecret || unlockedSecretPostIds.has(rawPostId);
 
         return `

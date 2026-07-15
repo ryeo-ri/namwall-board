@@ -1,7 +1,7 @@
 import { db } from "../core/firebase.js";
 import { formatResponsiveWidth, loadBoardTitleMap, loadSiteMainSettings } from "../shared/boards-render.js";
 import { sanitizeHTML } from "../shared/html-sanitizer-v2.js";
-import { collection, getDocs, limit, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, getDocs, limit, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuthSnapshot, isGuestUnlocked, logoutAdmin, verifyGuestCode } from "../core/state.js";
 import { isProfilePost } from "../skins/registry.js";
 
@@ -359,7 +359,10 @@ async function getRecentHomePosts(isAdmin) {
   if (recentPostsPromise.has(cacheKey)) return recentPostsPromise.get(cacheKey);
 
   const promise = (async () => {
-    const source = query(collection(db, "posts"), orderBy("updatedAt", "desc"), limit(30));
+    const postsCollection = collection(db, "posts");
+    const source = isAdmin
+      ? query(postsCollection, orderBy("updatedAt", "desc"), limit(30))
+      : query(postsCollection, where("isPublic", "==", true), orderBy("updatedAt", "desc"), limit(30));
     const snapshot = await getDocs(source);
     const posts = snapshot.docs
       .map((item) => ({ id: item.id, ...item.data() }))

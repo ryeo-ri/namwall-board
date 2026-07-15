@@ -1,6 +1,7 @@
 import { db, storage } from "../core/firebase.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import { invalidateSiteMainSettingsCache, loadSiteMainSettings } from "../shared/boards-render.js";
+import { writeCachedHeaderFont } from "../shared/design.js";
 import {
   collection,
   deleteDoc,
@@ -343,6 +344,7 @@ async function saveHomeSettings() {
     }, { merge: true });
 
     invalidateSiteMainSettingsCache();
+    writeCachedHeaderFont(headerFontFamily);
 
     for (const path of removedHomeImagePaths) {
       if (!path) continue;

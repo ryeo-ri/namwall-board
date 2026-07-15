@@ -400,7 +400,7 @@ function finalizePosts(docs, category, publicOnly) {
 // unavailable. The client-side filterPostsForBoard still enforces correctness.
 async function loadAllPostsFallback(category, publicOnly) {
   const source = publicOnly
-    ? query(collection(db, "posts"), where("isPublic", "in", [true, null]))
+    ? query(collection(db, "posts"), where("isPublic", "==", true))
     : collection(db, "posts");
   const snapshot = await getDocs(source);
   return finalizePosts(snapshot.docs, category, publicOnly);
@@ -417,12 +417,12 @@ async function queryBoardScopedDocs(boardCandidates, publicOnly) {
     return (await getDocs(source)).docs;
   }
 
-  // Guest: rules require a public constraint, and Firestore allows only one `in`
-  // per query, so fan out per board candidate (boardId == X AND isPublic in ...).
+  // Guest: rules require an explicit public constraint, so fan out per board
+  // candidate (boardId == X AND isPublic == true).
   // Requires the composite index (boardId, isPublic); falls back on error.
   const snapshots = await Promise.all(
     boardCandidates.map((candidate) =>
-      getDocs(query(postsCol, where("boardId", "==", candidate), where("isPublic", "in", [true, null])))
+      getDocs(query(postsCol, where("boardId", "==", candidate), where("isPublic", "==", true)))
     )
   );
 
@@ -857,7 +857,6 @@ async function renderBoardAdminToolsUnified(skin) {
   const variant = skin?.capabilities?.board?.deleteModeVariant || "none";
   const isBoard = variant === "board";
   const isGallery = variant === "gallery";
-  const isLog = variant === "log";
   if (variant === "none") {
     boardAdminToolsEl.classList.add("hidden");
     boardAdminToolsEl.innerHTML = "";

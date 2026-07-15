@@ -59,7 +59,11 @@
    2. 베이스
    ========================================================================== */
 *{ box-sizing: border-box; }
-html, body{ height: 100%; }
+html{
+  height: 100%;
+  scrollbar-gutter: stable;
+}
+body{ height: 100%; }
 body{
   margin: 0;
   background: var(--bg);
@@ -5609,25 +5613,30 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
   }
 
   /* 홈 페이지 */
-  body.home-page .header .container{
-    width: min(var(--home-header-width, var(--max-w)), 100%);
+  body.site-page .header .container{
     padding-top: 10px;
     padding-bottom: 10px;
   }
-  body.home-page .header .row{
+  body.home-page .header .container{
+    width: min(var(--home-header-width, var(--max-w)), 100%);
+  }
+  body.site-page .header .row{
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
   }
-  body.home-page .brand{
+  body.site-page .brand{
     order: 1;
     flex: 1 1 auto;
     min-width: 0;
-    max-width: calc(100% - 120px);
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  body.home-page .brand{
+    max-width: calc(100% - 120px);
   }
   body.home-page .pills{
     order: 2;
@@ -5637,7 +5646,7 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
     justify-content: flex-end;
     gap: 6px;
   }
-  body.home-page .nav{
+  body.site-page .nav{
     order: 3;
     width: 100%;
     flex: 0 0 100%;
@@ -5649,10 +5658,10 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  body.home-page .nav::-webkit-scrollbar{
+  body.site-page .nav::-webkit-scrollbar{
     display: none;
   }
-  body.home-page .nav a{
+  body.site-page .nav a{
     flex: 0 0 auto;
     height: 40px;
     padding: 0 10px;
@@ -5924,17 +5933,17 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
     text-align: right;
     white-space: nowrap;
   }
-  body.home-page .header .container{
+  body.site-page .header .container{
     padding-top: 8px;
     padding-bottom: 8px;
   }
-  body.home-page .header .row{
+  body.site-page .header .row{
     gap: 8px;
   }
-  body.home-page .brand{
+  body.site-page .brand{
     font-size: 1.2rem;
   }
-  body.home-page .nav a{
+  body.site-page .nav a{
     height: 36px;
     padding: 0 8px;
     font-size: 0.62rem;

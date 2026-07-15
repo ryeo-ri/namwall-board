@@ -13,7 +13,8 @@ import {
   normalizeDesignSettings,
   normalizeFontFamilyValue,
   normalizeHexColor,
-  writeCachedDesign
+  writeCachedDesign,
+  writeCachedHeaderFont
 } from "../shared/design.js";
 
 const msgEl = document.getElementById("designMsg");
@@ -202,6 +203,7 @@ async function saveDesignSettings() {
 
     invalidateSiteMainSettingsCache();
     writeCachedDesign(design);
+    writeCachedHeaderFont(headerFontFamily);
     showMsg("디자인 설정 저장 완료. 사용자 페이지 새로고침 시 적용됩니다.");
   } catch (error) {
     console.error(error);

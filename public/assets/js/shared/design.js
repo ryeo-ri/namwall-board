@@ -2,6 +2,7 @@
 // - 사용자 페이지: core/app.js 가 applyDesignSettings 로 CSS 변수를 주입
 // - 관리자 페이지: admin/design-page.js 가 편집/저장
 const DESIGN_CACHE_KEY = "archive_design_cache_v1";
+const HEADER_FONT_CACHE_KEY = "archive_header_font_v1";
 const HEADING_FONT_LINK_ID = "archiveHeadingFontLink";
 const BODY_FONT_LINK_ID = "archiveBodyFontLink";
 
@@ -125,6 +126,8 @@ function setOrRemoveVar(el, name, value) {
 function applyCustomFont(body, varName, linkId, fontName, fallbackStack) {
   if (!fontName) {
     body.style.removeProperty(varName);
+    // font-boot.js(첫 페인트용)가 html에 남긴 인라인 변수도 함께 제거
+    document.documentElement.style.removeProperty(varName);
     document.getElementById(linkId)?.remove();
     return;
   }
@@ -132,6 +135,7 @@ function applyCustomFont(body, varName, linkId, fontName, fallbackStack) {
   const href = buildGoogleFontUrl(fontName);
   if (link.getAttribute("href") !== href) link.setAttribute("href", href);
   body.style.setProperty(varName, `"${escapeCssString(fontName)}", ${fallbackStack}`);
+  document.documentElement.style.removeProperty(varName);
 }
 
 function ensureFontLink(id) {
@@ -171,6 +175,16 @@ export function writeCachedDesign(design) {
     } else {
       localStorage.removeItem(DESIGN_CACHE_KEY);
     }
+  } catch (_error) {
+    // ignore
+  }
+}
+
+export function writeCachedHeaderFont(fontName) {
+  try {
+    const normalized = normalizeFontFamilyValue(fontName);
+    if (normalized) localStorage.setItem(HEADER_FONT_CACHE_KEY, normalized);
+    else localStorage.removeItem(HEADER_FONT_CACHE_KEY);
   } catch (_error) {
     // ignore
   }

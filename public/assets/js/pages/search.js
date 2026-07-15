@@ -36,20 +36,13 @@ function getPostDateValue(post) {
   return Number.isNaN(createdAt.getTime()) ? new Date(0) : createdAt;
 }
 
-function isPermissionDenied(error) {
-  const code = String(error?.code || error?.name || "").toLowerCase();
-  return code.includes("permission-denied") || code.includes("permission denied");
-}
-
 async function loadSearchPosts(isAdmin) {
-  try {
-    const snapshot = await getDocs(collection(db, "posts"));
-    return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-  } catch (error) {
-    if (isAdmin || !isPermissionDenied(error)) throw error;
-    const snapshot = await getDocs(query(collection(db, "posts"), where("isPublic", "in", [true, null])));
-    return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-  }
+  const postsCollection = collection(db, "posts");
+  const source = isAdmin
+    ? postsCollection
+    : query(postsCollection, where("isPublic", "==", true));
+  const snapshot = await getDocs(source);
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
 async function runSearch() {

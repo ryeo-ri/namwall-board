@@ -1,9 +1,10 @@
 export function sanitizeHTML(html, options = {}) {
   if (!html) return "";
 
-  const allowIframes = Boolean(options.allowIframes);
+  // allowIframes: false(차단) | true(https 전체 허용) | "youtube"(유튜브 embed만 허용)
+  const iframePolicy = normalizeIframePolicy(options.allowIframes);
   const allowedTags = ["b", "i", "u", "br", "p", "a", "img", "span", "blockquote", "code", "strong", "em", "pre"];
-  if (allowIframes) allowedTags.push("iframe");
+  if (iframePolicy !== "none") allowedTags.push("iframe");
 
   const allowedAttributes = {
     a: ["href", "title", "target"],
@@ -42,7 +43,7 @@ export function sanitizeHTML(html, options = {}) {
       if (!allowedAttrs.includes(attrName)) return;
       if (attrName === "href" && !isSafeLink(attr.value)) return;
       if (attrName === "src" && tagName === "img" && !isSafeMediaSource(attr.value)) return;
-      if (attrName === "src" && tagName === "iframe" && !isSafeIframeSource(attr.value)) return;
+      if (attrName === "src" && tagName === "iframe" && !isSafeIframeSource(attr.value, iframePolicy)) return;
       newNode.setAttribute(attrName, attr.value);
     });
 
@@ -117,13 +118,31 @@ function isSafeMediaSource(value) {
   return true;
 }
 
-function isSafeIframeSource(value) {
+function normalizeIframePolicy(value) {
+  if (value === true || value === "all") return "all";
+  if (value === "youtube") return "youtube";
+  return "none";
+}
+
+const YOUTUBE_EMBED_HOSTS = new Set([
+  "www.youtube.com",
+  "youtube.com",
+  "www.youtube-nocookie.com",
+  "youtube-nocookie.com"
+]);
+
+function isSafeIframeSource(value, policy = "all") {
   const trimmed = stripControlChars(value).trim();
   if (!trimmed) return false;
 
   try {
     const parsed = new URL(trimmed, window.location.origin);
-    return parsed.protocol === "https:";
+    if (parsed.protocol !== "https:") return false;
+    if (policy === "youtube") {
+      return YOUTUBE_EMBED_HOSTS.has(parsed.hostname.toLowerCase())
+        && parsed.pathname.startsWith("/embed/");
+    }
+    return true;
   } catch (_error) {
     return false;
   }

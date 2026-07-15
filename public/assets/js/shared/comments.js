@@ -7,13 +7,13 @@ import {
   query,
   orderBy,
   addDoc,
-  setDoc,
   updateDoc,
   serverTimestamp,
   deleteDoc,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { sanitizeHTML } from "./html-sanitizer-v2.js";
+import { findSkinTypeByAlias, resolveBoardSkinType } from "../skins/registry.js";
 import { getAuthSnapshot, getGuestProofHash, isGuestUnlocked, sha256Hex, verifyGuestCode } from "../core/state.js";
 import { showInputModal } from "./ui-modal.js";
 
@@ -72,20 +72,16 @@ function preserveLineBreaks(value) {
   return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
 }
 
-function sanitizeCommentHtml(value) {
-  return sanitizeHTML(preserveLineBreaks(value), { allowIframes: false });
+// LOG 스킨 게시판 댓글에서만 유튜브 embed iframe을 허용한다.
+function commentIframePolicy(context) {
+  const board = context?.board || {};
+  const boardId = board.id || context?.boardId || "";
+  const isLogBoard = resolveBoardSkinType(board) === "LOG" || findSkinTypeByAlias(boardId) === "LOG";
+  return isLogBoard ? "youtube" : false;
 }
 
-function normalizeLink(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(raw, window.location.origin);
-    if (!["http:", "https:"].includes(url.protocol)) return "";
-    return url.href;
-  } catch (_error) {
-    return "";
-  }
+function sanitizeCommentHtml(value, context) {
+  return sanitizeHTML(preserveLineBreaks(value), { allowIframes: commentIframePolicy(context) });
 }
 
 function formatDateTime(value) {
@@ -215,7 +211,7 @@ function renderCommentForm(postId, context, writeState) {
 }
 function renderCommentBodyV2(comment, context, auth) {
   const raw = String(comment.contentHtml || comment.content || "");
-  const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: false }), context.boardId);
+  const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: commentIframePolicy(context) }), context.boardId);
   const author = escapeHtml(comment.nickname || "익명");
   const dateStr = formatDateTime(comment.createdAt);
   const manuallyFolded = Boolean(comment.more);
@@ -446,7 +442,7 @@ function bindCommentEditSaveButtons(container, postId, context) {
 
       await updateDoc(doc(db, "posts", postId, "comments", commentId), {
         content,
-        contentHtml: sanitizeCommentHtml(content),
+        contentHtml: sanitizeCommentHtml(content, context),
         updatedAt: serverTimestamp()
       });
 
@@ -524,7 +520,7 @@ function bindCommentSubmit(postId, container, context, writeState) {
     try {
       const auth = await getAuthSnapshot();
       const authorType = auth.isAdmin ? "ADMIN" : (isGuestUnlocked() ? "GUEST" : "PUBLIC");
-      const contentHtml = sanitizeCommentHtml(content);
+      const contentHtml = sanitizeCommentHtml(content, context);
       const commentPayload = {
         postId,
         boardId: context.boardId || context.board?.id || "",
@@ -604,8 +600,11 @@ async function verifyCommentSecret(comment, password) {
 }
 
 function normalizeCommentContent(comment) {
-  const raw = String(comment?.content || comment?.contentHtml || "");
-  return raw
+  // content는 사용자가 입력한 원문 그대로 보존 (iframe 등 마크업 유지)
+  const rawContent = String(comment?.content || "").trim();
+  if (rawContent) return rawContent;
+
+  return String(comment?.contentHtml || "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
     .replace(/<[^>]*>/g, "")

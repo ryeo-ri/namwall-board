@@ -2,7 +2,7 @@ import { getAuthSnapshot, isGuestUnlocked } from "./state.js";
 import { db } from "./firebase.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getSiteTitle, loadSiteMainSettings, readCachedSiteTitle, renderTopNav } from "../shared/boards-render.js";
-import { applyDesignSettings, readCachedDesign, writeCachedDesign } from "../shared/design.js";
+import { applyDesignSettings, readCachedDesign, writeCachedDesign, writeCachedHeaderFont } from "../shared/design.js";
 
 const HEADER_FONT_LINK_ID = "archiveHeaderFontLink";
 const BOOTSTRAP_FLAG = "archive_bootstrapped_v1";
@@ -111,8 +111,11 @@ function shouldReplaceDocumentTitle(title) {
 
 function applyHeaderFont(settings = {}) {
   const fontName = normalizeHeaderFontFamily(settings.headerFontFamily);
+  writeCachedHeaderFont(fontName);
   if (!fontName) {
     document.body?.style.removeProperty("--header-font");
+    // font-boot.js(첫 페인트용)가 html에 남긴 인라인 변수도 함께 제거
+    document.documentElement.style.removeProperty("--header-font");
     removeHeaderFontLink();
     return;
   }
@@ -123,6 +126,7 @@ function applyHeaderFont(settings = {}) {
     link.setAttribute("href", href);
   }
   document.body?.style.setProperty("--header-font", `"${escapeCssString(fontName)}", var(--font-kr), sans-serif`);
+  document.documentElement.style.removeProperty("--header-font");
 }
 
 function normalizeHeaderFontFamily(value) {

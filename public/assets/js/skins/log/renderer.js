@@ -83,7 +83,6 @@ function renderLogEntry(post, board, options = {}) {
   const title = escapeHtml(deriveLogTitle(post, commentHtml, logNumber, dateStr));
   const commentsContainerId = `comments-${post.id}`;
   const isSelected = selectedPostIds.has(post.id);
-  const boardUrl = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
   const hideCover = post.isSecret && !isAdmin && !unlockedSecretPostIds.has(post.id);
   const hasMedia = Boolean(hideCover || (cover.mode === "video" && cover.embedHtml) || cover.imageUrl);
   const bodyPlain = String(sanitizedComment || "").replace(/<[^>]*>/g, "").replace(/ /g, " ").trim();

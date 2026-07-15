@@ -898,13 +898,6 @@ function applyThumbModeUI() {
   }
 }
 
-function extractIframeSrcFromHtml(html) {
-  const temp = document.createElement("div");
-  temp.innerHTML = String(html || "").trim();
-  const iframe = temp.querySelector("iframe");
-  return iframe?.getAttribute("src") || "";
-}
-
 function normalizeThumbVideoHtml(rawHtml) {
   const trimmed = String(rawHtml || "").trim();
   if (!trimmed) return { embedHtml: "", embedSrc: "" };

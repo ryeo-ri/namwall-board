@@ -50,10 +50,6 @@ export function getScriptSourceLabel(sourceType) {
   return "자동 감지";
 }
 
-export async function processRoll20Html(file) {
-  return processScriptHtml(file, { sourceType: "roll20" });
-}
-
 function normalizeSourceType(value) {
   const normalized = String(value || "auto").trim().toLowerCase();
   return SOURCE_TYPES.has(normalized) ? normalized : "auto";

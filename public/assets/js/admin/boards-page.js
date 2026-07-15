@@ -527,10 +527,6 @@ function normalizeCommentScope(value) {
   return String(value || "all").trim().toLowerCase() === "guest" ? "guest" : "all";
 }
 
-function getCommentScopeLabel(value) {
-  return normalizeCommentScope(value) === "guest" ? "게스트" : "전체";
-}
-
 function getBoardStatusLabel(value) {
   return value ? "ON" : "OFF";
 }
@@ -540,7 +536,6 @@ function updateFormSummary() {
 
   const data = readForm();
   const skinOptions = data.skinOptions || {};
-  const isBoardSkin = data.skinType === "BOARD";
   const isLogSkin = data.skinType === "LOG";
   const isGallerySkin = data.skinType === "GALLERY";
   const isProfileSkin = data.skinType === "PROFILE";
