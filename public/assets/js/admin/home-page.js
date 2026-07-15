@@ -20,7 +20,8 @@ const headerFontFamilyInput = document.getElementById("headerFontFamilyInput");
 const homeImageWidthInput = document.getElementById("homeImageWidthInput");
 const homeImageHeightInput = document.getElementById("homeImageHeightInput");
 const homeImageInput = document.getElementById("homeImageInput");
-const homeImagePathInput = document.getElementById("homeImagePathInput");
+const homeImageDropZone = document.getElementById("homeImageDropZone");
+const homeImageSelectionCountEl = document.getElementById("homeImageSelectionCount");
 const homeImagePendingPreviewEl = document.getElementById("homeImagePendingPreview");
 const homeImageItemsEl = document.getElementById("homeImageItems");
 const selectHomeImagesBtn = document.getElementById("selectHomeImagesBtn");
@@ -149,25 +150,37 @@ function resolveIntroHtml(settings = {}) {
   return buildLegacyIntroHtml(settings);
 }
 
-function renderHomePendingPreview(files = []) {
+function getFileIdentity(file) {
+  return [file?.name || "", Number(file?.size || 0), Number(file?.lastModified || 0)].join(":");
+}
+
+function renderHomePendingPreview() {
   if (!homeImagePendingPreviewEl) return;
-  const items = Array.isArray(files) ? files.filter(Boolean) : [];
+  const items = stagedHomeFiles.map((file, index) => ({
+    file,
+    previewUrl: stagedHomePreviewUrls[index] || ""
+  }));
 
-  if (!items.length) {
-    homeImagePendingPreviewEl.innerHTML = "";
-    if (homeImagePathInput) homeImagePathInput.value = "";
-    return;
-  }
-
-  if (homeImagePathInput) {
-    homeImagePathInput.value = `${items.length}개 파일 선택`;
-  }
+  if (homeImageSelectionCountEl) homeImageSelectionCountEl.textContent = items.length ? `${items.length}장 선택` : "";
+  clearHomeImagesBtn?.classList.toggle("hidden", !items.length);
 
   homeImagePendingPreviewEl.innerHTML = items.map((item, index) => `
     <div class="previewItem">
       <img src="${escapeHtml(item.previewUrl)}" alt="home preview ${index + 1}" class="previewImage">
+      <button type="button" class="admin-image-remove" data-home-pending-remove="${index}" aria-label="선택 이미지 ${index + 1} 제거">×</button>
     </div>
   `).join("");
+
+  homeImagePendingPreviewEl.querySelectorAll("[data-home-pending-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.homePendingRemove);
+      if (!Number.isInteger(index) || index < 0 || index >= stagedHomeFiles.length) return;
+      revokeObjectUrl(stagedHomePreviewUrls[index]);
+      stagedHomeFiles.splice(index, 1);
+      stagedHomePreviewUrls.splice(index, 1);
+      renderHomePendingPreview();
+    });
+  });
 }
 
 function clearHomePendingSelection() {
@@ -175,7 +188,7 @@ function clearHomePendingSelection() {
   stagedHomePreviewUrls = [];
   stagedHomeFiles = [];
   if (homeImageInput) homeImageInput.value = "";
-  renderHomePendingPreview([]);
+  renderHomePendingPreview();
 }
 
 function renderHomeImageItems() {
@@ -196,9 +209,7 @@ function renderHomeImageItems() {
     return `
       <div class="previewItem" data-home-image="${escapeHtml(key)}">
         <img src="${escapeHtml(url)}" alt="${escapeHtml(name)}" class="previewImage">
-        <div class="formRow mt-sm">
-          <button type="button" class="btn small" data-home-remove="${escapeHtml(key)}">삭제</button>
-        </div>
+        <button type="button" class="admin-image-remove" data-home-remove="${escapeHtml(key)}" aria-label="저장 이미지 ${index + 1} 삭제">×</button>
       </div>
     `;
   }).join("");
@@ -243,7 +254,7 @@ function fillHomeForm(settings) {
   if (homeImageHeightInput) homeImageHeightInput.value = homeSettings.homeImageHeight;
 
   removedHomeImagePaths = new Set();
-  renderHomePendingPreview([]);
+  clearHomePendingSelection();
   renderHomeImageItems();
 }
 
@@ -357,7 +368,6 @@ async function saveHomeSettings() {
     };
     clearHomePendingSelection();
     removedHomeImagePaths = new Set();
-    if (homeImagePathInput) homeImagePathInput.value = "";
     renderHomeImageItems();
     showMsg("홈 소개를 저장했습니다.");
   } catch (error) {
@@ -378,27 +388,54 @@ function resetHomeSettings() {
     homeImageHeight: "",
     homeImages: []
   });
-  clearHomePendingSelection();
   showMsg("초기화했습니다.");
+}
+
+function addHomeImageFiles(files = []) {
+  const imageFiles = [...files].filter((file) => fileLooksLikeImage(file));
+  if (!imageFiles.length) throw new Error("추가할 이미지 파일을 선택해 주세요.");
+  imageFiles.forEach((file) => ensureImageFile(file, "홈 이미지"));
+
+  const existing = new Set(stagedHomeFiles.map((file) => getFileIdentity(file)));
+  let added = 0;
+  imageFiles.forEach((file) => {
+    const identity = getFileIdentity(file);
+    if (existing.has(identity)) return;
+    existing.add(identity);
+    stagedHomeFiles.push(file);
+    stagedHomePreviewUrls.push(URL.createObjectURL(file));
+    added += 1;
+  });
+
+  renderHomePendingPreview();
+  if (!added) {
+    showMsg("이미 선택된 이미지입니다.", true);
+    return 0;
+  }
+  showMsg(`이미지 ${added}개를 추가했습니다. 저장하면 반영됩니다.`);
+  return added;
+}
+
+function getClipboardImageFiles(event) {
+  const directFiles = [...(event.clipboardData?.files || [])];
+  const itemFiles = [...(event.clipboardData?.items || [])]
+    .map((item) => item.kind === "file" ? item.getAsFile() : null)
+    .filter(Boolean);
+  const files = [...directFiles, ...itemFiles].filter((file) => fileLooksLikeImage(file));
+  return files.filter((file, index) => files.findIndex((candidate) => (
+    getFileIdentity(candidate) === getFileIdentity(file)
+  )) === index);
 }
 
 function handleHomeImageChange(event) {
   try {
     const files = [...(event.target.files || [])];
     if (!files.length) return;
-    files.forEach((file) => ensureImageFile(file, "홈 이미지"));
-
-    clearHomePendingSelection();
-    stagedHomeFiles = files;
-    stagedHomePreviewUrls = files.map((file) => URL.createObjectURL(file));
-    renderHomePendingPreview(files.map((file, index) => ({
-      name: file.name,
-      previewUrl: stagedHomePreviewUrls[index]
-    })));
-    showMsg(`이미지 ${files.length}개를 선택했습니다. 저장하면 반영됩니다.`);
+    addHomeImageFiles(files);
   } catch (error) {
-    clearHomePendingSelection();
     showMsg(error.message || "이미지 선택에 실패했습니다.", true);
+  } finally {
+    if (event.target) event.target.value = "";
   }
 }
 
@@ -410,6 +447,43 @@ function handleHomeImageChange(event) {
 
   selectHomeImagesBtn?.addEventListener("click", () => homeImageInput?.click());
   homeImageInput?.addEventListener("change", handleHomeImageChange);
+  homeImageDropZone?.addEventListener("click", (event) => {
+    if (event.target.closest("button")) return;
+    homeImageInput?.click();
+  });
+  homeImageDropZone?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    homeImageInput?.click();
+  });
+  homeImageDropZone?.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    homeImageDropZone.classList.add("is-dragover");
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  });
+  homeImageDropZone?.addEventListener("dragleave", (event) => {
+    if (event.relatedTarget && homeImageDropZone.contains(event.relatedTarget)) return;
+    homeImageDropZone.classList.remove("is-dragover");
+  });
+  homeImageDropZone?.addEventListener("drop", (event) => {
+    event.preventDefault();
+    homeImageDropZone.classList.remove("is-dragover");
+    try {
+      addHomeImageFiles(event.dataTransfer?.files || []);
+    } catch (error) {
+      showMsg(error.message || "이미지 드롭에 실패했습니다.", true);
+    }
+  });
+  homeImageDropZone?.addEventListener("paste", (event) => {
+    const files = getClipboardImageFiles(event);
+    if (!files.length) return;
+    event.preventDefault();
+    try {
+      addHomeImageFiles(files);
+    } catch (error) {
+      showMsg(error.message || "이미지 붙여넣기에 실패했습니다.", true);
+    }
+  });
   clearHomeImagesBtn?.addEventListener("click", () => {
     clearHomePendingSelection();
     showMsg("선택한 이미지를 해제했습니다.");

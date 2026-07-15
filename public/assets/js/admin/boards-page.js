@@ -55,11 +55,13 @@ const pageIframeUrlInput = document.getElementById("pageIframeUrlInput");
 const pageHeightInput = document.getElementById("pageHeightInput");
 const titleImageInput = document.getElementById("boardTitleImageInput");
 const titleImageFileInput = document.getElementById("boardTitleImageFile");
+const titleImageDropZone = document.getElementById("boardTitleImageDropZone");
 const titleImagePreviewEl = document.getElementById("boardTitleImagePreview");
 const skinCatalog = getSkinCatalog();
 let loadedBoards = [];
 let boardIdAutoMode = true;
 let stagedTitleImageFile = null;
+let stagedTitleImagePreviewUrl = "";
 let pendingBoardEditId = String(boardPageParams.get("boardId") || boardPageParams.get("edit") || "").trim();
 let activeSkinOptionsType = "BOARD";
 let activeSkinOptionsSchema = {};
@@ -135,13 +137,14 @@ function fillPageData(pageData = {}) {
 function updatePageContentVisibility() {
   const skinType = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
   const isPageSkin = skinType === "PAGE";
+  const isAdminOnlyContentSkin = isPageSkin || skinType === "SCRIPT";
   const mode = normalizePageMode(pageModeInput?.value);
   pageContentBlockEl?.classList.toggle("hidden", !isPageSkin);
   pageHtmlInput?.closest(".field-group")?.classList.toggle("hidden", !isPageSkin || mode !== "srcdoc");
   pageIframeUrlInput?.closest(".field-group")?.classList.toggle("hidden", !isPageSkin || mode !== "url");
-  guestOptionCardEl?.classList.toggle("hidden", isPageSkin);
-  commentRestrictionOptionCardEl?.classList.toggle("hidden", isPageSkin);
-  if (isPageSkin) {
+  guestOptionCardEl?.classList.toggle("hidden", isAdminOnlyContentSkin);
+  commentRestrictionOptionCardEl?.classList.toggle("hidden", isAdminOnlyContentSkin);
+  if (isAdminOnlyContentSkin) {
     const guestInput = document.getElementById("boardGuestInput");
     const commentInput = document.getElementById("commentRestrictionInput");
     if (guestInput) guestInput.checked = false;
@@ -501,6 +504,7 @@ function readForm() {
   const skinType = normalizeKind(document.getElementById("boardKindInput")?.value, "BOARD");
   const skinOptions = activeSkinOptionsType === skinType ? readSkinOptionsFromInputs() : {};
   const isPageSkin = skinType === "PAGE";
+  const isAdminOnlyContentSkin = isPageSkin || skinType === "SCRIPT";
 
   return {
     boardId,
@@ -511,9 +515,9 @@ function readForm() {
     menuOrder: toMenuOrder(menuOrderRaw),
     menuVisible: !!document.getElementById("menuVisibleInput")?.checked,
     isPublic: !!document.getElementById("boardPublicInput")?.checked,
-    allowGuestPost: isPageSkin ? false : !!document.getElementById("boardGuestInput")?.checked,
-    commentScope: isPageSkin ? "all" : (commentRestricted ? "guest" : "all"),
-    commentRestricted: isPageSkin ? false : commentRestricted,
+    allowGuestPost: isAdminOnlyContentSkin ? false : !!document.getElementById("boardGuestInput")?.checked,
+    commentScope: isAdminOnlyContentSkin ? "all" : (commentRestricted ? "guest" : "all"),
+    commentRestricted: isAdminOnlyContentSkin ? false : commentRestricted,
     skinOptions,
     pageData: skinType === "PAGE" ? readPageDataFromInputs() : null
   };
@@ -541,6 +545,8 @@ function updateFormSummary() {
   const isGallerySkin = data.skinType === "GALLERY";
   const isProfileSkin = data.skinType === "PROFILE";
   const isPageSkin = data.skinType === "PAGE";
+  const isScriptSkin = data.skinType === "SCRIPT";
+  const hidesInteractionOptions = isPageSkin || isScriptSkin;
   const hasBoardWidth = Object.prototype.hasOwnProperty.call(skinOptions, "boardWidth");
   const boardWidth = skinOptions.boardWidth ?? "";
   const galleryColumns = skinOptions.galleryColumns ?? skinOptions.columns ?? "";
@@ -554,7 +560,7 @@ function updateFormSummary() {
   if (summaryCommentScopeEl) summaryCommentScopeEl.textContent = data.commentRestricted ? "ON" : "OFF";
   if (summaryBoardWidthEl) summaryBoardWidthEl.textContent = hasBoardWidth ? (formatResponsiveWidth(boardWidth) || "-") : "-";
   if (summaryGalleryBoardWidthEl) summaryGalleryBoardWidthEl.textContent = isGallerySkin ? (formatResponsiveWidth(boardWidth) || "-") : "-";
-  if (summaryGalleryColumnsEl) summaryGalleryColumnsEl.textContent = (isGallerySkin || isProfileSkin) ? (galleryColumns || "-") : "-";
+  if (summaryGalleryColumnsEl) summaryGalleryColumnsEl.textContent = (isGallerySkin || isProfileSkin || isScriptSkin) ? (galleryColumns || "-") : "-";
   if (summaryLogBoardWidthEl) summaryLogBoardWidthEl.textContent = isLogSkin ? (formatResponsiveWidth(boardWidth) || "-") : "-";
   if (summaryLogImageWidthEl) summaryLogImageWidthEl.textContent = isLogSkin ? (formatLogImageWidth(imageWidth) || "-") : "-";
   if (summaryLogCommentPositionEl) summaryLogCommentPositionEl.textContent = isLogSkin ? getLogCommentPositionLabel(commentPosition) : "우측";
@@ -563,11 +569,12 @@ function updateFormSummary() {
     summaryChipsEl.innerHTML = `
       <span class="summary-chip ${data.menuVisible ? "is-on" : "is-off"}">메뉴 ${getBoardStatusLabel(data.menuVisible)}</span>
       <span class="summary-chip ${data.isPublic ? "is-on" : "is-off"}">공개 ${getBoardStatusLabel(data.isPublic)}</span>
-      ${isPageSkin ? "" : `<span class="summary-chip ${data.allowGuestPost ? "is-on" : "is-off"}">게스트 ${getBoardStatusLabel(data.allowGuestPost)}</span>`}
-      ${isPageSkin ? "" : `<span class="summary-chip ${data.commentRestricted ? "is-off" : "is-on"}">댓글제한 ${data.commentRestricted ? "ON" : "OFF"}</span>`}
+      ${hidesInteractionOptions ? "" : `<span class="summary-chip ${data.allowGuestPost ? "is-on" : "is-off"}">게스트 ${getBoardStatusLabel(data.allowGuestPost)}</span>`}
+      ${hidesInteractionOptions ? "" : `<span class="summary-chip ${data.commentRestricted ? "is-off" : "is-on"}">댓글제한 ${data.commentRestricted ? "ON" : "OFF"}</span>`}
       ${hasBoardWidth ? `<span class="summary-chip is-on">가로 ${formatResponsiveWidth(boardWidth) || "-"}</span>` : ""}
       ${isGallerySkin ? `<span class="summary-chip is-on">갤러리 ${galleryColumns || 4}열</span>` : ""}
       ${isProfileSkin ? `<span class="summary-chip is-on">프로필 ${galleryColumns || 4}열</span>` : ""}
+      ${isScriptSkin ? `<span class="summary-chip is-on">세션 ${galleryColumns || 3}열</span>` : ""}
       ${isLogSkin ? `<span class="summary-chip is-on">배치 ${getLogCommentPositionLabel(commentPosition)}</span>` : ""}
     `;
   }
@@ -776,7 +783,7 @@ async function loadBoards() {
     const commentRestricted = commentScope === "guest";
     const boardWidthLabel = kind === "BOARD" ? (formatResponsiveWidth(skinOptions.boardWidth ?? 800) || "800px") : "-";
     const galleryBoardWidthLabel = kind === "GALLERY" ? (formatResponsiveWidth(skinOptions.boardWidth) || "-") : "-";
-    const galleryColumnsLabel = kind === "GALLERY" || kind === "PROFILE" ? (skinOptions.galleryColumns || "-") : "-";
+    const galleryColumnsLabel = kind === "GALLERY" || kind === "PROFILE" || kind === "SCRIPT" ? (skinOptions.galleryColumns || "-") : "-";
     const logBoardWidthLabel = kind === "LOG" ? (formatResponsiveWidth(skinOptions.boardWidth) || "-") : "-";
     const imageWidthLabel = kind === "LOG" ? (formatLogImageWidth(skinOptions.imageWidth) || "-") : "-";
     const commentPositionLabel = kind === "LOG" ? getLogCommentPositionLabel(skinOptions.commentPosition) : "우측";
@@ -792,9 +799,9 @@ async function loadBoards() {
             <div class="board-row-meta">
               <span class="summary-chip ${isVisible ? "is-on" : "is-off"}">노출 ${isVisible ? "ON" : "OFF"}</span>
               <span class="summary-chip ${isPublic ? "is-on" : "is-off"}">공개 ${isPublic ? "ON" : "OFF"}</span>
-              ${kind === "PAGE" ? "" : `<span class="summary-chip ${allowGuest ? "is-on" : "is-off"}">게스트 ${allowGuest ? "ON" : "OFF"}</span>`}
-              ${kind === "PAGE" ? "" : `<span class="summary-chip ${commentRestricted ? "is-off" : "is-on"}">댓글제한 ${commentRestricted ? "ON" : "OFF"}</span>`}
-              <span class="muted small">skin ${kind} / order ${menuOrder} / size ${toMenuOrder(board.pageSize, 12)}${kind === "BOARD" ? ` / width ${boardWidthLabel}` : ""}${kind === "GALLERY" ? ` / width ${galleryBoardWidthLabel} / cols ${galleryColumnsLabel}` : ""}${kind === "PROFILE" ? ` / cols ${galleryColumnsLabel}` : ""}${kind === "LOG" ? ` / width ${logBoardWidthLabel} / image ${imageWidthLabel} / comments ${commentPositionLabel}` : ""}</span>
+              ${kind === "PAGE" || kind === "SCRIPT" ? "" : `<span class="summary-chip ${allowGuest ? "is-on" : "is-off"}">게스트 ${allowGuest ? "ON" : "OFF"}</span>`}
+              ${kind === "PAGE" || kind === "SCRIPT" ? "" : `<span class="summary-chip ${commentRestricted ? "is-off" : "is-on"}">댓글제한 ${commentRestricted ? "ON" : "OFF"}</span>`}
+              <span class="muted small">skin ${kind} / order ${menuOrder} / size ${toMenuOrder(board.pageSize, 12)}${kind === "BOARD" ? ` / width ${boardWidthLabel}` : ""}${kind === "GALLERY" ? ` / width ${galleryBoardWidthLabel} / cols ${galleryColumnsLabel}` : ""}${kind === "PROFILE" ? ` / cols ${galleryColumnsLabel}` : ""}${kind === "SCRIPT" ? ` / cols ${galleryColumnsLabel}` : ""}${kind === "LOG" ? ` / width ${logBoardWidthLabel} / image ${imageWidthLabel} / comments ${commentPositionLabel}` : ""}</span>
             </div>
           </div>
           <div class="formRow board-row-actions">
@@ -1188,11 +1195,40 @@ function escapeHtml(text) {
 }
 
 /* 제목 이미지 (선택) — 파일은 저장 시 board_assets/{boardId}/ 로 업로드 */
+function fileLooksLikeImage(file) {
+  if (!file) return false;
+  if (String(file.type || "").startsWith("image/")) return true;
+  return /\.(png|jpe?g|gif|webp|svg|ico)$/i.test(file.name || "");
+}
+
+function ensureTitleImageFile(file) {
+  if (!file || !file.name) throw new Error("제목 이미지 파일을 선택해 주세요.");
+  if (!fileLooksLikeImage(file)) throw new Error("제목 이미지는 이미지 파일만 업로드할 수 있습니다.");
+  if (Number(file.size || 0) > 20 * 1024 * 1024) {
+    throw new Error("제목 이미지는 20MB 이하만 업로드할 수 있습니다.");
+  }
+}
+
+function clearStagedTitleImageFile() {
+  if (stagedTitleImagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(stagedTitleImagePreviewUrl);
+  stagedTitleImagePreviewUrl = "";
+  stagedTitleImageFile = null;
+  if (titleImageFileInput) titleImageFileInput.value = "";
+}
+
+function stageTitleImageFile(file) {
+  ensureTitleImageFile(file);
+  clearStagedTitleImageFile();
+  stagedTitleImageFile = file;
+  stagedTitleImagePreviewUrl = URL.createObjectURL(file);
+  if (titleImageInput) titleImageInput.value = "";
+  updateTitleImagePreview();
+  showMsg("제목 이미지를 선택했습니다. 게시판을 저장하면 업로드됩니다.");
+}
+
 function updateTitleImagePreview() {
   if (!titleImagePreviewEl) return;
-  const src = stagedTitleImageFile
-    ? URL.createObjectURL(stagedTitleImageFile)
-    : (titleImageInput?.value || "").trim();
+  const src = stagedTitleImagePreviewUrl || (titleImageInput?.value || "").trim();
   if (!src) {
     titleImagePreviewEl.classList.add("hidden");
     titleImagePreviewEl.innerHTML = "";
@@ -1202,14 +1238,17 @@ function updateTitleImagePreview() {
   titleImagePreviewEl.innerHTML = `
     <div class="previewItem">
       <img class="previewImage" src="${escapeHtml(src)}" alt="제목 이미지 미리보기" style="object-fit: contain;">
-      <span class="previewName muted small">${stagedTitleImageFile ? escapeHtml(stagedTitleImageFile.name) + " (저장 시 업로드)" : "현재 이미지"}</span>
+      <button type="button" class="admin-image-remove" data-clear-title-image aria-label="제목 이미지 제거">×</button>
     </div>
   `;
+  titleImagePreviewEl.querySelector("[data-clear-title-image]")?.addEventListener("click", () => {
+    setTitleImageValue("");
+    showMsg("제목 이미지를 제거했습니다. 게시판을 저장하면 반영됩니다.");
+  });
 }
 
 function setTitleImageValue(url) {
-  stagedTitleImageFile = null;
-  if (titleImageFileInput) titleImageFileInput.value = "";
+  clearStagedTitleImageFile();
   if (titleImageInput) titleImageInput.value = url || "";
   updateTitleImagePreview();
 }
@@ -1266,17 +1305,60 @@ function stripHtml(html) {
   document.getElementById("saveBoardBtn")?.addEventListener("click", saveBoard);
   document.getElementById("migrateDocsBtn")?.addEventListener("click", migrateFirestoreDocs);
   document.getElementById("selectTitleImageBtn")?.addEventListener("click", () => titleImageFileInput?.click());
-  document.getElementById("clearTitleImageBtn")?.addEventListener("click", () => setTitleImageValue(""));
   titleImageFileInput?.addEventListener("change", () => {
     const file = titleImageFileInput.files?.[0] || null;
-    if (file) {
-      stagedTitleImageFile = file;
-      updateTitleImagePreview();
+    if (!file) return;
+    try {
+      stageTitleImageFile(file);
+    } catch (error) {
+      if (titleImageFileInput) titleImageFileInput.value = "";
+      showMsg(error.message || "제목 이미지 선택에 실패했습니다.", true);
+    }
+  });
+  titleImageDropZone?.addEventListener("click", (event) => {
+    if (event.target.closest("button")) return;
+    titleImageFileInput?.click();
+  });
+  titleImageDropZone?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    titleImageFileInput?.click();
+  });
+  titleImageDropZone?.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    titleImageDropZone.classList.add("is-dragover");
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  });
+  titleImageDropZone?.addEventListener("dragleave", (event) => {
+    if (event.relatedTarget && titleImageDropZone.contains(event.relatedTarget)) return;
+    titleImageDropZone.classList.remove("is-dragover");
+  });
+  titleImageDropZone?.addEventListener("drop", (event) => {
+    event.preventDefault();
+    titleImageDropZone.classList.remove("is-dragover");
+    const file = [...(event.dataTransfer?.files || [])].find((item) => fileLooksLikeImage(item));
+    try {
+      stageTitleImageFile(file);
+    } catch (error) {
+      showMsg(error.message || "제목 이미지 드롭에 실패했습니다.", true);
+    }
+  });
+  titleImageDropZone?.addEventListener("paste", (event) => {
+    const directFile = [...(event.clipboardData?.files || [])].find((item) => fileLooksLikeImage(item));
+    const itemFile = [...(event.clipboardData?.items || [])]
+      .map((item) => item.kind === "file" ? item.getAsFile() : null)
+      .find((item) => fileLooksLikeImage(item));
+    const file = directFile || itemFile;
+    if (!file) return;
+    event.preventDefault();
+    try {
+      stageTitleImageFile(file);
+    } catch (error) {
+      showMsg(error.message || "제목 이미지 붙여넣기에 실패했습니다.", true);
     }
   });
   titleImageInput?.addEventListener("input", () => {
-    stagedTitleImageFile = null;
-    if (titleImageFileInput) titleImageFileInput.value = "";
+    clearStagedTitleImageFile();
     updateTitleImagePreview();
   });
   [

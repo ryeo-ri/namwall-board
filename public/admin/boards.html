@@ -55,17 +55,16 @@
               </div>
 
               <div class="field-group">
-                <div class="field-head">
-                  <label for="boardTitleImageInput">제목 이미지 (선택)</label>
-                  <div class="formRow">
-                    <button type="button" class="btn small" id="selectTitleImageBtn">파일 선택</button>
-                    <button type="button" class="btn small" id="clearTitleImageBtn">제거</button>
-                  </div>
-                </div>
+                <label for="boardTitleImageInput">제목 이미지 (선택)</label>
                 <input id="boardTitleImageInput" placeholder="이미지 URL — 지정하면 헤더 메뉴에서 이름 대신 표시" autocomplete="off" spellcheck="false">
+                <div class="admin-image-dropzone" id="boardTitleImageDropZone" tabindex="0" role="button" aria-label="게시판 제목 이미지 파일 선택">
+                  <button type="button" class="btn small" id="selectTitleImageBtn">파일 선택</button>
+                  <span>이미지를 끌어놓거나 클릭해서 선택</span>
+                  <span class="muted small">여기를 선택한 뒤 이미지 붙여넣기도 가능합니다.</span>
+                </div>
                 <input id="boardTitleImageFile" type="file" accept="image/*" class="hidden">
                 <div class="muted small">파일을 선택하면 저장 시 업로드됩니다. URL을 직접 입력해도 됩니다.</div>
-                <div id="boardTitleImagePreview" class="previewGrid hidden"></div>
+                <div id="boardTitleImagePreview" class="previewGrid admin-image-preview-list hidden"></div>
               </div>
 
               <div class="field-group">
@@ -266,4 +265,3 @@
   <script type="module" src="assets/js/admin/boards-page.js"></script>
 </body>
 </html>
-

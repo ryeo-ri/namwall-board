@@ -68,6 +68,22 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    match /script_archives/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() &&
+        request.resource != null &&
+        request.resource.size < 50 * 1024 * 1024 &&
+        (request.resource.contentType == 'application/gzip' ||
+         request.resource.contentType == 'application/json');
+      allow delete: if isAdmin();
+    }
+
+    match /script_assets/{boardId}/{archiveId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && safeImageWrite();
+      allow delete: if isAdmin();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

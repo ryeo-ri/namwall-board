@@ -82,11 +82,14 @@
             </div>
 
             <div id="thumbFileFields" class="write-field-block hidden">
-              <div class="formRow write-file-row">
-                <button type="button" class="btn" id="selectThumbFileBtn">파일 선택</button>
-                <button type="button" class="btn" id="clearThumbFileBtn">선택 삭제</button>
+              <div class="write-thumb-dropzone" id="thumbDropZone" tabindex="0" role="button" aria-label="썸네일 이미지 파일 선택">
+                <div class="formRow write-file-row">
+                  <button type="button" class="btn" id="selectThumbFileBtn">파일 선택</button>
+                  <button type="button" class="btn hidden" id="clearThumbFileBtn">선택 삭제</button>
+                </div>
+                <span>이미지를 끌어놓거나 클릭해서 선택</span>
+                <span class="muted small">여기를 선택한 뒤 이미지 붙여넣기도 가능합니다.</span>
               </div>
-              <input id="thumbFilePathInput" readonly placeholder="선택한 파일 없음">
               <input id="thumbFileInput" type="file" accept="image/*" class="hidden">
             </div>
 
@@ -157,15 +160,18 @@
         </div>
 
         <details class="write-extra-details" id="extraFields">
-          <summary>추가 이미지</summary>
+          <summary>
+            <span>추가 이미지</span>
+            <span class="write-extra-count" id="extraItemCount" aria-live="polite"></span>
+          </summary>
           <div class="write-extra-body">
             <div class="write-mode-row">
-              <label><input type="radio" name="extraMode" value="url" id="extraModeUrl" checked> URL</label>
-              <label><input type="radio" name="extraMode" value="file" id="extraModeFile"> 파일</label>
+              <label><input type="radio" name="extraMode" value="url" id="extraModeUrl"> URL</label>
+              <label><input type="radio" name="extraMode" value="file" id="extraModeFile" checked> 파일</label>
               <label><input type="radio" name="extraMode" value="video" id="extraModeVideo"> VIDEO</label>
             </div>
 
-            <div id="extraUrlFields" class="write-field-block">
+            <div id="extraUrlFields" class="write-field-block hidden">
               <label class="muted small" for="extraImageUrlInput">추가 이미지 URL</label>
               <input id="extraImageUrlInput" placeholder="https://...">
             </div>
@@ -175,20 +181,19 @@
               <textarea id="extraVideoInput" class="write-video-input" rows="4" placeholder='<iframe width="560" height="315" src="https://www.youtube.com/embed/..." allowfullscreen></iframe>'></textarea>
             </div>
 
-            <div id="extraFileFields" class="write-field-block hidden">
-              <div class="formRow write-file-row">
+            <div id="extraFileFields" class="write-field-block">
+              <div class="write-extra-dropzone" id="extraDropZone" tabindex="0" role="button" aria-label="추가 이미지 파일 선택">
                 <button type="button" class="btn" id="selectExtraFileBtn">파일 선택</button>
-                <button type="button" class="btn" id="clearExtraFileBtn">선택 삭제</button>
+                <span>이미지를 끌어놓거나 클릭해서 선택</span>
+                <span class="muted small">여기를 선택한 뒤 이미지 붙여넣기도 가능합니다.</span>
               </div>
-              <input id="extraFilePathInput" readonly placeholder="선택한 파일 없음">
               <input id="extraFileInput" type="file" accept="image/*" multiple class="hidden">
             </div>
 
-            <div id="extraPendingPreview" class="previewGrid mt-sm"></div>
-            <div class="formRow mt-sm">
-              <button type="button" class="btn" id="addExtraItemBtn">등록</button>
+            <div class="formRow write-extra-add-row">
+              <button type="button" class="btn" id="addExtraItemBtn">추가</button>
             </div>
-            <div id="extraItems" class="previewGrid mt-sm"></div>
+            <div id="extraItems" class="previewGrid write-extra-list mt-sm"></div>
             <div class="notice hidden mt-sm" id="uploadMsg"></div>
 
             <div id="extraImageAlignField" class="write-field-block mt-sm">

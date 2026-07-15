@@ -46,6 +46,11 @@ export function createSkinDefinition(definition = {}) {
     postFields: Array.isArray(definition.postFields) ? definition.postFields.slice() : DEFAULT_POST_FIELDS,
     renderList,
     renderDetail: definition.renderDetail || null,
+    renderPostField: typeof definition.renderPostField === "function" ? definition.renderPostField : null,
+    bindWriteFields: typeof definition.bindWriteFields === "function" ? definition.bindWriteFields : null,
+    prepareWrite: typeof definition.prepareWrite === "function" ? definition.prepareWrite : null,
+    afterWrite: typeof definition.afterWrite === "function" ? definition.afterWrite : null,
+    bindDetail: typeof definition.bindDetail === "function" ? definition.bindDetail : null,
     renderWriteFields: Array.isArray(definition.renderWriteFields) ? definition.renderWriteFields.slice() : [],
     buildSkinData: typeof definition.buildSkinData === "function" ? definition.buildSkinData : null,
     capabilities: mergeCapabilities(DEFAULT_CAPABILITIES, definition.capabilities || {}),
@@ -69,4 +74,3 @@ function mergeCapabilities(base, incoming) {
     }
   };
 }
-

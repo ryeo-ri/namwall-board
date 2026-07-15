@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
+<title>스킨 데이터 편집</title>
+<link rel="preconnect" href="https://r2.naru.pub">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="assets/js/core/app.js">
+<link rel="modulepreload" href="assets/js/core/firebase.js">
+<link rel="modulepreload" href="assets/js/core/state.js">
+<link rel="modulepreload" href="assets/js/shared/boards-render.js">
+<link rel="modulepreload" href="assets/js/skins/registry.js">
+<link rel="modulepreload" href="assets/js/pages/skin-editor-page.js">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+</head>
+<body class="site-page skin-editor-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="index.html"><span class="dot"></span><span id="siteTitle"></span></a>
+        <nav class="nav" id="topNav"></nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container skin-editor-container">
+    <section class="card skin-editor-shell">
+      <header class="skin-editor-page-head">
+        <div>
+          <span class="skin-editor-kicker" id="skinEditorKicker">SKIN EDITOR</span>
+          <h1 id="skinEditorTitle">데이터 편집</h1>
+          <p class="muted small" id="skinEditorMeta">편집기를 불러오는 중입니다.</p>
+        </div>
+        <div class="formRow skin-editor-head-actions">
+          <a class="btn" id="skinEditorBack" href="index.html">돌아가기</a>
+          <div class="formRow skin-editor-actions" id="skinEditorActions"></div>
+        </div>
+      </header>
+
+      <div class="notice hidden" id="skinEditorNotice" aria-live="polite"></div>
+      <div class="skin-editor-loading" id="skinEditorLoading">
+        <span class="loading-indicator" role="status"><span class="sr-only">편집기를 불러오는 중</span></span>
+      </div>
+      <div class="skin-editor-root hidden" id="skinEditorRoot"></div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/core/app.js"></script>
+  <script type="module" src="assets/js/pages/skin-editor-page.js"></script>
+</body>
+</html>

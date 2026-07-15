@@ -6,6 +6,7 @@ const SKIN_CATALOG = [
   { type: "GALLERY", folder: "gallery", aliases: ["gal", "gallery"], description: "Gallery board" },
   { type: "PROFILE", folder: "profile", aliases: ["profile"], description: "Profile board" },
   { type: "GUESTBOOK", folder: "guestbook", aliases: ["guestbook", "gb"], description: "Guestbook" },
+  { type: "SCRIPT", folder: "script", aliases: ["script", "trpg"], description: "TRPG play log archive" },
   { type: "PAGE", folder: "page", aliases: ["page"], description: "Free page" }
 ];
 
@@ -16,6 +17,7 @@ const SKIN_META_BY_TYPE = new Map(
 );
 
 const skinCache = new Map();
+const editorCache = new Map();
 const stylesheetCache = new Set();
 
 function isPlainObject(value) {
@@ -178,10 +180,13 @@ export function getPostSkinData(post = {}) {
 }
 
 export function getBoardAliasCandidates(rawBoardId, skinType = "") {
-  const normalizedBoardId = String(rawBoardId || "").trim().toLowerCase();
+  const originalBoardId = String(rawBoardId || "").trim();
+  const normalizedBoardId = originalBoardId.toLowerCase();
   if (!normalizedBoardId) return [];
 
-  const candidates = new Set([normalizedBoardId]);
+  // Firestore string comparisons are case-sensitive. Keep the canonical document
+  // ID while also querying legacy lowercase aliases.
+  const candidates = new Set([originalBoardId, normalizedBoardId]);
   const aliasMatchedType = hasKnownAlias(normalizedBoardId) ? findSkinTypeByAlias(normalizedBoardId) : "";
   const normalizedType = skinType ? normalizeSkinType(skinType, DEFAULT_SKIN_TYPE) : aliasMatchedType;
   if (normalizedType) {
@@ -229,6 +234,43 @@ export async function getSkin(boardOrType) {
   ensureSkinStylesheets(skin);
   skinCache.set(skinType, skin);
   return skin;
+}
+
+// editor.js is optional. Adding it beside a skin's index.js enables the shared
+// admin editor page without adding another catalog flag or board option.
+export async function getSkinEditor(boardOrType) {
+  const rawType = typeof boardOrType === "string"
+    ? boardOrType
+    : (boardOrType?.type || resolveBoardSkinType(boardOrType, DEFAULT_SKIN_TYPE));
+  const skinType = normalizeSkinType(rawType, DEFAULT_SKIN_TYPE);
+
+  if (editorCache.has(skinType)) {
+    return editorCache.get(skinType);
+  }
+
+  const folder = getSkinFolderName(skinType, DEFAULT_SKIN_TYPE);
+  try {
+    const module = await import(`./${folder}/editor.js`);
+    const editor = module.editor || module.default;
+    if (!editor || typeof editor.mount !== "function") {
+      console.warn(`Skin editor ${skinType} does not export a mount function.`);
+      editorCache.set(skinType, null);
+      return null;
+    }
+    editorCache.set(skinType, editor);
+    return editor;
+  } catch (error) {
+    if (!isMissingOptionalEditorError(error)) {
+      console.warn(`Skin editor ${skinType} load failed.`, error);
+    }
+    editorCache.set(skinType, null);
+    return null;
+  }
+}
+
+function isMissingOptionalEditorError(error) {
+  return /failed to fetch dynamically imported module|error loading dynamically imported module|cannot find module|module script failed|404/i
+    .test(String(error?.message || error || ""));
 }
 
 function ensureSkinStylesheets(skin) {

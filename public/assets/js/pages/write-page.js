@@ -59,13 +59,14 @@ const thumbFileFieldsEl = document.getElementById("thumbFileFields");
 const thumbVideoFieldsEl = document.getElementById("thumbVideoFields");
 const thumbVideoInput = document.getElementById("thumbVideoInput");
 const thumbPreviewEl = document.getElementById("thumbPreview");
+const thumbDropZoneEl = document.getElementById("thumbDropZone");
 const selectThumbFileBtn = document.getElementById("selectThumbFileBtn");
 const clearThumbFileBtn = document.getElementById("clearThumbFileBtn");
-const thumbFilePathInput = document.getElementById("thumbFilePathInput");
 const thumbFileInput = document.getElementById("thumbFileInput");
 const thumbSectionEl = document.getElementById("thumbSection");
 
 const extraItemsEl = document.getElementById("extraItems");
+const extraItemCountEl = document.getElementById("extraItemCount");
 const addExtraItemBtn = document.getElementById("addExtraItemBtn");
 const extraModeUrlRadio = document.getElementById("extraModeUrl");
 const extraModeFileRadio = document.getElementById("extraModeFile");
@@ -75,10 +76,8 @@ const extraVideoFieldsEl = document.getElementById("extraVideoFields");
 const extraFileFieldsEl = document.getElementById("extraFileFields");
 const extraImageUrlInput = document.getElementById("extraImageUrlInput");
 const extraVideoInput = document.getElementById("extraVideoInput");
-const extraPendingPreviewEl = document.getElementById("extraPendingPreview");
+const extraDropZoneEl = document.getElementById("extraDropZone");
 const selectExtraFileBtn = document.getElementById("selectExtraFileBtn");
-const clearExtraFileBtn = document.getElementById("clearExtraFileBtn");
-const extraFilePathInput = document.getElementById("extraFilePathInput");
 const extraFileInput = document.getElementById("extraFileInput");
 
 const logNumberInput = document.getElementById("logNumberInput");
@@ -111,7 +110,7 @@ let uploadedExtraAttachments = [];
 let fixedAdminNickname = "";
 let fixedAuthorName = "";
 let extraItems = [];
-let stagedExtraAttachments = [];
+let draggedExtraItemId = "";
 let stagedThumbFile = null;
 let thumbPreviewBlobUrl = "";
 let editingPost = null;
@@ -193,14 +192,16 @@ async function getSelectedSkin() {
   return getSkin(fallbackSkinType);
 }
 
-function applyProfileWriteLabels(isProfileSkin) {
+function applyProfileWriteLabels(isProfileSkin, isScriptSkin = false) {
   const thumbLabelEl = thumbSectionEl?.querySelector(".write-label");
   const thumbUrlLabelEl = thumbUrlFieldsEl?.querySelector("label");
   const titleLabelEl = titleFieldsEl?.querySelector(".write-label");
   const contentLabelEl = contentFieldsEl?.querySelector(".write-label");
 
-  if (thumbLabelEl) thumbLabelEl.textContent = isProfileSkin ? "대표이미지(썸네일)" : "대표이미지";
-  if (thumbUrlLabelEl) thumbUrlLabelEl.textContent = isProfileSkin ? "썸네일 이미지 URL" : "이미지 URL";
+  if (thumbLabelEl) thumbLabelEl.textContent = isProfileSkin
+    ? "대표이미지(썸네일)"
+    : (isScriptSkin ? "세션 썸네일" : "대표이미지");
+  if (thumbUrlLabelEl) thumbUrlLabelEl.textContent = (isProfileSkin || isScriptSkin) ? "썸네일 이미지 URL" : "이미지 URL";
   if (titleLabelEl) titleLabelEl.textContent = isProfileSkin ? "캐릭터 이름" : "제목";
   if (contentLabelEl) contentLabelEl.textContent = isProfileSkin ? "캐릭터 한마디" : "본문";
   if (titleInput) titleInput.placeholder = isProfileSkin ? "캐릭터 이름" : "제목";
@@ -249,7 +250,7 @@ function renderSkinPostFields(skin, post = editingPost) {
   }
 
   const skinData = getPostSkinData(post || {});
-  if (skinFieldsTitleEl) skinFieldsTitleEl.textContent = `${skin.type} 정보`;
+  if (skinFieldsTitleEl) skinFieldsTitleEl.textContent = skin.type === "PROFILE" ? "캐릭터 정보" : `${skin.type} 정보`;
 
   const fieldHtml = fields.map((field) => {
     const key = String(field.key || "");
@@ -265,6 +266,15 @@ function renderSkinPostFields(skin, post = editingPost) {
     const wrapperAttrs = visibleWhen
       ? ` data-skin-field-wrap="${escapeHtml(key)}" data-visible-when-key="${escapeHtml(visibleWhen.key)}" data-visible-when-value="${escapeHtml(visibleWhen.value)}"`
       : ` data-skin-field-wrap="${escapeHtml(key)}"`;
+
+    if (field.type === "hidden") {
+      return `<input ${commonAttrs} type="hidden" value="${escapeHtml(value)}">`;
+    }
+
+    if (typeof skin.renderPostField === "function") {
+      const customHtml = skin.renderPostField({ field, key, id, value, label, placeholder, commonAttrs, wrapperAttrs });
+      if (typeof customHtml === "string") return customHtml;
+    }
 
     if (field.type === "select") {
       const options = Array.isArray(field.options) ? field.options : [];
@@ -291,7 +301,7 @@ function renderSkinPostFields(skin, post = editingPost) {
       const htmlToggleHtml = htmlToggleKey ? `
         <label class="write-check write-skin-html-toggle">
           <input id="${htmlToggleId}" type="checkbox" data-skin-field="${escapeHtml(htmlToggleKey)}" ${htmlToggleValue === true || htmlToggleValue === "true" ? "checked" : ""}>
-          <span>HTML 허용</span>
+          <span>HTML</span>
         </label>
       ` : "";
       return `
@@ -306,13 +316,23 @@ function renderSkinPostFields(skin, post = editingPost) {
     }
 
     if (field.type === "image") {
+      const modeName = `skinImageMode_${key.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
       return `
         <div class="field-group write-skin-field write-skin-image-field"${wrapperAttrs}>
           <label class="muted small" for="${id}">${label}</label>
-          <input ${commonAttrs} type="url" value="${escapeHtml(value)}">
-          <div class="formRow write-file-row mt-sm">
-            <button type="button" class="btn" data-skin-file-select="${escapeHtml(key)}">파일 선택</button>
-            <button type="button" class="btn" data-skin-file-clear="${escapeHtml(key)}">선택 삭제</button>
+          <div class="write-mode-row write-skin-image-modes">
+            <label><input type="radio" name="${modeName}" value="file" data-skin-image-mode="${escapeHtml(key)}" checked> 파일</label>
+            <label><input type="radio" name="${modeName}" value="url" data-skin-image-mode="${escapeHtml(key)}"> URL</label>
+          </div>
+          <div class="write-skin-image-panel" data-skin-image-panel="file" data-skin-image-key="${escapeHtml(key)}">
+            <div class="write-skin-image-dropzone" data-skin-file-drop="${escapeHtml(key)}" tabindex="0" role="button" aria-label="${label} 파일 선택">
+              <button type="button" class="btn" data-skin-file-select="${escapeHtml(key)}">파일 선택</button>
+              <span>이미지를 끌어놓거나 클릭해서 선택</span>
+              <span class="muted small">붙여넣기도 가능합니다.</span>
+            </div>
+          </div>
+          <div class="write-skin-image-panel hidden" data-skin-image-panel="url" data-skin-image-key="${escapeHtml(key)}">
+            <input ${commonAttrs} type="url" value="${escapeHtml(value)}">
           </div>
           <input type="file" accept="image/*" class="hidden" data-skin-file-input="${escapeHtml(key)}">
           <div class="previewGrid mt-sm" data-skin-file-preview="${escapeHtml(key)}"></div>
@@ -331,6 +351,12 @@ function renderSkinPostFields(skin, post = editingPost) {
   skinFieldsContainerEl.innerHTML = `<div class="write-skin-fields">${fieldHtml}</div>`;
   bindSkinFieldVisibility();
   bindSkinImageFieldActions(skin);
+  skin.bindWriteFields?.({
+    container: skinFieldsContainerEl,
+    post,
+    showMessage: showMsg,
+    showUploadMessage: showUploadMsg
+  });
 }
 
 function getSkinFieldInput(key = "") {
@@ -360,13 +386,17 @@ function renderSkinImagePreview(key = "", attachment = null) {
     return;
   }
 
-  const name = attachment?.name || "profile-image";
   previewEl.innerHTML = `
-    <div class="previewItem">
-      <img src="${escapeHtml(url)}" alt="profile image preview" class="previewImage">
-      <div class="muted small previewName" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+    <div class="previewItem write-skin-image-preview-item">
+      <img src="${escapeHtml(url)}" alt="프로필 이미지 미리보기" class="previewImage">
+      <button type="button" class="write-extra-remove" data-skin-preview-clear="${escapeHtml(key)}" aria-label="프로필 이미지 삭제">×</button>
     </div>
   `;
+  previewEl.querySelector("[data-skin-preview-clear]")?.addEventListener("click", () => {
+    clearSkinImageSelection(key, true);
+    setSkinImageMode(key, "file");
+    showUploadMsg("프로필 이미지를 삭제했습니다.");
+  });
 }
 
 function clearSkinImageSelection(key = "", clearValue = false) {
@@ -386,7 +416,29 @@ function setSkinImageFileSelection(key = "", file) {
   const previewUrl = URL.createObjectURL(file);
   stagedSkinImagePreviewUrls.set(key, previewUrl);
   renderSkinImagePreview(key, createLocalAttachment(file, previewUrl));
+  setSkinImageMode(key, "file");
   showUploadMsg("프로필 이미지를 선택했습니다. 저장 시 Storage에 업로드됩니다.");
+}
+
+function setSkinImageMode(key = "", mode = "file") {
+  if (!skinFieldsContainerEl) return;
+  const safeKey = cssEscape(key);
+  const resolvedMode = mode === "url" ? "url" : "file";
+  const modeInput = skinFieldsContainerEl.querySelector(`[data-skin-image-mode="${safeKey}"][value="${resolvedMode}"]`);
+  if (modeInput) modeInput.checked = true;
+  skinFieldsContainerEl.querySelectorAll(`[data-skin-image-panel][data-skin-image-key="${safeKey}"]`).forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.skinImagePanel !== resolvedMode);
+  });
+}
+
+function setSkinImageUrl(key = "", rawUrl = "") {
+  const attachment = buildExternalAttachment(rawUrl);
+  clearSkinImageSelection(key);
+  const urlInput = getSkinFieldInput(key);
+  if (urlInput) urlInput.value = attachment.url;
+  setSkinImageMode(key, "url");
+  renderSkinImagePreview(key, attachment);
+  showUploadMsg("프로필 이미지 URL을 적용했습니다.");
 }
 
 function bindSkinImageFieldActions(skin) {
@@ -398,14 +450,14 @@ function bindSkinImageFieldActions(skin) {
     renderSkinImagePreview(key);
 
     const selectBtn = skinFieldsContainerEl.querySelector(`[data-skin-file-select="${cssEscape(key)}"]`);
-    const clearBtn = skinFieldsContainerEl.querySelector(`[data-skin-file-clear="${cssEscape(key)}"]`);
     const fileInput = skinFieldsContainerEl.querySelector(`[data-skin-file-input="${cssEscape(key)}"]`);
+    const dropZone = skinFieldsContainerEl.querySelector(`[data-skin-file-drop="${cssEscape(key)}"]`);
     const urlInput = getSkinFieldInput(key);
+    const modeInputs = skinFieldsContainerEl.querySelectorAll(`[data-skin-image-mode="${cssEscape(key)}"]`);
 
     selectBtn?.addEventListener("click", () => fileInput?.click());
-    clearBtn?.addEventListener("click", () => {
-      clearSkinImageSelection(key, true);
-      showUploadMsg("프로필 이미지 선택을 해제했습니다.");
+    modeInputs.forEach((modeInput) => {
+      modeInput.addEventListener("change", () => setSkinImageMode(key, modeInput.value));
     });
     fileInput?.addEventListener("change", (event) => {
       try {
@@ -421,6 +473,63 @@ function bindSkinImageFieldActions(skin) {
       if (stagedSkinImageFiles.has(key)) clearSkinImageSelection(key);
       renderSkinImagePreview(key);
     });
+    urlInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      try {
+        setSkinImageUrl(key, urlInput.value);
+      } catch (error) {
+        showUploadMsg(error.message || "프로필 이미지 URL 적용 실패", true);
+      }
+    });
+    dropZone?.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      fileInput?.click();
+    });
+    dropZone?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      fileInput?.click();
+    });
+    dropZone?.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      dropZone.classList.add("is-dragover");
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+    dropZone?.addEventListener("dragleave", (event) => {
+      if (event.relatedTarget && dropZone.contains(event.relatedTarget)) return;
+      dropZone.classList.remove("is-dragover");
+    });
+    dropZone?.addEventListener("drop", (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("is-dragover");
+      const file = [...(event.dataTransfer?.files || [])].find((item) => fileLooksLikeImage(item));
+      const droppedUrl = String(
+        event.dataTransfer?.getData("text/uri-list")
+        || event.dataTransfer?.getData("text/plain")
+        || ""
+      ).split(/\r?\n/).find((line) => line && !line.startsWith("#"))?.trim() || "";
+      try {
+        if (file) setSkinImageFileSelection(key, file);
+        else if (droppedUrl) setSkinImageUrl(key, droppedUrl);
+      } catch (error) {
+        showUploadMsg(error.message || "프로필 이미지 드롭 실패", true);
+      }
+    });
+    dropZone?.addEventListener("paste", (event) => {
+      const files = getClipboardImageFiles(event);
+      const pastedText = String(event.clipboardData?.getData("text/plain") || "").trim();
+      if (!files.length && !pastedText) return;
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        if (files.length) setSkinImageFileSelection(key, files[0]);
+        else setSkinImageUrl(key, pastedText);
+      } catch (error) {
+        showUploadMsg(error.message || "프로필 이미지 붙여넣기 실패", true);
+      }
+    });
+    setSkinImageMode(key, "file");
   });
 }
 
@@ -463,10 +572,14 @@ async function setSkinFields() {
   const writeCaps = skin.capabilities.write;
   const isProfileSkin = skin.type === "PROFILE";
   const isPageSkin = skin.type === "PAGE";
+  const isScriptSkin = skin.type === "SCRIPT";
   const hideThumbnailFields = skin.type === "BOARD";
   const hideGalleryTextFields = !!writeCaps.supportsGalleryFields;
   const hideContentFields = writeCaps.supportsContent === false;
   const hasSkinPostFields = getSkinPostFields(skin).length > 0;
+
+  document.body.classList.toggle("profile-write-page", isProfileSkin);
+  document.body.classList.toggle("script-write-page", isScriptSkin);
 
   if (writeCaps.disabled) {
     if (saveBtn) saveBtn.disabled = true;
@@ -482,17 +595,21 @@ async function setSkinFields() {
   if (titleFieldsEl) titleFieldsEl.classList.toggle("hidden", !writeCaps.supportsTitle || hideGalleryTextFields || isPageSkin);
   if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields || hideContentFields);
   if (visibilityFieldsEl) visibilityFieldsEl.classList.toggle("hidden", isPageSkin);
-  if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin);
+  if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin || isScriptSkin);
   // 추가 이미지 정렬: 인라인 갤러리를 쓰는 스킨(BOARD 등)만 노출, 프로필·페이지는 숨김
-  if (extraImageAlignFieldEl) extraImageAlignFieldEl.classList.toggle("hidden", isPageSkin || isProfileSkin);
+  if (extraImageAlignFieldEl) extraImageAlignFieldEl.classList.toggle("hidden", isPageSkin || isProfileSkin || isScriptSkin);
   if (tagFieldsEl) tagFieldsEl.classList.toggle("hidden", isPageSkin);
   profileSkinFieldsHelpEl?.classList.toggle("hidden", !isProfileSkin);
   if (logNumberInput) {
     logNumberInput.readOnly = !!writeCaps.autoLogNumber;
   }
 
-  applyProfileWriteLabels(isProfileSkin);
+  applyProfileWriteLabels(isProfileSkin, isScriptSkin);
   renderSkinPostFields(skin, editingPost);
+  if (isScriptSkin && !editPostId && thumbModeFileRadio) {
+    thumbModeFileRadio.checked = true;
+    applyThumbModeUI();
+  }
   contentInput.placeholder = writeCaps.contentPlaceholder || (isProfileSkin ? "캐릭터 한마디" : "본문");
   if (!writeCaps.supportsTitle) {
     titleInput.value = "";
@@ -505,11 +622,9 @@ async function setSkinFields() {
   if (isPageSkin) {
     uploadedExtraAttachments = [];
     extraItems = [];
-    stagedExtraAttachments = [];
     if (tagsInput) tagsInput.value = "";
     if (visibilityInput) visibilityInput.value = "public";
     renderExtraItems();
-    clearPendingExtraPreview();
   }
   updateSecretPasswordVisibility();
 }
@@ -673,7 +788,7 @@ async function resolveNextLogNumber(board) {
   } catch (error) {
     console.warn("Failed to query log numbers directly. Falling back to client filter.", error);
     const snapshot = await getDocs(query(collection(db, "posts"), ...visibilityConstraints));
-    const allowedBoardIds = new Set(boardCandidates);
+    const allowedBoardIds = new Set(boardCandidates.map((candidate) => String(candidate || "").trim().toLowerCase()));
     posts = snapshot.docs
       .map((item) => item.data())
       .filter((post) => allowedBoardIds.has(String(post.boardId || "").trim().toLowerCase()));
@@ -705,7 +820,7 @@ function renderThumbPreview(thumbnail = null) {
   if (!thumbPreviewEl) return;
   if (!thumbnail) {
     thumbPreviewEl.innerHTML = "";
-    if (thumbFilePathInput) thumbFilePathInput.value = "";
+    updateThumbFileControls(false);
     return;
   }
 
@@ -713,7 +828,7 @@ function renderThumbPreview(thumbnail = null) {
   if (mode === "video") {
     const embedHtml = thumbnail.embedHtml || "";
     const sourceLabel = thumbnail.embedSrc || "VIDEO";
-    if (thumbFilePathInput) thumbFilePathInput.value = "";
+    updateThumbFileControls(false);
     if (thumbVideoInput && thumbnail.rawInput != null) thumbVideoInput.value = thumbnail.rawInput;
     thumbPreviewEl.innerHTML = `
       <div class="previewItem previewItemVideo">
@@ -726,8 +841,7 @@ function renderThumbPreview(thumbnail = null) {
 
   const previewUrl = thumbnail.url || "";
   const fileName = thumbnail.name || "selected-thumb";
-  const pathLabel = thumbnail.path || thumbnail.storagePath || "";
-  if (thumbFilePathInput) thumbFilePathInput.value = pathLabel || fileName;
+  updateThumbFileControls(Boolean(previewUrl));
 
   thumbPreviewEl.innerHTML = `
     <div class="previewItem">
@@ -735,6 +849,11 @@ function renderThumbPreview(thumbnail = null) {
       <div class="muted small previewName" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>
     </div>
   `;
+}
+
+function updateThumbFileControls(hasFile) {
+  thumbDropZoneEl?.classList.toggle("has-file", Boolean(hasFile));
+  clearThumbFileBtn?.classList.toggle("hidden", !hasFile);
 }
 
 function clearSelectedThumb() {
@@ -794,66 +913,12 @@ function normalizeThumbVideoHtml(rawHtml) {
   return { embedHtml: normalized.html, embedSrc: normalized.src };
 }
 
-function renderPendingExtraPreview(attachments = []) {
-  if (!extraPendingPreviewEl) return;
-  const items = Array.isArray(attachments) ? attachments.filter((item) => item?.url || item?.embedHtml) : [];
-  if (!items.length) {
-    extraPendingPreviewEl.innerHTML = "";
-    if (extraFilePathInput) extraFilePathInput.value = "";
-    return;
-  }
-
-  if (extraFilePathInput) {
-    extraFilePathInput.value = items.length === 1
-      ? (items[0]?.name || items[0]?.path || "")
-      : `${items.length}개 파일 선택됨`;
-  }
-
-  extraPendingPreviewEl.innerHTML = items.map((attachment, index) => {
-    const fileName = attachment.name || `selected-extra-${index + 1}`;
-    const pathLabel = attachment.path || attachment.url || "";
-    const isVideo = String(attachment.mode || "").toLowerCase() === "video" || Boolean(attachment.embedHtml);
-    return `
-      <div class="previewItem${isVideo ? " previewItemVideo" : ""}">
-        ${isVideo
-          ? `${renderPostVideoFrame(attachment.embedHtml || "", "previewVideoFrame")}`
-          : `<img src="${escapeHtml(attachment.url)}" alt="extra preview" class="previewImage">`}
-        <div class="muted small previewName" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function revokePendingExtraPreviews() {
-  stagedExtraAttachments.forEach((attachment) => revokeObjectUrl(attachment?.url));
-}
-
-function clearPendingExtraSelection() {
-  revokePendingExtraPreviews();
-  stagedExtraAttachments = [];
-  if (extraFileInput) extraFileInput.value = "";
-  renderPendingExtraPreview([]);
-}
-
 function applyExtraModeUI() {
   const mode = getExtraMode();
   if (extraUrlFieldsEl) extraUrlFieldsEl.classList.toggle("hidden", mode !== "url");
   if (extraVideoFieldsEl) extraVideoFieldsEl.classList.toggle("hidden", mode !== "video");
   if (extraFileFieldsEl) extraFileFieldsEl.classList.toggle("hidden", mode !== "file");
-
-  if (mode === "url") {
-    clearPendingExtraSelection();
-  } else if (mode === "video") {
-    clearPendingExtraSelection();
-    try {
-      renderPendingExtraPreview(extraVideoInput?.value ? [buildExternalVideoAttachment(extraVideoInput.value)] : []);
-    } catch (_error) {
-      renderPendingExtraPreview([]);
-    }
-  } else if (extraImageUrlInput) {
-    extraImageUrlInput.value = "";
-    renderPendingExtraPreview([]);
-  }
+  if (addExtraItemBtn) addExtraItemBtn.classList.toggle("hidden", mode === "file");
 }
 
 function buildExternalAttachment(rawUrl) {
@@ -898,6 +963,7 @@ function createExtraItem({ file = null, existing = null, previewUrl = "" } = {})
   const resolvedPreviewUrl = previewUrl || (file ? URL.createObjectURL(file) : "");
   extraItems.push({ id, file, existing, previewUrl: resolvedPreviewUrl });
   renderExtraItems();
+  return id;
 }
 
 function removeExtraItem(id) {
@@ -907,31 +973,48 @@ function removeExtraItem(id) {
   renderExtraItems();
 }
 
+function moveExtraItem(sourceId, targetId, placeAfter = false) {
+  if (!sourceId || !targetId || sourceId === targetId) return;
+  const sourceIndex = extraItems.findIndex((item) => item.id === sourceId);
+  if (sourceIndex < 0) return;
+
+  const [movedItem] = extraItems.splice(sourceIndex, 1);
+  let targetIndex = extraItems.findIndex((item) => item.id === targetId);
+  if (targetIndex < 0) {
+    extraItems.push(movedItem);
+  } else {
+    if (placeAfter) targetIndex += 1;
+    extraItems.splice(targetIndex, 0, movedItem);
+  }
+  renderExtraItems();
+}
+
+function updateExtraItemCount() {
+  if (!extraItemCountEl) return;
+  extraItemCountEl.textContent = extraItems.length ? `${extraItems.length}장` : "";
+}
+
 function renderExtraItems() {
   if (!extraItemsEl) return;
+  updateExtraItemCount();
   if (!extraItems.length) {
-    extraItemsEl.innerHTML = '<div class="muted small" style="grid-column: 1 / -1;">등록된 추가 이미지가 없습니다.</div>';
+    extraItemsEl.innerHTML = "";
     return;
   }
 
   extraItemsEl.innerHTML = extraItems.map((item, index) => {
     const previewUrl = item.previewUrl || item.existing?.url || "";
-    const fileName = item.file?.name || item.existing?.name || `image-${index + 1}`;
-    const pathLabel = item.existing?.path || "";
     const isVideo = String(item.existing?.mode || "").toLowerCase() === "video" || Boolean(item.existing?.embedHtml);
     return `
-      <div class="previewItem" data-extra-id="${item.id}">
-        <div class="muted small">추가 이미지 ${index + 1}</div>
-        <div class="mt-sm">
+      <div class="previewItem write-extra-item" data-extra-id="${item.id}" draggable="true">
+        <span class="write-extra-order" title="드래그해서 순서 변경">${index + 1}</span>
+        <button type="button" class="write-extra-remove" data-remove-extra="${item.id}" aria-label="추가 이미지 ${index + 1} 삭제">×</button>
+        <div class="write-extra-preview">
           ${previewUrl
             ? (isVideo
               ? `<div class="previewGrid previewItemVideo">${renderPostVideoFrame(item.existing?.embedHtml || "", "previewVideoFrame")}</div>`
-              : `<div class="previewGrid"><img src="${escapeHtml(previewUrl)}" alt="preview" class="previewImage"></div>`)
+              : `<div class="previewGrid"><img src="${escapeHtml(previewUrl)}" alt="추가 이미지 ${index + 1}" class="previewImage"></div>`)
             : ""}
-          ${isVideo ? "" : `<div class="muted small previewName" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>`}
-        </div>
-        <div class="formRow mt-sm">
-          <button type="button" class="btn small" data-remove-extra="${item.id}">삭제</button>
         </div>
       </div>
     `;
@@ -939,6 +1022,32 @@ function renderExtraItems() {
 
   extraItemsEl.querySelectorAll("[data-remove-extra]").forEach((button) => {
     button.addEventListener("click", () => removeExtraItem(button.dataset.removeExtra));
+  });
+
+  extraItemsEl.querySelectorAll("[data-extra-id]").forEach((itemEl) => {
+    itemEl.addEventListener("dragstart", (event) => {
+      draggedExtraItemId = itemEl.dataset.extraId || "";
+      itemEl.classList.add("is-dragging");
+      event.dataTransfer?.setData("text/plain", draggedExtraItemId);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+    });
+    itemEl.addEventListener("dragend", () => {
+      draggedExtraItemId = "";
+      itemEl.classList.remove("is-dragging");
+    });
+    itemEl.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    });
+    itemEl.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const sourceId = event.dataTransfer?.getData("text/plain") || draggedExtraItemId;
+      const rect = itemEl.getBoundingClientRect();
+      const placeAfter = event.clientY > rect.top + (rect.height / 2)
+        || event.clientX > rect.left + (rect.width / 2);
+      moveExtraItem(sourceId, itemEl.dataset.extraId, placeAfter);
+    });
   });
 }
 
@@ -953,6 +1062,22 @@ function handleThumbFileChange(event) {
   try {
     const file = event.target.files?.[0];
     if (!file) return;
+    setThumbFileSelection(file, "썸네일 파일을 선택했습니다. 저장 시 Storage에 업로드됩니다.");
+  } catch (error) {
+    clearSelectedThumb();
+    showUploadMsg(error.message || "썸네일 파일 선택 실패", true);
+  }
+}
+
+function handleThumbDrop(event) {
+  event.preventDefault();
+  thumbDropZoneEl?.classList.remove("is-dragover");
+  const file = Array.from(event.dataTransfer?.files || []).find((item) => item.type.startsWith("image/"));
+  if (!file) {
+    showUploadMsg("썸네일로 사용할 이미지 파일을 놓아주세요.", true);
+    return;
+  }
+  try {
     setThumbFileSelection(file, "썸네일 파일을 선택했습니다. 저장 시 Storage에 업로드됩니다.");
   } catch (error) {
     clearSelectedThumb();
@@ -986,7 +1111,7 @@ async function handleClipboardPaste(event) {
   const activeTag = document.activeElement?.tagName?.toLowerCase() || "";
   const activeId = document.activeElement?.id || "";
   const isTypingField = ["input", "textarea"].includes(activeTag);
-  const isThumbField = activeId === "imageUrlInput" || activeId === "thumbFilePathInput";
+  const isThumbField = activeId === "imageUrlInput";
   const shouldCapture = !isTypingField || isThumbField || activeId === "thumbFileInput";
   if (!shouldCapture) return;
 
@@ -1008,36 +1133,91 @@ function handleExtraFileChange(event) {
   try {
     const files = [...(event.target.files || [])];
     if (!files.length) return;
-    files.forEach((file) => ensureImageFile(file, "추가 이미지"));
-
-    clearPendingExtraSelection();
-    stagedExtraAttachments = files.map((file) => createLocalAttachment(file, URL.createObjectURL(file)));
-    renderPendingExtraPreview(stagedExtraAttachments);
-    showUploadMsg(`추가 이미지 ${stagedExtraAttachments.length}개를 선택했습니다. 등록을 눌러 목록에 추가하세요.`);
+    addExtraFiles(files);
   } catch (error) {
-    clearPendingExtraSelection();
     showUploadMsg(error.message || "추가 이미지 파일 선택 실패", true);
+  } finally {
+    if (extraFileInput) extraFileInput.value = "";
   }
 }
 
-function addSelectedExtraFiles() {
-  if (!stagedExtraAttachments.length) {
-    throw new Error("등록할 추가 이미지 파일을 선택하세요.");
-  }
-
+function addExtraFiles(files = []) {
+  const imageFiles = [...files];
+  if (!imageFiles.length) return 0;
+  imageFiles.forEach((file) => ensureImageFile(file, "추가 이미지"));
   let added = 0;
-  stagedExtraAttachments.forEach((attachment) => {
-    if (!attachment?.file || hasExistingExtraFile(attachment.file)) return;
-    createExtraItem({ file: attachment.file, previewUrl: attachment.url });
+  imageFiles.forEach((file) => {
+    if (hasExistingExtraFile(file)) return;
+    extraItems.push({
+      id: `extra_${Date.now()}_${randomId(8)}`,
+      file,
+      existing: null,
+      previewUrl: URL.createObjectURL(file)
+    });
     added += 1;
   });
 
   if (!added) {
-    throw new Error("이미 등록된 파일입니다.");
+    showUploadMsg("이미 추가된 파일입니다.", true);
+    return 0;
   }
 
-  clearPendingExtraSelection();
-  showUploadMsg(`추가 이미지 ${added}개를 등록 목록에 추가했습니다.`);
+  renderExtraItems();
+  showUploadMsg(`추가 이미지 ${added}개를 바로 추가했습니다.`);
+  return added;
+}
+
+function getClipboardImageFiles(event) {
+  const directFiles = [...(event.clipboardData?.files || [])].filter((file) => fileLooksLikeImage(file));
+  const itemFiles = [...(event.clipboardData?.items || [])]
+    .map((item) => fileFromClipboardItem(item))
+    .filter((file) => fileLooksLikeImage(file));
+  const files = [...directFiles, ...itemFiles];
+  return files.filter((file, index) => files.findIndex((candidate) => (
+    candidate.name === file.name
+    && candidate.size === file.size
+    && candidate.lastModified === file.lastModified
+  )) === index);
+}
+
+function handleExtraPaste(event) {
+  const files = getClipboardImageFiles(event);
+  const pastedText = String(event.clipboardData?.getData("text/plain") || "").trim();
+  if (!files.length && !pastedText) return;
+  event.preventDefault();
+  event.stopPropagation();
+  try {
+    if (files.length) {
+      addExtraFiles(files);
+    } else {
+      createExtraItem({ existing: buildExternalAttachment(pastedText) });
+      showUploadMsg("붙여넣은 이미지 URL을 바로 추가했습니다.");
+    }
+  } catch (error) {
+    showUploadMsg(error.message || "클립보드 이미지 추가 실패", true);
+  }
+}
+
+function handleExtraDrop(event) {
+  event.preventDefault();
+  extraDropZoneEl?.classList.remove("is-dragover");
+  const files = [...(event.dataTransfer?.files || [])].filter((file) => fileLooksLikeImage(file));
+  const droppedUrl = String(
+    event.dataTransfer?.getData("text/uri-list")
+    || event.dataTransfer?.getData("text/plain")
+    || ""
+  ).split(/\r?\n/).find((line) => line && !line.startsWith("#"))?.trim() || "";
+  if (!files.length && !droppedUrl) return;
+  try {
+    if (files.length) {
+      addExtraFiles(files);
+    } else {
+      createExtraItem({ existing: buildExternalAttachment(droppedUrl) });
+      showUploadMsg("드롭한 이미지 URL을 바로 추가했습니다.");
+    }
+  } catch (error) {
+    showUploadMsg(error.message || "추가 이미지 드롭 실패", true);
+  }
 }
 
 async function uploadImageFile(file, bucketFolder, boardId) {
@@ -1507,6 +1687,9 @@ async function buildPayload() {
   if (skinType !== "PAGE") {
     delete skinData.page;
   }
+  if (skinType !== "SCRIPT") {
+    delete skinData.script;
+  }
 
   payload.skinData = {
     ...skinData,
@@ -1545,11 +1728,21 @@ async function savePost() {
     }
 
     await uploadSelectedImages(getSelectedBoard()?.id || preselectBoardId || "board");
+    if (typeof selectedSkin.prepareWrite === "function") {
+      await selectedSkin.prepareWrite({
+        boardId: getSelectedBoard()?.id || preselectBoardId || "board",
+        editingPost,
+        container: skinFieldsContainerEl,
+        showMessage: showMsg,
+        showUploadMessage: showUploadMsg
+      });
+    }
     const payload = await buildPayload();
     const nextLocation = `board.html?bo=${encodeURIComponent(payload.boardId)}`;
 
     if (!authState.isAdmin) {
       const refDoc = await createGuestPost(payload);
+      await selectedSkin.afterWrite?.({ payload, editingPost, postId: refDoc.id });
       if (payload.skinType === "LOG" && Number.isFinite(Number(payload.skinData?.logNo))) {
         nextLogNumberCache.set(payload.boardId, Number(payload.skinData.logNo) + 1);
       }
@@ -1560,12 +1753,14 @@ async function savePost() {
 
     if (editPostId) {
       await updateDoc(doc(db, "posts", editPostId), payload);
+      await selectedSkin.afterWrite?.({ payload, editingPost, postId: editPostId });
       showMsg("수정 완료");
       location.href = nextLocation;
       return;
     }
 
     const refDoc = await addDoc(collection(db, "posts"), payload);
+    await selectedSkin.afterWrite?.({ payload, editingPost, postId: refDoc.id });
     if (payload.skinType === "LOG" && Number.isFinite(Number(payload.skinData?.logNo))) {
       nextLogNumberCache.set(payload.boardId, Number(payload.skinData.logNo) + 1);
     }
@@ -1682,30 +1877,15 @@ async function init() {
     extraModeUrlRadio?.addEventListener("change", applyExtraModeUI);
     extraModeFileRadio?.addEventListener("change", applyExtraModeUI);
     extraModeVideoRadio?.addEventListener("change", applyExtraModeUI);
-    extraImageUrlInput?.addEventListener("input", () => {
-      const value = extraImageUrlInput.value.trim();
-      if (!value) {
-        renderPendingExtraPreview([]);
-        return;
-      }
-      try {
-        renderPendingExtraPreview([buildExternalAttachment(value)]);
-      } catch (_error) {
-        renderPendingExtraPreview([]);
-      }
+    extraImageUrlInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      addExtraItemBtn?.click();
     });
-    extraVideoInput?.addEventListener("input", () => {
-      if (getExtraMode() !== "video") return;
-      const value = extraVideoInput.value.trim();
-      if (!value) {
-        renderPendingExtraPreview([]);
-        return;
-      }
-      try {
-        renderPendingExtraPreview([buildExternalVideoAttachment(value)]);
-      } catch (_error) {
-        renderPendingExtraPreview([]);
-      }
+    extraVideoInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) return;
+      event.preventDefault();
+      addExtraItemBtn?.click();
     });
     applyExtraModeUI();
 
@@ -1715,14 +1895,49 @@ async function init() {
       clearSelectedThumb();
       showUploadMsg("선택된 썸네일 파일을 해제했습니다.");
     });
+    thumbDropZoneEl?.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      thumbFileInput?.click();
+    });
+    thumbDropZoneEl?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      thumbFileInput?.click();
+    });
+    thumbDropZoneEl?.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      thumbDropZoneEl.classList.add("is-dragover");
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+    thumbDropZoneEl?.addEventListener("dragleave", (event) => {
+      if (event.relatedTarget && thumbDropZoneEl.contains(event.relatedTarget)) return;
+      thumbDropZoneEl.classList.remove("is-dragover");
+    });
+    thumbDropZoneEl?.addEventListener("drop", handleThumbDrop);
     document.addEventListener("paste", handleClipboardPaste);
 
     selectExtraFileBtn?.addEventListener("click", () => extraFileInput?.click());
     extraFileInput?.addEventListener("change", handleExtraFileChange);
-    clearExtraFileBtn?.addEventListener("click", () => {
-      clearPendingExtraSelection();
-      showUploadMsg("선택된 추가 이미지 파일을 해제했습니다.");
+    extraDropZoneEl?.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      extraFileInput?.click();
     });
+    extraDropZoneEl?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      extraFileInput?.click();
+    });
+    extraDropZoneEl?.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      extraDropZoneEl.classList.add("is-dragover");
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+    extraDropZoneEl?.addEventListener("dragleave", (event) => {
+      if (event.relatedTarget && extraDropZoneEl.contains(event.relatedTarget)) return;
+      extraDropZoneEl.classList.remove("is-dragover");
+    });
+    extraDropZoneEl?.addEventListener("drop", handleExtraDrop);
+    extraDropZoneEl?.addEventListener("paste", handleExtraPaste);
 
     visibilityInput?.addEventListener("change", updateSecretPasswordVisibility);
     updateSecretPasswordVisibility();
@@ -1734,8 +1949,7 @@ async function init() {
           const attachment = buildExternalAttachment(extraImageUrlInput?.value || "");
           createExtraItem({ existing: attachment });
           if (extraImageUrlInput) extraImageUrlInput.value = "";
-          renderPendingExtraPreview([]);
-          showUploadMsg("추가 이미지 URL을 등록 목록에 추가했습니다.");
+          showUploadMsg("추가 이미지 URL을 바로 추가했습니다.");
           return;
         }
 
@@ -1743,14 +1957,11 @@ async function init() {
           const attachment = buildExternalVideoAttachment(extraVideoInput?.value || "");
           createExtraItem({ existing: attachment });
           if (extraVideoInput) extraVideoInput.value = "";
-          renderPendingExtraPreview([]);
-          showUploadMsg("VIDEO를 등록 목록에 추가했습니다.");
+          showUploadMsg("VIDEO를 바로 추가했습니다.");
           return;
         }
-
-        addSelectedExtraFiles();
       } catch (error) {
-        showMsg(error.message || "추가 이미지 등록 실패", true);
+        showUploadMsg(error.message || "추가 이미지 등록 실패", true);
       }
     });
 

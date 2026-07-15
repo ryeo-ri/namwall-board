@@ -265,6 +265,8 @@ async function loadBoard() {
       } else {
         writeBtn.href = `write.html?bo=${encodeURIComponent(boardId)}`;
         await bindWriteButton(writeBtn);
+        writeBtn.hidden = false;
+        writeBtn.classList.remove("hidden");
       }
     }
 
@@ -655,7 +657,7 @@ function bindBoardDeleteActions(container) {
       if (input.checked) selectedBoardPostIds.add(postId);
       else selectedBoardPostIds.delete(postId);
 
-      const item = input.closest(".board-line-item, .profile-card");
+      const item = input.closest(".board-line-item, .profile-card, .script-card");
       item?.classList.toggle("is-delete-selected", input.checked);
       await renderBoardAdminToolsCompact(currentSkin);
     });
@@ -919,7 +921,7 @@ async function renderBoardAdminToolsUnified(skin) {
     else setLogDeleteStatus("");
     await renderBoardAdminToolsUnified(currentSkin);
     const selector = isBoard ? "[data-board-select]" : isGallery ? "[data-gallery-select]" : "[data-log-select]";
-    const cardSelector = isBoard ? ".board-line-item, .profile-card" : isGallery ? ".gallery-card" : ".log-post";
+    const cardSelector = isBoard ? ".board-line-item, .profile-card, .script-card" : isGallery ? ".gallery-card" : ".log-post";
     document.querySelectorAll(selector).forEach((input) => {
       input.checked = false;
       input.closest(cardSelector)?.classList.remove("is-delete-selected");
@@ -944,7 +946,7 @@ async function renderBoardAdminToolsUnified(skin) {
 
 async function deletePosts(postIds, modeLabel, skinType) {
   const auth = await getAuthSnapshot();
-  const usesBoardDeleteState = skinType === "BOARD" || skinType === "PROFILE";
+  const usesBoardDeleteState = skinType === "BOARD" || skinType === "PROFILE" || skinType === "SCRIPT";
   if (!auth.isAdmin) {
     if (usesBoardDeleteState) setBoardDeleteStatus("관리자만 삭제할 수 있습니다.", true);
     if (skinType === "GALLERY") setGalleryDeleteStatus("관리자만 삭제할 수 있습니다.", true);

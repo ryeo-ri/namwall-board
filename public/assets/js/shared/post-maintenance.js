@@ -67,6 +67,15 @@ async function deletePostStorageAssets(post) {
     if (storagePathValue) paths.add(storagePathValue);
   });
 
+  const scriptData = post?.skinData?.script || {};
+  if (isManagedStoragePath(scriptData.archivePath)) paths.add(scriptData.archivePath);
+  (Array.isArray(scriptData.archiveHistory) ? scriptData.archiveHistory : []).forEach((entry) => {
+    if (isManagedStoragePath(entry?.archivePath)) paths.add(entry.archivePath);
+  });
+  (Array.isArray(scriptData.assetPaths) ? scriptData.assetPaths : []).forEach((path) => {
+    if (isManagedStoragePath(path)) paths.add(path);
+  });
+
   for (const path of paths) {
     try {
       await deleteObject(storageRef(storage, path));
@@ -84,7 +93,7 @@ function extractStoragePath(value) {
 
   for (const candidate of candidates) {
     const trimmed = candidate.trim();
-    if (trimmed.startsWith("gallery_thumbs/") || trimmed.startsWith("gallery_extra/")) {
+    if (isManagedStoragePath(trimmed)) {
       return trimmed;
     }
 
@@ -92,7 +101,7 @@ function extractStoragePath(value) {
       try {
         const parsed = new URL(trimmed);
         const objectPath = decodeURIComponent(parsed.pathname.split("/o/")[1] || "");
-        if (objectPath.startsWith("gallery_thumbs/") || objectPath.startsWith("gallery_extra/")) {
+        if (isManagedStoragePath(objectPath)) {
           return objectPath;
         }
       } catch (_error) {
@@ -104,18 +113,27 @@ function extractStoragePath(value) {
   return "";
 }
 
+function isManagedStoragePath(value) {
+  const path = String(value || "").trim();
+  return ["gallery_thumbs/", "gallery_extra/", "profile_images/", "script_archives/", "script_assets/"]
+    .some((prefix) => path.startsWith(prefix));
+}
+
 async function findPostsForBoard(board) {
   const boardCandidates = getBoardAliasCandidates(board?.id || "", resolveBoardSkinType(board));
-  const normalizedCandidates = new Set(boardCandidates.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean));
-  if (!normalizedCandidates.size) return [];
+  const queryCandidates = Array.from(new Set(
+    boardCandidates.map((item) => String(item || "").trim()).filter(Boolean)
+  )).slice(0, 10);
+  const normalizedCandidates = new Set(queryCandidates.map((item) => item.toLowerCase()));
+  if (!queryCandidates.length) return [];
 
   try {
-    if (normalizedCandidates.size > 1) {
-      const snapshot = await getDocs(query(collection(db, "posts"), where("boardId", "in", Array.from(normalizedCandidates))));
+    if (queryCandidates.length > 1) {
+      const snapshot = await getDocs(query(collection(db, "posts"), where("boardId", "in", queryCandidates)));
       return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
     }
 
-    const [singleBoardId] = Array.from(normalizedCandidates);
+    const [singleBoardId] = queryCandidates;
     const snapshot = await getDocs(query(collection(db, "posts"), where("boardId", "==", singleBoardId)));
     return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
   } catch (error) {

@@ -9,7 +9,7 @@ import { getAuthSnapshot, sha256Hex } from "../core/state.js";
 import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
 import { showInputModal } from "../shared/ui-modal.js";
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings, renderTopNav } from "../shared/boards-render.js";
-import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin } from "../skins/registry.js";
+import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin, getSkinEditor } from "../skins/registry.js";
 import "../shared/lightbox.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -149,8 +149,7 @@ function renderBoardAccessDeniedPage(board = {}, fallbackBoardId = "") {
 }
 
 async function unlockSecretIfNeeded(post, isAdmin) {
-  if (!post.isSecret) return true;
-  if (isAdmin) return true;
+  if (!post.isSecret || isAdmin) return { unlocked: true, cancelled: false };
 
   const pw = await showInputModal({
     title: "잠금 해제",
@@ -160,9 +159,10 @@ async function unlockSecretIfNeeded(post, isAdmin) {
     confirmText: "확인"
   });
 
-  if (!pw) return false;
+  if (pw === null) return { unlocked: false, cancelled: true };
+  if (!pw) return { unlocked: false, cancelled: false };
   const hashed = await sha256Hex(`${post.secretSalt || ""}:${pw}`);
-  return hashed === post.secretHash;
+  return { unlocked: hashed === post.secretHash, cancelled: false };
 }
 
 async function loadPage() {
@@ -217,9 +217,11 @@ async function loadPage() {
     if (skin?.type === "PAGE") {
       await renderTopNav(document.getElementById("viewNav"));
     }
-    renderAdminTools(auth, post, boardId);
-    const secretUnlocked = await unlockSecretIfNeeded(post, auth.isAdmin);
-    if (skin?.type === "BOARD" && post.isSecret && !secretUnlocked) {
+    const skinEditor = await resolveAvailableSkinEditor(auth, post, board, skin, boardId);
+    renderAdminTools(auth, post, boardId, skinEditor);
+    const secretAccess = await unlockSecretIfNeeded(post, auth.isAdmin);
+    const secretUnlocked = secretAccess.unlocked;
+    if (post.isSecret && secretAccess.cancelled) {
       location.replace(`board.html?bo=${encodeURIComponent(boardId)}`);
       return;
     }
@@ -270,6 +272,16 @@ async function loadPage() {
       }
     }
 
+    if (typeof skin?.bindDetail === "function") {
+      await skin.bindDetail({
+        post,
+        board,
+        container: document.getElementById("viewContent"),
+        secretUnlocked,
+        isAdmin: auth.isAdmin
+      });
+    }
+
     const showComments = Boolean(detailCaps.supportsComments);
     const commentWrap = document.getElementById("viewCommentsWrap");
     if (!showComments) {
@@ -310,7 +322,23 @@ async function loadPage() {
   }
 }
 
-function renderAdminTools(auth, post, boardId) {
+async function resolveAvailableSkinEditor(auth, post, board, skin, boardId) {
+  if (!auth?.isAdmin || !skin?.type) return null;
+  try {
+    const editor = await getSkinEditor(skin.type);
+    if (!editor) return null;
+    if (typeof editor.canEdit === "function") {
+      const canEdit = await editor.canEdit({ post, board, skin, postId: post.id, boardId });
+      if (!canEdit) return null;
+    }
+    return editor;
+  } catch (error) {
+    console.warn(`Skin editor ${skin.type} is unavailable for this post.`, error);
+    return null;
+  }
+}
+
+function renderAdminTools(auth, post, boardId, skinEditor = null) {
   if (!viewAdminToolsEl) return;
 
   if (!auth?.isAdmin || !post?.id) {
@@ -319,8 +347,13 @@ function renderAdminTools(auth, post, boardId) {
     return;
   }
 
+  const editorPath = String(skinEditor?.route || "skin-editor.html").trim();
+  const editorLink = skinEditor
+    ? `<a class="view-meta-action" href="${escapeHtml(editorPath)}?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="스킨 데이터 편집">${escapeHtml(skinEditor.label || "데이터 편집")}</a>`
+    : "";
   viewAdminToolsEl.classList.remove("hidden");
   viewAdminToolsEl.innerHTML = `
+    ${editorLink}
     <a class="view-meta-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="게시물 수정">수정</a>
     <button type="button" class="view-meta-action" id="deleteViewPostBtn" aria-label="게시물 삭제">삭제</button>
   `;

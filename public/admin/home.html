@@ -96,17 +96,19 @@
               <span class="muted small">여러 장 등록하면 홈에 랜덤으로 표시됩니다.</span>
             </div>
             <div class="field-group">
-              <div class="field-head">
-                <label for="homeImageInput">홈 이미지</label>
-                <div class="formRow">
-                  <button type="button" class="btn small" id="selectHomeImagesBtn">파일 선택</button>
-                  <button type="button" class="btn small" id="clearHomeImagesBtn">선택 해제</button>
-                </div>
+              <label for="homeImageInput">홈 이미지</label>
+              <div class="admin-image-dropzone" id="homeImageDropZone" tabindex="0" role="button" aria-label="홈 이미지 파일 선택">
+                <button type="button" class="btn small" id="selectHomeImagesBtn">파일 선택</button>
+                <span>이미지를 끌어놓거나 클릭해서 선택</span>
+                <span class="muted small">여기를 선택한 뒤 이미지 붙여넣기도 가능합니다.</span>
               </div>
-              <input id="homeImagePathInput" readonly placeholder="선택한 이미지 수">
               <input id="homeImageInput" type="file" accept="image/*" multiple class="hidden">
+              <div class="admin-image-selection-row">
+                <span class="muted small" id="homeImageSelectionCount" aria-live="polite"></span>
+                <button type="button" class="btn small hidden" id="clearHomeImagesBtn">전체 해제</button>
+              </div>
               <div class="muted small">업로드한 이미지는 저장소에 보관되고 홈에는 방문할 때마다 하나씩 랜덤으로 보입니다.</div>
-              <div id="homeImagePendingPreview" class="previewGrid"></div>
+              <div id="homeImagePendingPreview" class="previewGrid admin-image-preview-list"></div>
               <div class="formRow mt-sm">
                 <button type="button" class="btn primary" id="saveHomeImagesBtn">업로드</button>
               </div>
@@ -123,7 +125,7 @@
             </div>
             <div class="mt-sm">
               <div class="muted small mb-sm">저장된 이미지</div>
-              <div id="homeImageItems" class="previewGrid"></div>
+              <div id="homeImageItems" class="previewGrid admin-image-preview-list"></div>
             </div>
           </div>
 
