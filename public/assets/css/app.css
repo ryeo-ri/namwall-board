@@ -457,8 +457,10 @@ textarea.textarea:focus{
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  max-width: 100%;
   min-height: 24px;
-  padding: 0 10px;
+  padding: 4px 10px;
   background: rgba(15, 23, 42, 0.06);
   border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 999px;
@@ -877,6 +879,49 @@ textarea.textarea:focus{
 .comment-meta-right{
   margin-left: auto;
 }
+.comment-reply-btn{
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 13px;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.comment-reply-btn:hover,
+.comment-reply-btn[aria-expanded="true"]{
+  color: var(--muted);
+  text-decoration: underline;
+}
+.comment-replies{
+  margin-left: 20px;
+}
+.comment-item.is-reply{
+  position: relative;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.comment-reply-arrow{
+  position: absolute;
+  top: 10px;
+  left: -14px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+}
+.comment-reply-form{
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 4px 20px;
+}
+.comment-reply-form > .comment-name-input{
+  width: min(160px, 100%);
+}
 .comment-admin-actions{
   display: flex;
   align-items: center;
@@ -935,7 +980,10 @@ body.site-page .comment-admin-actions [data-del-comment]{
   font-weight: 600;
   font-size: 13px;
   color: var(--site-text, var(--text));
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: left;
 }
 .comment-content{
   line-height: 1.6;
@@ -1570,7 +1618,7 @@ body.site-page .board-admin-status.is-error{
   margin: 0 auto;
   padding: 0;
   border: 0;
-  background: transparent;
+  background: var(--gallery-card-bg, transparent);
   cursor: zoom-in;
   position: relative;
 }
@@ -1580,7 +1628,7 @@ body.site-page .board-admin-status.is-error{
   height: auto;
   display: block;
   border-radius: 14px;
-  background: #fff;
+  background: var(--gallery-card-bg, transparent);
 }
 .log-feed.is-unlimited-image .log-hero-image,
 .log-feed.is-unlimited-image .log-hero-placeholder{
@@ -1598,7 +1646,7 @@ body.site-page .board-admin-status.is-error{
   cursor: default;
   text-decoration: none;
   overflow: hidden;
-  background: transparent;
+  background: var(--gallery-card-bg, transparent);
 }
 .log-feed.has-log-media-width .log-hero-video{
   width: 100%;
@@ -1620,7 +1668,7 @@ body.site-page .board-admin-status.is-error{
   min-height: 220px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--gallery-card-bg, transparent);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -3930,6 +3978,7 @@ body.site-page .gallery-manage-button{
 }
 body.site-page .view-meta-action,
 body.site-page .comment-admin-actions .btn,
+body.site-page .comment-reply-btn,
 body.site-page .guestbook-delete,
 body.site-page .log-manage-button,
 body.site-page .gallery-manage-button{
@@ -3971,6 +4020,17 @@ body.site-page .skin-chip{
   font-weight: 500;
   line-height: 1;
   letter-spacing: 0.01em;
+}
+body.site-page .tag{
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: left;
 }
 body.site-page .summary-title,
 body.site-page .board-title-row h1,
@@ -4246,11 +4306,13 @@ body.home-page .tags-list{
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  min-width: 0;
+  max-width: 100%;
 }
 /* 홈 태그: 크기만 홈 스타일 (폰트는 본문 상속, 모양은 site-page 공통) */
 body.home-page .tag{
   font-size: 0.72rem;
-  line-height: 1;
+  line-height: 1.35;
   letter-spacing: 0.02em;
 }
 body.home-page .footer{

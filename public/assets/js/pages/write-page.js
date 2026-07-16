@@ -54,6 +54,8 @@ const imageUrlInput = document.getElementById("imageUrlInput");
 const thumbModeUrlRadio = document.getElementById("thumbModeUrl");
 const thumbModeFileRadio = document.getElementById("thumbModeFile");
 const thumbModeVideoRadio = document.getElementById("thumbModeVideo");
+const thumbModeTextRadio = document.getElementById("thumbModeText");
+const thumbModeTextLabel = document.getElementById("thumbModeTextLabel");
 const thumbUrlFieldsEl = document.getElementById("thumbUrlFields");
 const thumbFileFieldsEl = document.getElementById("thumbFileFields");
 const thumbVideoFieldsEl = document.getElementById("thumbVideoFields");
@@ -573,6 +575,7 @@ async function setSkinFields() {
   const isProfileSkin = skin.type === "PROFILE";
   const isPageSkin = skin.type === "PAGE";
   const isScriptSkin = skin.type === "SCRIPT";
+  const isLogSkin = skin.type === "LOG";
   const hideThumbnailFields = skin.type === "BOARD";
   const hideGalleryTextFields = !!writeCaps.supportsGalleryFields;
   const hideContentFields = writeCaps.supportsContent === false;
@@ -589,6 +592,11 @@ async function setSkinFields() {
   }
 
   if (thumbSectionEl) thumbSectionEl.classList.toggle("hidden", hideThumbnailFields || isPageSkin);
+  thumbModeTextLabel?.classList.toggle("hidden", !isLogSkin);
+  if (!isLogSkin && thumbModeTextRadio?.checked && thumbModeFileRadio) {
+    thumbModeFileRadio.checked = true;
+    applyThumbModeUI();
+  }
   if (profileOnlyFieldsEl) profileOnlyFieldsEl.classList.toggle("hidden", !hasSkinPostFields);
   document.getElementById("logOnlyFields").classList.toggle("hidden", !writeCaps.supportsLogFields);
   document.getElementById("galleryOnlyFields").classList.toggle("hidden", !writeCaps.supportsGalleryFields);
@@ -667,6 +675,7 @@ async function refreshLogNumberPreview() {
 }
 
 function getThumbMode() {
+  if (thumbModeTextRadio?.checked) return "text";
   if (thumbModeVideoRadio?.checked) return "video";
   if (thumbModeFileRadio?.checked) return "file";
   return "url";
@@ -869,7 +878,10 @@ function applyThumbModeUI() {
   if (thumbUrlFieldsEl) thumbUrlFieldsEl.classList.toggle("hidden", mode !== "url");
   if (thumbFileFieldsEl) thumbFileFieldsEl.classList.toggle("hidden", mode !== "file");
   if (thumbVideoFieldsEl) thumbVideoFieldsEl.classList.toggle("hidden", mode !== "video");
-  if (mode === "url") {
+  if (mode === "text") {
+    clearSelectedThumb();
+    imageUrlInput.value = "";
+  } else if (mode === "url") {
     clearSelectedThumb();
   } else if (mode === "video") {
     clearSelectedThumb();
@@ -1499,7 +1511,9 @@ async function loadEditPost() {
 
   const thumbMode = String(post.thumbnailMode || "").toLowerCase();
   const isVideoThumb = thumbMode === "video" || Boolean(post.thumbnailEmbedHtml);
-  if (isVideoThumb && thumbModeVideoRadio) {
+  if (thumbMode === "text" && thumbModeTextRadio) {
+    thumbModeTextRadio.checked = true;
+  } else if (isVideoThumb && thumbModeVideoRadio) {
     thumbModeVideoRadio.checked = true;
   } else if (post.thumbnailAttachment?.url && thumbModeFileRadio) {
     thumbModeFileRadio.checked = true;
@@ -1513,7 +1527,9 @@ async function loadEditPost() {
   applyThumbModeUI();
   uploadedThumbnail = post.thumbnailAttachment || null;
 
-  if (isVideoThumb) {
+  if (thumbMode === "text") {
+    renderThumbPreview(null);
+  } else if (isVideoThumb) {
     const rawInput = post.thumbnailEmbedHtml || "";
     const normalized = rawInput ? normalizeThumbVideoHtml(rawInput) : { embedHtml: "", embedSrc: "" };
     if (thumbVideoInput) thumbVideoInput.value = rawInput;
@@ -1846,6 +1862,7 @@ async function init() {
     thumbModeUrlRadio?.addEventListener("change", applyThumbModeUI);
     thumbModeFileRadio?.addEventListener("change", applyThumbModeUI);
     thumbModeVideoRadio?.addEventListener("change", applyThumbModeUI);
+    thumbModeTextRadio?.addEventListener("change", applyThumbModeUI);
     thumbVideoInput?.addEventListener("input", () => {
       if (getThumbMode() !== "video") return;
       try {

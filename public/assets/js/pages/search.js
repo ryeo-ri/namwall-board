@@ -45,6 +45,17 @@ async function loadSearchPosts(isAdmin) {
   return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
+function isVisibleInSearch(post, isAdmin) {
+  if (isAdmin) return true;
+
+  const hasPublicFlag = Object.prototype.hasOwnProperty.call(post || {}, "isPublic");
+  if (hasPublicFlag && post.isPublic !== true) return false;
+  if (post?.isSecret === true) return false;
+
+  const status = String(post?.status || "").trim().toUpperCase();
+  return status !== "PRIVATE" && status !== "SECRET";
+}
+
 async function runSearch() {
   const queryText = searchInput.value.trim();
   const tagFilter = tagInput.value.trim().toLowerCase();
@@ -62,6 +73,7 @@ async function runSearch() {
     ]);
 
     const visiblePosts = posts
+      .filter((post) => isVisibleInSearch(post, auth.isAdmin))
       .filter((post) => !isProfilePost(post))
       .sort((a, b) => getPostDateValue(b) - getPostDateValue(a));
 

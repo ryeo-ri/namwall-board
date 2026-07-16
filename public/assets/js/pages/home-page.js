@@ -444,6 +444,17 @@ function getPostBoardId(post) {
   return String(raw || "").trim();
 }
 
+function isVisibleOnPublicHome(post, isAdmin) {
+  if (isAdmin) return true;
+
+  const hasPublicFlag = Object.prototype.hasOwnProperty.call(post || {}, "isPublic");
+  if (hasPublicFlag && post.isPublic !== true) return false;
+  if (post?.isSecret === true) return false;
+
+  const status = String(post?.status || "").trim().toUpperCase();
+  return status !== "PRIVATE" && status !== "SECRET";
+}
+
 async function getRecentHomePosts(isAdmin) {
   const cacheKey = isAdmin ? "admin" : "public";
   if (recentPostsCache.has(cacheKey)) return recentPostsCache.get(cacheKey);
@@ -471,7 +482,7 @@ async function getRecentHomePosts(isAdmin) {
 
     const posts = snapshot.docs
       .map((item) => ({ id: item.id, ...item.data() }))
-      .filter((post) => (isAdmin || post.isPublic !== false) && !isProfilePost(post))
+      .filter((post) => isVisibleOnPublicHome(post, isAdmin) && !isProfilePost(post))
       .sort((a, b) => getRecentPostTime(b) - getRecentPostTime(a))
       .slice(0, 30);
     recentPostsCache.set(cacheKey, posts);

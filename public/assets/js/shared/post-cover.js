@@ -4,6 +4,16 @@ export function getPostCoverMedia(post = {}) {
   const embedSrcRaw = String(post.thumbnailEmbedSrc || "").trim();
   const imageUrl = String(post.imageUrl || post.thumbnailAttachment?.url || "").trim();
 
+  if (thumbMode === "text") {
+    return {
+      mode: "text",
+      imageUrl: "",
+      embedHtml: "",
+      embedSrc: "",
+      previewUrl: ""
+    };
+  }
+
   if (thumbMode === "video" || embedHtmlRaw) {
     const normalized = normalizeVideoEmbedInput(embedHtmlRaw || embedSrcRaw);
     return {

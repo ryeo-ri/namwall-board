@@ -22,6 +22,7 @@ const expandedCommentIds = new Set();
 const expandedCommentFormPosts = new Set();
 const editingCommentIds = new Set();
 const commentEditDrafts = new Map();
+const replyingToCommentByPost = new Map();
 const postCache = new Map();
 const boardCache = new Map();
 const COMMENT_UNLOCK_STORAGE_KEY = "archive_unlocked_secret_comment_ids";
@@ -72,12 +73,15 @@ function preserveLineBreaks(value) {
   return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
 }
 
-// LOG 스킨 게시판 댓글에서만 유튜브 embed iframe을 허용한다.
-function commentIframePolicy(context) {
+function isLogCommentContext(context) {
   const board = context?.board || {};
   const boardId = board.id || context?.boardId || "";
-  const isLogBoard = resolveBoardSkinType(board) === "LOG" || findSkinTypeByAlias(boardId) === "LOG";
-  return isLogBoard ? "youtube" : false;
+  return resolveBoardSkinType(board) === "LOG" || findSkinTypeByAlias(boardId) === "LOG";
+}
+
+// LOG 스킨 게시판 댓글에서만 유튜브 embed iframe을 허용한다.
+function commentIframePolicy(context) {
+  return isLogCommentContext(context) ? "youtube" : false;
 }
 
 function sanitizeCommentHtml(value, context) {
@@ -153,15 +157,7 @@ async function resolveAdminNickname(auth) {
 
 function renderCommentForm(postId, writeState) {
   if (!writeState.canWrite && writeState.needsGuestUnlock) {
-    return `
-      <div class="comment-gate notice">
-        <div class="comment-gate-copy">
-          <strong>댓글은 게스트만 작성할 수 있습니다.</strong>
-          <div class="muted small">게스트 코드를 입력하면 댓글을 작성할 수 있어요.</div>
-        </div>
-        <button type="button" class="btn small" data-comment-guest-unlock="${escapeHtml(postId)}">게스트 코드 입력</button>
-      </div>
-    `;
+    return "";
   }
 
   const formExpanded = expandedCommentFormPosts.has(postId);
@@ -221,7 +217,56 @@ function renderCommentForm(postId, writeState) {
     </div>
   `;
 }
-function renderCommentBodyV2(comment, context, auth) {
+function renderReplyForm(comment, context, writeState) {
+  if (!writeState.canWrite) return "";
+  if (replyingToCommentByPost.get(context.post.id) !== comment.id) return "";
+
+  return `
+    <div class="comment-reply-form" data-comment-reply-form="${escapeHtml(comment.id)}">
+      ${writeState.auth?.isAdmin ? "" : `
+        <input
+          type="text"
+          class="comment-name-input"
+          data-comment-reply-author="${escapeHtml(comment.id)}"
+          placeholder="닉네임"
+        >
+      `}
+      <textarea
+        class="comment-memo-input"
+        data-comment-reply-content="${escapeHtml(comment.id)}"
+        rows="3"
+        placeholder="답글 내용"
+      ></textarea>
+      <div class="comment-form-row-inline comment-form-row-options">
+        <label class="comment-toggle">
+          <input type="checkbox" data-comment-reply-more="${escapeHtml(comment.id)}">
+          <span>접기</span>
+        </label>
+        <label class="comment-toggle">
+          <input type="checkbox" data-comment-reply-secret="${escapeHtml(comment.id)}">
+          <span>비밀</span>
+        </label>
+        <span class="comment-secret-pass-wrap hidden" data-comment-reply-secret-wrap="${escapeHtml(comment.id)}">
+          <span class="comment-pass-label">비밀번호</span>
+          <input
+            type="password"
+            class="comment-pass-input"
+            data-comment-reply-secret-pass="${escapeHtml(comment.id)}"
+            placeholder="비밀번호"
+          >
+        </span>
+        <button
+          type="button"
+          class="btn primary comment-submit-btn"
+          data-comment-reply-submit="${escapeHtml(comment.id)}"
+        >등록</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCommentBodyV2(comment, context, writeState) {
+  const auth = writeState.auth;
   const raw = String(comment.contentHtml || comment.content || "");
   const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: commentIframePolicy(context) }), context.boardId);
   const author = escapeHtml(comment.nickname || "익명");
@@ -239,6 +284,16 @@ function renderCommentBodyV2(comment, context, auth) {
   const isSecret = Boolean(comment.isSecret);
   const unlocked = isCommentSecretUnlocked(comment.id, auth);
   const isEditing = canManage && editingCommentIds.has(comment.id);
+  const replyExpanded = replyingToCommentByPost.get(context.post.id) === comment.id;
+  const replyButton = writeState.canWrite ? `
+    <button
+      type="button"
+      class="comment-reply-btn muted small"
+      data-comment-reply="${escapeHtml(comment.id)}"
+      aria-label="${escapeHtml(comment.nickname || "익명")}님 댓글에 답글 달기"
+      aria-expanded="${replyExpanded ? "true" : "false"}"
+    >R</button>
+  ` : "";
   const manageButtons = canManage ? `
     <div class="comment-admin-actions">
       <button type="button" class="btn small" data-edit-comment="${escapeHtml(comment.id)}" data-post="${escapeHtml(context.post.id)}">수정</button>
@@ -255,6 +310,7 @@ function renderCommentBodyV2(comment, context, auth) {
         </div>
         <div class="comment-meta-right">
           <span class="muted small">${escapeHtml(dateStr)}</span>
+          ${replyButton}
           ${manageButtons}
         </div>
       </div>
@@ -288,6 +344,7 @@ function renderCommentBodyV2(comment, context, auth) {
       </div>
       <div class="comment-meta-right">
         <span class="muted small">${escapeHtml(dateStr)}</span>
+        ${replyButton}
         ${manageButtons}
       </div>
     </div>
@@ -311,14 +368,48 @@ function renderCommentBodyV2(comment, context, auth) {
   `;
 }
 
-function renderCommentItem(comment, context, auth) {
+function renderCommentItem(comment, context, writeState, childrenByParent, depth = 0, visited = new Set()) {
+  if (visited.has(comment.id)) return "";
+  const nextVisited = new Set(visited);
+  nextVisited.add(comment.id);
   const isSecret = Boolean(comment.isSecret);
-  const unlocked = isCommentSecretUnlocked(comment.id, auth);
+  const unlocked = isCommentSecretUnlocked(comment.id, writeState.auth);
+  const canShowReplies = !isSecret || unlocked;
+  const children = childrenByParent.get(comment.id) || [];
+  const repliesHtml = canShowReplies
+    ? children
+      .map((child) => renderCommentItem(child, context, writeState, childrenByParent, depth + 1, nextVisited))
+      .join("")
+    : "";
   return `
-    <article class="comment-item${isSecret && !unlocked ? " is-secret" : ""}" data-comment-id="${escapeHtml(comment.id)}">
-      ${renderCommentBodyV2(comment, context, auth)}
+    <article class="comment-item${depth > 0 ? " is-reply" : ""}${isSecret && !unlocked ? " is-secret" : ""}" data-comment-id="${escapeHtml(comment.id)}" data-comment-depth="${depth}">
+      ${depth > 0 ? '<span class="comment-reply-arrow" aria-hidden="true">→</span>' : ""}
+      ${renderCommentBodyV2(comment, context, writeState)}
+      ${renderReplyForm(comment, context, writeState)}
+      ${repliesHtml ? `<div class="comment-replies">${repliesHtml}</div>` : ""}
     </article>
   `;
+}
+
+function renderCommentsTree(comments, context, writeState) {
+  const commentIds = new Set(comments.map((comment) => comment.id));
+  const childrenByParent = new Map();
+  const roots = [];
+
+  comments.forEach((comment) => {
+    const legacyReplyMatch = String(comment.link || "").trim().match(/^reply:(.+)$/);
+    const parentId = String(comment.parentCommentId || legacyReplyMatch?.[1] || "").trim();
+    if (!parentId || parentId === comment.id || !commentIds.has(parentId)) {
+      roots.push(comment);
+      return;
+    }
+    if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+    childrenByParent.get(parentId).push(comment);
+  });
+
+  return roots
+    .map((comment) => renderCommentItem(comment, context, writeState, childrenByParent))
+    .join("");
 }
 
 function bindCommentSecretUnlocks(container, context) {
@@ -380,6 +471,155 @@ function bindCommentFormToggle(container) {
       const hidden = body.classList.toggle("hidden");
       if (hidden) expandedCommentFormPosts.delete(postId);
       else expandedCommentFormPosts.add(postId);
+    });
+  });
+}
+
+function bindCommentReplyButtons(container, postId, context) {
+  container.querySelectorAll("[data-comment-reply]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const commentId = button.dataset.commentReply || "";
+      if (!commentId) return;
+
+      if (replyingToCommentByPost.get(postId) === commentId) {
+        replyingToCommentByPost.delete(postId);
+      } else {
+        replyingToCommentByPost.set(postId, commentId);
+      }
+
+      await loadComments(postId, container, context);
+      const textarea = container.querySelector(`[data-comment-reply-content="${CSS.escape(commentId)}"]`);
+      textarea?.focus();
+    });
+  });
+}
+
+function bindCommentReplySecretToggles(container) {
+  container.querySelectorAll("[data-comment-reply-secret]").forEach((toggle) => {
+    const commentId = toggle.dataset.commentReplySecret || "";
+    const form = toggle.closest("[data-comment-reply-form]");
+    const wrap = form?.querySelector(`[data-comment-reply-secret-wrap="${CSS.escape(commentId)}"]`);
+    const passInput = form?.querySelector(`[data-comment-reply-secret-pass="${CSS.escape(commentId)}"]`);
+    if (!wrap) return;
+
+    const sync = () => {
+      wrap.classList.toggle("hidden", !toggle.checked);
+      if (!toggle.checked && passInput) passInput.value = "";
+    };
+    toggle.addEventListener("change", sync);
+    sync();
+  });
+}
+
+async function saveReplyComment({ postId, context, auth, nickname, content, more, isSecret, secretPw, parentCommentId }) {
+  const contentHtml = sanitizeCommentHtml(content, context);
+  const commentPayload = {
+    postId,
+    boardId: context.boardId || context.board?.id || "",
+    link: `reply:${parentCommentId}`,
+    nickname,
+    content,
+    contentHtml,
+    more,
+    isSecret,
+    authorType: auth.isAdmin ? "ADMIN" : (isGuestUnlocked() ? "GUEST" : "PUBLIC"),
+    createdAt: serverTimestamp(),
+    isDeleted: false
+  };
+
+  if (isSecret) {
+    const saltBytes = crypto.getRandomValues(new Uint8Array(8));
+    const secretSalt = Array.from(saltBytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    commentPayload.secretSalt = secretSalt;
+    commentPayload.secretHash = await sha256Hex(`${secretSalt}:${secretPw}`);
+  } else {
+    commentPayload.secretSalt = "";
+    commentPayload.secretHash = "";
+  }
+
+  if (context.commentScope === "guest" && !auth.isAdmin) {
+    const commentRef = doc(collection(db, "posts", postId, "comments"));
+    const proofRef = doc(db, "comment_write_proofs", commentRef.id);
+    const proofHash = getGuestProofHash();
+    const batch = writeBatch(db);
+
+    batch.set(proofRef, {
+      postId,
+      boardId: context.boardId || context.board?.id || "",
+      proofHash,
+      createdAt: serverTimestamp()
+    });
+    batch.set(commentRef, {
+      ...commentPayload,
+      authorType: "GUEST"
+    });
+    await batch.commit();
+    return;
+  }
+
+  await addDoc(commentsCol(postId), commentPayload);
+}
+
+function bindCommentReplyForms(container, postId, context, writeState) {
+  container.querySelectorAll("[data-comment-reply-form]").forEach((form) => {
+    const parentCommentId = form.dataset.commentReplyForm || "";
+    const submitButton = form.querySelector(`[data-comment-reply-submit="${CSS.escape(parentCommentId)}"]`);
+    const authorInput = form.querySelector(`[data-comment-reply-author="${CSS.escape(parentCommentId)}"]`);
+    const contentInput = form.querySelector(`[data-comment-reply-content="${CSS.escape(parentCommentId)}"]`);
+    const moreInput = form.querySelector(`[data-comment-reply-more="${CSS.escape(parentCommentId)}"]`);
+    const secretInput = form.querySelector(`[data-comment-reply-secret="${CSS.escape(parentCommentId)}"]`);
+    const passInput = form.querySelector(`[data-comment-reply-secret-pass="${CSS.escape(parentCommentId)}"]`);
+
+    async function submitReply() {
+      if (!writeState.canWrite || !parentCommentId) return;
+
+      const content = String(contentInput?.value || "").trim();
+      const more = Boolean(moreInput?.checked);
+      const isSecret = Boolean(secretInput?.checked);
+      const secretPw = String(passInput?.value || "").trim();
+      if (isSecret && !secretPw) {
+        window.alert("비밀글 비밀번호를 입력하세요.");
+        return;
+      }
+
+      submitButton.disabled = true;
+      try {
+        const auth = await getAuthSnapshot();
+        const nickname = auth.isAdmin
+          ? await resolveAdminNickname(auth)
+          : String(authorInput?.value || "").trim();
+        if (!nickname || !content) {
+          window.alert("닉네임과 내용을 입력해 주세요.");
+          return;
+        }
+
+        await saveReplyComment({
+          postId,
+          context,
+          auth,
+          nickname,
+          content,
+          more,
+          isSecret,
+          secretPw,
+          parentCommentId
+        });
+        replyingToCommentByPost.delete(postId);
+        await loadComments(postId, container, context);
+      } catch (error) {
+        console.error("Failed to submit comment reply:", error);
+        window.alert(error?.message || "답글 등록에 실패했습니다.");
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    submitButton?.addEventListener("click", submitReply);
+    contentInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        submitReply();
+      }
     });
   });
 }
@@ -745,8 +985,6 @@ export async function loadComments(postId, container, options = {}) {
   try {
     const context = await resolveCommentContext(postId, options);
     const writeState = await resolveWriteState(context);
-    const auth = writeState.auth;
-
     const snapshot = await getDocs(query(commentsCol(postId), orderBy("createdAt", "asc")));
     const comments = snapshot.docs
       .map((item) => ({ id: item.id, ...item.data() }))
@@ -756,7 +994,7 @@ export async function loadComments(postId, container, options = {}) {
     currentCommentsByPost.set(postId, currentComments);
 
     const commentsHTML = comments.length
-      ? comments.map((comment) => renderCommentItem(comment, context, auth)).join("")
+      ? renderCommentsTree(comments, context, writeState)
       : "";
 
     container.innerHTML = `
@@ -771,6 +1009,9 @@ export async function loadComments(postId, container, options = {}) {
     bindCommentDeleteButtons(container, postId, context);
     bindCommentMoreButtons(container);
     bindCommentFormToggle(container);
+    bindCommentReplyButtons(container, postId, context);
+    bindCommentReplySecretToggles(container);
+    bindCommentReplyForms(container, postId, context, writeState);
     bindCommentSecretUnlocks(container, context);
     bindGuestUnlock(container, context);
     bindCommentSecretToggle(postId);
