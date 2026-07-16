@@ -690,6 +690,7 @@ textarea.textarea:focus{
 }
 .overlay-modal-input{
   padding: 20px 14px;
+  background: var(--site-bg, #fff);
 }
 .overlay-backdrop{
   position: absolute;
@@ -697,7 +698,7 @@ textarea.textarea:focus{
   background: rgba(2, 6, 23, 0.58);
 }
 .overlay-modal-input .overlay-backdrop{
-  background: rgba(2, 6, 23, 0.44);
+  background: var(--site-bg, #fff);
 }
 .overlay-panel{
   position: relative;
@@ -707,10 +708,11 @@ textarea.textarea:focus{
 .overlay-modal-input .overlay-panel{
   width: min(380px, calc(100vw - 24px));
   padding: 18px 20px;
-  border: 1px solid rgba(28, 28, 28, 0.22);
+  border: 1px solid var(--site-text, #000);
   border-radius: 0;
-  background: #f5f3ee;
-  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.28);
+  background: var(--site-bg, #fff);
+  color: var(--site-text, #000);
+  box-shadow: none;
   display: grid;
   gap: 12px;
 }
@@ -718,13 +720,15 @@ textarea.textarea:focus{
   margin: 0;
   font-size: 18px;
   line-height: 1.2;
-  color: var(--text);
+  color: var(--site-text, var(--text));
 }
 .overlay-modal-input .muted.small{
   margin-top: 0;
+  margin-bottom: 0;
   font-size: 12px;
   line-height: 1.45;
-  color: #111;
+  color: var(--site-text, #000);
+  opacity: 0.72;
 }
 .overlay-modal-input input,
 .overlay-modal-input textarea{
@@ -732,9 +736,9 @@ textarea.textarea:focus{
   flex: 0 0 auto;
   padding: 8px 10px;
   border-radius: 0;
-  border: 0;
-  background-color: #FFF;
-  color: var(--text);
+  border: 1px solid var(--site-text, #000);
+  background-color: var(--site-bg, #fff);
+  color: var(--site-text, var(--text));
   box-shadow: none;
   font-size: 12px;
 }
@@ -752,8 +756,8 @@ textarea.textarea:focus{
 .overlay-modal-input textarea:focus-visible{
   outline: none;
   box-shadow: none;
-  border: 0;
-  background-color: #FFF;
+  border: 1px solid var(--site-text, #000);
+  background-color: var(--site-bg, #fff);
 }
 .overlay-modal-input input::placeholder,
 .overlay-modal-input textarea::placeholder{
@@ -763,38 +767,44 @@ textarea.textarea:focus{
   justify-content: flex-end;
   gap: 6px;
 }
+.overlay-modal-input .overlay-input-error{
+  margin: -4px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.45;
+}
 .overlay-modal-input .overlay-actions .btn{
   min-height: 26px;
   min-width: 58px;
   padding: 0 10px;
   border-radius: 0;
-  background-color: #FFF;
-  border-color: rgba(28, 28, 28, 0.18);
-  color: var(--text);
+  background-color: var(--site-bg, #fff);
+  border-color: var(--site-text, #000);
+  color: var(--site-text, var(--text));
   font-size: 11px;
   letter-spacing: 0.06em;
   white-space: nowrap;
 }
 .overlay-modal-input .overlay-actions .btn.primary{
-  background-color: #FFF;
-  border-color: rgba(28, 28, 28, 0.32);
-  color: var(--text);
+  background-color: var(--site-bg, #fff);
+  border-color: var(--site-text, #000);
+  color: var(--site-text, var(--text));
   font-weight: 700;
 }
 .overlay-modal-input .overlay-actions .btn:hover,
 .overlay-modal-input .overlay-actions .btn:focus,
 .overlay-modal-input .overlay-actions .btn:active{
-  background-color: #FFF;
-  border-color: rgba(28, 28, 28, 0.18);
-  color: var(--text);
+  background-color: var(--site-bg, #fff);
+  border-color: var(--site-text, #000);
+  color: var(--site-text, var(--text));
   box-shadow: none;
 }
 .overlay-modal-input .overlay-actions .btn.primary:hover,
 .overlay-modal-input .overlay-actions .btn.primary:focus,
 .overlay-modal-input .overlay-actions .btn.primary:active{
-  background-color: #FFF;
-  border-color: rgba(28, 28, 28, 0.32);
-  color: var(--text);
+  background-color: var(--site-bg, #fff);
+  border-color: var(--site-text, #000);
+  color: var(--site-text, var(--text));
   box-shadow: none;
 }
 
@@ -2265,7 +2275,7 @@ body.site-page .board-admin-status.is-error{
   display: block;
   margin-bottom: 5px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 14px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -2870,6 +2880,15 @@ body.page-raw-board .page-frame{
   max-width: 100%;
   height: auto;
   aspect-ratio: auto;
+}
+.comments-section .comment-content iframe[src*="youtube.com/embed/"],
+.comments-section .comment-content iframe[src*="youtube-nocookie.com/embed/"]{
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
 }
 /* 추가 이미지: 한 장씩 줄바꿈 + 정렬 선택 (기본 좌측), 모서리 라운드 없음 */
 .view-inline-gallery{
@@ -3902,6 +3921,20 @@ body.site-page .profile-panel{
   background: transparent;
 }
 /* 버튼: 디자인 관리의 버튼 테두리/글자/배경 설정을 따름 (기본: 글자색 테두리 + 투명 배경) */
+body.site-page button,
+body.site-page [role="button"],
+body.site-page .btn,
+body.site-page .log-manage-button,
+body.site-page .gallery-manage-button{
+  font-family: var(--font-heading, var(--font-pixel));
+}
+body.site-page .view-meta-action,
+body.site-page .comment-admin-actions .btn,
+body.site-page .guestbook-delete,
+body.site-page .log-manage-button,
+body.site-page .gallery-manage-button{
+  font-family: var(--font-kr);
+}
 body.site-page .btn{
   border-radius: 0;
   border-color: var(--site-btn-border, currentcolor);
@@ -4205,6 +4238,9 @@ body.home-page .recent-update-board{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+body.home-page .recent-update-title{
+  font-family: var(--font-heading, var(--font-pixel));
 }
 body.home-page .tags-list{
   display: flex;
@@ -5601,6 +5637,58 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
 }
 
 @media (max-width: 640px){
+  .board-list-compact .board-list-item{
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+  }
+  .board-list-compact .board-row-compact{
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .board-list-compact .board-row-main,
+  .board-list-compact .board-row-title,
+  .board-list-compact .board-row-meta{
+    width: 100%;
+    min-width: 0;
+  }
+  .board-list-compact .board-row-title{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    overflow-wrap: anywhere;
+  }
+  .board-list-compact .board-row-meta{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .board-list-compact .board-row-meta .summary-chip{
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+  }
+  .board-list-compact .board-row-meta > .muted.small{
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-top: 2px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .board-list-compact .board-row-actions{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+  .board-list-compact .board-row-actions .btn{
+    width: 100%;
+  }
   .skin-editor-container{
     width: calc(100% - 16px);
   }

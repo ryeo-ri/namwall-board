@@ -259,14 +259,14 @@ async function loadBoard() {
 
     const writeBtn = document.getElementById("writeBtn");
     if (writeBtn) {
-      // 방명록은 목록 페이지의 인라인 폼으로 작성하므로 상단 WRITE 버튼 숨김
-      if (currentSkin?.type === "GUESTBOOK") {
-        writeBtn.style.display = "none";
-      } else {
+      // 방명록은 인라인 폼을 사용하고, 게스트 글쓰기 비허용 게시판은 일반 방문자에게 WRITE 버튼을 노출하지 않는다.
+      const hideGuestWriteButton = !auth?.isAdmin && currentBoard?.allowGuestPost !== true;
+      const shouldHideWriteButton = currentSkin?.type === "GUESTBOOK" || hideGuestWriteButton;
+      writeBtn.hidden = shouldHideWriteButton;
+      writeBtn.classList.toggle("hidden", shouldHideWriteButton);
+      if (!shouldHideWriteButton) {
         writeBtn.href = `write.html?bo=${encodeURIComponent(boardId)}`;
         await bindWriteButton(writeBtn);
-        writeBtn.hidden = false;
-        writeBtn.classList.remove("hidden");
       }
     }
 

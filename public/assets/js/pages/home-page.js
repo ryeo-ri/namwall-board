@@ -351,7 +351,7 @@ export async function loadRecentUpdates() {
       return `
         <a href="${boardUrl}" class="recent-item recent-update-item">
           <span class="recent-update-date">${escapeHtml(dateStr)}</span>
-          <span class="recent-update-board">${escapeHtml(label)}</span>
+          <span class="recent-update-board recent-update-title">${escapeHtml(label)}</span>
         </a>
       `;
     }).join("");

@@ -19,7 +19,7 @@ export const skin = createSkinDefinition({
       label: "이미지 폭 크기",
       min: 0,
       step: 1,
-      placeholder: "기본값 / 0은 제한 없음",
+      placeholder: "자동",
       help: "0을 입력하면 이미지 폭 제한을 두지 않습니다."
     },
     commentPosition: {

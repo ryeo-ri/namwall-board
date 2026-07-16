@@ -98,7 +98,7 @@ function updatePreview() {
   previewBtn.style.color = design.btnTextColor || btnFallback;
   previewBtn.style.borderColor = design.btnBorderColor || btnFallback;
   previewBtn.style.background = design.btnBgColor || "transparent";
-  previewBtn.style.fontFamily = `"${bodyFont}", "Noto Sans KR", sans-serif`; // 실제 버튼은 본문 폰트를 따름
+  previewBtn.style.fontFamily = `"${headingFont}", "Pixelify Sans", sans-serif`; // 실제 버튼은 제목 폰트를 따름
 
   loadPreviewFonts([headerFont, headingFont, bodyFont]);
 }

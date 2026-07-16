@@ -126,22 +126,32 @@ async function resolveCommentContext(postId, options = {}) {
 async function resolveWriteState(context) {
   const auth = await getAuthSnapshot();
   if (auth.isAdmin) {
-    return { auth, canWrite: true, mode: "ADMIN", needsGuestUnlock: false };
+    return { auth, canWrite: true, needsGuestUnlock: false };
   }
 
   if (context.commentScope === "guest" && !isGuestUnlocked()) {
-    return { auth, canWrite: false, mode: "GUEST", needsGuestUnlock: true };
+    return { auth, canWrite: false, needsGuestUnlock: true };
   }
 
   return {
     auth,
     canWrite: true,
-    mode: isGuestUnlocked() ? "GUEST" : "PUBLIC",
     needsGuestUnlock: false
   };
 }
 
-function renderCommentForm(postId, context, writeState) {
+async function resolveAdminNickname(auth) {
+  if (!auth?.isAdmin || !auth?.user?.uid) return "";
+
+  const profileSnap = await getDoc(doc(db, "admin_users", auth.user.uid));
+  return String(
+    (profileSnap.exists() ? profileSnap.data()?.nickname : "")
+      || auth.user.email
+      || "ADMIN"
+  ).trim();
+}
+
+function renderCommentForm(postId, writeState) {
   if (!writeState.canWrite && writeState.needsGuestUnlock) {
     return `
       <div class="comment-gate notice">
@@ -164,14 +174,16 @@ function renderCommentForm(postId, context, writeState) {
       </div>
 
       <div class="comment-form-body${formExpanded ? "" : " hidden"}" data-comment-form-body="${escapeHtml(postId)}">
-        <div class="comment-form-row comment-form-row-name">
-          <input
-            type="text"
-            id="comment-author-${escapeHtml(postId)}"
-            class="comment-name-input"
-            placeholder="닉네임"
-          >
-        </div>
+        ${writeState.auth?.isAdmin ? "" : `
+          <div class="comment-form-row comment-form-row-name">
+            <input
+              type="text"
+              id="comment-author-${escapeHtml(postId)}"
+              class="comment-name-input"
+              placeholder="닉네임"
+            >
+          </div>
+        `}
 
         <div class="comment-form-row">
           <textarea
@@ -501,16 +513,10 @@ function bindCommentSubmit(postId, container, context, writeState) {
   async function submit() {
     if (!writeState.canWrite) return;
 
-    const nickname = (authorInput?.value || "").trim();
     const content = (memoInput?.value || "").trim();
     const more = Boolean(moreInput?.checked);
     const isSecret = Boolean(secretInput?.checked);
     const secretPw = (passInput?.value || "").trim();
-
-    if (!nickname || !content) {
-      window.alert("닉네임과 내용을 입력해 주세요.");
-      return;
-    }
 
     if (isSecret && !secretPw) {
       window.alert("비밀글 비밀번호를 입력하세요.");
@@ -519,6 +525,14 @@ function bindCommentSubmit(postId, container, context, writeState) {
 
     try {
       const auth = await getAuthSnapshot();
+      const nickname = auth.isAdmin
+        ? await resolveAdminNickname(auth)
+        : (authorInput?.value || "").trim();
+      if (!nickname || !content) {
+        window.alert("닉네임과 내용을 입력해 주세요.");
+        return;
+      }
+
       const authorType = auth.isAdmin ? "ADMIN" : (isGuestUnlocked() ? "GUEST" : "PUBLIC");
       const contentHtml = sanitizeCommentHtml(content, context);
       const commentPayload = {
@@ -747,7 +761,7 @@ export async function loadComments(postId, container, options = {}) {
 
     container.innerHTML = `
       <div class="comments-list">${commentsHTML}</div>
-      ${renderCommentForm(postId, context, writeState)}
+      ${renderCommentForm(postId, writeState)}
     `;
 
     bindCommentEditButtons(container, postId, context);

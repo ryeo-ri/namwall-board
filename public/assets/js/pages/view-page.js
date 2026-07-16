@@ -1,4 +1,4 @@
-﻿import { db } from "../core/firebase.js";
+import { db } from "../core/firebase.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { sanitizeHTML } from "../shared/html-sanitizer-v2.js";
 import { loadComments } from "../shared/comments.js";
@@ -157,13 +157,17 @@ async function unlockSecretIfNeeded(post, isAdmin) {
     description: "비밀번호를 입력하세요.",
     placeholder: "비밀번호",
     inputType: "password",
-    confirmText: "확인"
+    confirmText: "확인",
+    validationMessage: "비밀번호 확인 중 오류가 발생했습니다.",
+    validate: async (value) => {
+      if (!String(value || "").trim()) return "비밀번호를 입력해 주세요.";
+      const hashed = await sha256Hex(`${post.secretSalt || ""}:${value}`);
+      return hashed === post.secretHash || "비밀번호가 일치하지 않습니다.";
+    }
   });
 
   if (pw === null) return { unlocked: false, cancelled: true };
-  if (!pw) return { unlocked: false, cancelled: false };
-  const hashed = await sha256Hex(`${post.secretSalt || ""}:${pw}`);
-  return { unlocked: hashed === post.secretHash, cancelled: false };
+  return { unlocked: true, cancelled: false };
 }
 
 async function loadPage() {

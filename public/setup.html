@@ -42,6 +42,14 @@
               <li><strong>모드</strong>: <strong>프로덕션 모드로 시작</strong>을 선택(보안 규칙은 나중에 설정합니다.) 테스트 모드는 30일 뒤 자동으로 잠기므로 권장하지 않음.</li>
               <li>만들기를 눌러 완료합니다.</li>
               <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
+              <li>
+                <strong>Firestore → 인덱스</strong> 탭에서 <strong>인덱스 추가</strong>를 눌러 아래 복합 인덱스 2개를 만듭니다.
+                <ul class="setup-substeps">
+                  <li><strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>boardId</code> 오름차순 + <code>isPublic</code> 오름차순</li>
+                  <li><strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>updatedAt</code> 내림차순</li>
+                  <li>두 인덱스의 상태가 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
+                </ul>
+              </li>
             </ul>
           </li>
           <li>
@@ -106,6 +114,10 @@
           <div class="field-group">
             <label for="setupPassword">비밀번호 <span class="muted small">(6자 이상)</span></label>
             <input id="setupPassword" type="password" placeholder="비밀번호" autocomplete="new-password">
+          </div>
+          <div class="field-group">
+            <label for="setupPasswordConfirm">비밀번호 확인</label>
+            <input id="setupPasswordConfirm" type="password" placeholder="비밀번호 확인" autocomplete="new-password">
           </div>
         </div>
         <div class="formRow board-editor-save-row mt-md">

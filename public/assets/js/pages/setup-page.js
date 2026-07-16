@@ -69,9 +69,11 @@ async function submitSetup() {
   const nickname = (document.getElementById("setupNickname")?.value || "").trim() || "관리자";
   const email = (document.getElementById("setupEmail")?.value || "").trim();
   const password = document.getElementById("setupPassword")?.value || "";
+  const passwordConfirm = document.getElementById("setupPasswordConfirm")?.value || "";
 
   if (!email) return showMsg("이메일을 입력하세요.", true);
   if (password.length < 6) return showMsg("비밀번호는 6자 이상이어야 합니다.", true);
+  if (password !== passwordConfirm) return showMsg("비밀번호 확인이 일치하지 않습니다.", true);
 
   submitBtn.disabled = true;
   showMsg("처리 중…");

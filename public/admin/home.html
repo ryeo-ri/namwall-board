@@ -41,15 +41,15 @@
             <div class="grid tight">
               <div class="field-group">
                 <label for="siteTitleInput">사이트 이름</label>
-                <input id="siteTitleInput" placeholder="NAMWALL">
+                <input id="siteTitleInput" placeholder="기본 NAMWALL">
               </div>
               <div class="field-group">
-                <label class="option-card option-card-compact" for="homePublicInput">
+                <label class="option-card option-card-compact" for="homePrivateInput">
                   <span class="option-card-main">
-                    <input type="checkbox" id="homePublicInput" checked>
-                    <span class="option-card-title">홈페이지 공개</span>
+                    <input type="checkbox" id="homePrivateInput">
+                    <span class="option-card-title">홈페이지 비공개</span>
                   </span>
-                  <span class="option-card-desc">끄면 게스트 코드 또는 관리자 로그인이 있어야 홈에 접속할 수 있습니다.</span>
+                  <span class="option-card-desc">체크 시 게스트 코드 또는 관리자 로그인이 있어야 홈에 접속할 수 있습니다.</span>
                 </label>
               </div>
             </div>
@@ -62,12 +62,12 @@
             </div>
             <div class="field-group">
               <label for="homeHeaderWidthInput">헤더 가로</label>
-              <input id="homeHeaderWidthInput" type="number" min="1" step="1" placeholder="기본값 / 100 이하는 %">
+              <input id="homeHeaderWidthInput" type="number" min="1" step="1" placeholder="자동">
               <div class="muted small">100 이하는 %, 그 이상은 px로 적용됩니다.</div>
             </div>
             <div class="field-group mt-sm">
               <label for="headerFontFamilyInput">헤더 폰트명</label>
-              <input id="headerFontFamilyInput" placeholder="예: Geist Pixel">
+              <input id="headerFontFamilyInput" placeholder="기본 Pixelify Sans / Google Fonts 이름">
               <div class="muted small">
                 <a href="https://fonts.google.com/" target="_blank" rel="noopener noreferrer">Google Fonts</a>의 폰트 이름을 입력하면 헤더에만 적용됩니다.
               </div>
@@ -85,7 +85,7 @@
                   <input type="checkbox" id="homeShowTextInput">
                   <span class="option-card-title">홈 소개 표시</span>
                 </span>
-                <span class="option-card-desc">끄면 홈에는 이미지 만 보입니다.</span>
+                <span class="option-card-desc">체크 시 메인 페이지에 아래의 내용을 출력하는 공간이 추가됩니다.</span>
               </label>
             </div>
             <div class="field-group mt-sm">
@@ -94,7 +94,7 @@
                 <input id="homeIntroWidthInput" type="number" min="120" max="2400" step="1" placeholder="기본 250">
                 <div class="muted small">홈 소개 표시가 켜졌을 때 왼쪽 소개 영역의 가로값입니다.</div>
               </div>
-              <textarea id="homeIntroHtmlInput" class="textarea home-intro-input" rows="12" placeholder="<p>한 줄 소개와 자세한 설명을 HTML로 적어주세요.</p>"></textarea>
+              <textarea id="homeIntroHtmlInput" class="textarea home-intro-input" rows="12" placeholder="HTML로 소개 내용 입력"></textarea>
               <div class="muted small">HTML 입력이 가능합니다.</div>
             </div>
           </div>
@@ -125,11 +125,11 @@
             <div class="grid tight mt-sm">
               <div class="field-group">
                 <label for="homeImageWidthInput">이미지 가로(px)</label>
-                <input id="homeImageWidthInput" type="number" min="120" max="2400" step="1" placeholder="비우면 자동">
+                <input id="homeImageWidthInput" type="number" min="120" max="2400" step="1" placeholder="자동">
               </div>
               <div class="field-group">
                 <label for="homeImageHeightInput">이미지 세로(px)</label>
-                <input id="homeImageHeightInput" type="number" min="120" max="1800" step="1" placeholder="비우면 자동">
+                <input id="homeImageHeightInput" type="number" min="120" max="1800" step="1" placeholder="자동">
               </div>
             </div>
             <div class="mt-sm">

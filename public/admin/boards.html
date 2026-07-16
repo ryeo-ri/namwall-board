@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -45,18 +45,18 @@
                   <label for="boardIdInput">게시판 ID</label>
                   <button type="button" class="btn small" id="autoBoardIdBtn">자동 생성</button>
                 </div>
-                <input id="boardIdInput" placeholder="예: board, profile">
+                <input id="boardIdInput" placeholder="자동">
                 <div class="muted small hidden" id="boardIdHint"></div>
               </div>
 
               <div class="field-group">
                 <label for="boardTitleInput">게시판 제목</label>
-                <input id="boardTitleInput" placeholder="메뉴에 보일 이름">
+                <input id="boardTitleInput" placeholder="메뉴에 표시할 이름">
               </div>
 
               <div class="field-group">
                 <label for="boardTitleImageInput">제목 이미지 (선택)</label>
-                <input id="boardTitleImageInput" placeholder="이미지 URL — 지정하면 헤더 메뉴에서 이름 대신 표시" autocomplete="off" spellcheck="false">
+                <input id="boardTitleImageInput" placeholder="지정하면 헤더 메뉴에서 이름 대신 표시" autocomplete="off" spellcheck="false">
                 <div class="admin-image-dropzone" id="boardTitleImageDropZone" tabindex="0" role="button" aria-label="게시판 제목 이미지 파일 선택">
                   <button type="button" class="btn small" id="selectTitleImageBtn">파일 선택</button>
                   <span>이미지를 끌어놓거나 클릭해서 선택</span>
@@ -74,12 +74,12 @@
 
               <div class="field-group">
                 <label for="pageSizeInput">페이지당 게시물 수</label>
-                <input id="pageSizeInput" type="number" min="1" step="1" placeholder="기본값">
+                <input id="pageSizeInput" type="number" min="1" step="1" placeholder="기본 12">
               </div>
 
               <div class="field-group">
                 <label for="menuOrderInput">메뉴 순서</label>
-                <input id="menuOrderInput" type="number" min="0" step="1" placeholder="작을수록 위에 표시">
+                <input id="menuOrderInput" type="number" min="0" step="1" placeholder="기본 0 / 작을수록 먼저 표시">
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
             <div class="grid tight">
               <div class="field-group">
                 <label for="boardKindInput">스킨 타입</label>
-                <input id="boardKindInput" list="boardKindOptions" placeholder="예: BOARD, LOG, ESSAY">
+                <input id="boardKindInput" list="boardKindOptions" placeholder="기본 BOARD / 예: LOG, GALLERY">
                 <datalist id="boardKindOptions"></datalist>
                 <div id="skinFolderHint" class="muted small"></div>
               </div>
@@ -129,15 +129,15 @@
               </div>
               <div class="field-group">
                 <label for="pageHeightInput">iframe 높이</label>
-                <input id="pageHeightInput" type="number" min="120" step="1" placeholder="720">
+                <input id="pageHeightInput" type="number" min="120" step="1" placeholder="기본 720">
               </div>
               <div class="field-group page-html-field">
                 <label for="pageHtmlInput">HTML 소스</label>
-                <textarea id="pageHtmlInput" class="textarea" rows="18" placeholder="<div>HTML, CSS, JS를 자유롭게 입력하세요.</div>"></textarea>
+                <textarea id="pageHtmlInput" class="textarea" rows="18" placeholder="HTML·CSS·JS 입력"></textarea>
               </div>
               <div class="field-group page-url-field hidden">
                 <label for="pageIframeUrlInput">외부 iframe URL</label>
-                <input id="pageIframeUrlInput" placeholder="https://example.com">
+                <input id="pageIframeUrlInput" placeholder="외부 iframe URL">
               </div>
             </div>
           </div>

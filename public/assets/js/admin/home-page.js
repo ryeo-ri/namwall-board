@@ -13,7 +13,7 @@ import { deleteObject, getDownloadURL, ref, uploadBytes } from "https://www.gsta
 
 const msgEl = document.getElementById("homeMsg");
 const siteTitleInput = document.getElementById("siteTitleInput");
-const homePublicInput = document.getElementById("homePublicInput");
+const homePrivateInput = document.getElementById("homePrivateInput");
 const homeShowTextInput = document.getElementById("homeShowTextInput");
 const homeIntroInput = document.getElementById("homeIntroHtmlInput");
 const homeIntroWidthInput = document.getElementById("homeIntroWidthInput");
@@ -249,7 +249,7 @@ function fillHomeForm(settings) {
   };
 
   if (siteTitleInput) siteTitleInput.value = homeSettings.siteTitle;
-  if (homePublicInput) homePublicInput.checked = homeSettings.homeIsPublic;
+  if (homePrivateInput) homePrivateInput.checked = !homeSettings.homeIsPublic;
   if (homeShowTextInput) homeShowTextInput.checked = homeSettings.homeShowText;
   if (homeIntroInput) homeIntroInput.value = homeSettings.homeIntroHtml;
   if (homeIntroWidthInput) homeIntroWidthInput.value = homeSettings.homeIntroWidth;
@@ -315,7 +315,7 @@ async function uploadHomeImageFile(file) {
 async function saveHomeSettings() {
   try {
     const siteTitle = (siteTitleInput?.value || "").trim() || "NAMWALL";
-    const homeIsPublic = homePublicInput?.checked !== false;
+    const homeIsPublic = !homePrivateInput?.checked;
     const homeIntroHtml = (homeIntroInput?.value || "").trim();
     const homeIntroWidth = normalizePixelValue(homeIntroWidthInput?.value);
     const homeShowText = !!homeShowTextInput?.checked;

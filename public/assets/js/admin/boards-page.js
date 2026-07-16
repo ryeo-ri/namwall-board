@@ -1,4 +1,4 @@
-﻿import { db, storage } from "../core/firebase.js";
+import { db, storage } from "../core/firebase.js";
 import { deleteBoardContent } from "../shared/post-maintenance.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
@@ -186,7 +186,7 @@ function getSkinOptionPlaceholder(key, field = {}) {
   const fallbackPlaceholders = {
     boardWidth: "기본 800 / 100 이하는 %",
     galleryColumns: "기본 4",
-    imageWidth: "기본값 / 0은 제한 없음"
+    imageWidth: "자동"
   };
   return field.placeholder || fallbackPlaceholders[key] || "";
 }
@@ -1138,7 +1138,7 @@ function markBoardIdManualEdit() {
 async function addCustomSkinChip() {
   const rawPath = await showInputModal({
     title: "경로 추가",
-    placeholder: "skins/custom-board",
+    placeholder: "예: skins/custom-board",
     confirmText: "추가",
     cancelText: "취소"
   });

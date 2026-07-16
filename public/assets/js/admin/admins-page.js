@@ -1,6 +1,16 @@
 import { app, db } from "../core/firebase.js";
 import { ensureAdminPageAccess } from "../core/state.js";
 import {
+  deleteApp,
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  getAuth,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
   collection,
   doc,
   getDocs,
@@ -54,21 +64,82 @@ async function loadAdmins() {
 }
 
 async function saveAdminProfile() {
-  const uid = (document.getElementById("adminUidInput")?.value || "").trim();
-  const nickname = (document.getElementById("adminNicknameInput")?.value || "").trim();
-  const role = (document.getElementById("adminRoleInput")?.value || "ADMIN").trim();
+  const emailInput = document.getElementById("adminEmailInput");
+  const passwordInput = document.getElementById("adminPasswordInput");
+  const passwordConfirmInput = document.getElementById("adminPasswordConfirmInput");
+  const nicknameInput = document.getElementById("adminNicknameInput");
+  const roleInput = document.getElementById("adminRoleInput");
+  const submitButton = document.getElementById("saveAdminProfileBtn");
+  const email = (emailInput?.value || "").trim();
+  const password = passwordInput?.value || "";
+  const passwordConfirm = passwordConfirmInput?.value || "";
+  const nickname = (nicknameInput?.value || "").trim();
+  const role = (roleInput?.value || "ADMIN").trim();
 
-  if (!uid) return showMsg("UID를 입력하세요.", true);
+  if (!email) return showMsg("새 관리자의 이메일을 입력하세요.", true);
+  if (password.length < 6) return showMsg("비밀번호는 6자 이상이어야 합니다.", true);
+  if (password !== passwordConfirm) return showMsg("비밀번호 확인이 일치하지 않습니다.", true);
   if (!nickname) return showMsg("닉네임을 입력하세요.", true);
 
-  await setDoc(doc(db, "admin_users", uid), {
-    nickname,
-    role: role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "ADMIN",
-    createdAt: serverTimestamp()
-  }, { merge: true });
+  let secondaryApp = null;
+  let secondaryAuth = null;
+  let createdUser = null;
+  let profileSaved = false;
+  if (submitButton) submitButton.disabled = true;
+  showMsg("새 관리자 계정을 추가하는 중입니다.");
 
-  showMsg("관리자 프로필 저장 완료");
-  await loadAdmins();
+  try {
+    secondaryApp = initializeApp(app.options, `admin-create-${Date.now()}`);
+    secondaryAuth = getAuth(secondaryApp);
+    const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    createdUser = credential.user;
+
+    await setDoc(doc(db, "admin_users", createdUser.uid), {
+      nickname,
+      role: role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "ADMIN",
+      createdAt: serverTimestamp()
+    });
+    profileSaved = true;
+
+    if (emailInput) emailInput.value = "";
+    if (passwordInput) passwordInput.value = "";
+    if (passwordConfirmInput) passwordConfirmInput.value = "";
+    if (nicknameInput) nicknameInput.value = "";
+    if (roleInput) roleInput.value = "ADMIN";
+
+    showMsg("새 관리자 계정과 프로필을 추가했습니다.");
+    await loadAdmins();
+  } catch (error) {
+    if (createdUser && !profileSaved) {
+      try {
+        await deleteUser(createdUser);
+      } catch (rollbackError) {
+        console.error("새 관리자 계정 롤백 실패:", rollbackError);
+      }
+    }
+    console.error("새 관리자 추가 실패:", error);
+    showMsg(mapAdminCreateError(error), true);
+  } finally {
+    if (secondaryAuth) {
+      try { await signOut(secondaryAuth); } catch (_error) { /* ignore */ }
+    }
+    if (secondaryApp) {
+      try { await deleteApp(secondaryApp); } catch (_error) { /* ignore */ }
+    }
+    if (submitButton) submitButton.disabled = false;
+  }
+}
+
+function mapAdminCreateError(error) {
+  const code = error?.code || "";
+  if (code === "auth/email-already-in-use") return "이미 등록된 이메일입니다.";
+  if (code === "auth/invalid-email") return "이메일 형식이 올바르지 않습니다.";
+  if (code === "auth/weak-password") return "비밀번호가 너무 약합니다. 6자 이상으로 설정하세요.";
+  if (code === "auth/operation-not-allowed") return "이메일/비밀번호 로그인이 사용 설정되어 있지 않습니다.";
+  if (code === "permission-denied" || /permission/i.test(error?.message || "")) {
+    return "관리자 프로필을 저장할 권한이 없습니다.";
+  }
+  return error?.message || "새 관리자 추가에 실패했습니다.";
 }
 
 function escapeHtml(text) {
@@ -80,12 +151,6 @@ function escapeHtml(text) {
 (async () => {
   const access = await ensureAdminPageAccess();
   if (!access.ok) return;
-
-  const projectId = app?.options?.projectId || "";
-  const consoleLink = document.getElementById("authConsoleLink");
-  if (consoleLink && projectId) {
-    consoleLink.href = `https://console.firebase.google.com/project/${encodeURIComponent(projectId)}/authentication/users`;
-  }
 
   document.getElementById("saveAdminProfileBtn")?.addEventListener("click", saveAdminProfile);
   await loadAdmins();
