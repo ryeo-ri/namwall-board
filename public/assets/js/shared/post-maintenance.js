@@ -10,7 +10,6 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { deleteObject, ref as storageRef } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import { getBoardAliasCandidates, resolveBoardSkinType } from "../skins/registry.js";
 
 export async function deletePostsByIds(postIds) {
   const uniqueIds = Array.from(new Set((postIds || []).filter(Boolean)));
@@ -119,8 +118,14 @@ function isManagedStoragePath(value) {
     .some((prefix) => path.startsWith(prefix));
 }
 
+function getBoardStorageIdCandidates(rawBoardId) {
+  const originalBoardId = String(rawBoardId || "").trim();
+  if (!originalBoardId) return [];
+  return Array.from(new Set([originalBoardId, originalBoardId.toLowerCase()]));
+}
+
 async function findPostsForBoard(board) {
-  const boardCandidates = getBoardAliasCandidates(board?.id || "", resolveBoardSkinType(board));
+  const boardCandidates = getBoardStorageIdCandidates(board?.id || "");
   const queryCandidates = Array.from(new Set(
     boardCandidates.map((item) => String(item || "").trim()).filter(Boolean)
   )).slice(0, 10);

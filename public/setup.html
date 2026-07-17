@@ -43,11 +43,14 @@
               <li>만들기를 눌러 완료합니다.</li>
               <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
               <li>
-                <strong>Firestore → 인덱스</strong> 탭에서 <strong>인덱스 추가</strong>를 눌러 아래 복합 인덱스 2개를 만듭니다.
+                <strong>Firestore → 인덱스</strong> 탭에서 <strong>인덱스 추가</strong>를 눌러 아래 복합 인덱스 4개를 만듭니다.
                 <ul class="setup-substeps">
-                  <li><strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>boardId</code> 오름차순 + <code>isPublic</code> 오름차순</li>
-                  <li><strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>updatedAt</code> 내림차순</li>
-                  <li>두 인덱스의 상태가 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
+                  <li><strong>게시판 조회용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>boardId</code> 오름차순 + <code>isPublic</code> 오름차순</li>
+                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>updatedAt</code> 내림차순</li>
+                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>createdAt</code> 내림차순</li>
+                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>contentUpdatedAt</code> 내림차순</li>
+                  <li><strong>CLI로 자동 추가</strong>: 프로젝트 폴더에서 <code>firebase deploy --only firestore:indexes</code>를 실행하면 <code>firestore.indexes.json</code>의 인덱스가 한 번에 등록됩니다.</li>
+                  <li><strong>수동 추가</strong>: Firebase 콘솔에서 위 항목을 하나씩 만든 뒤, 네 인덱스의 상태가 모두 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
                 </ul>
               </li>
             </ul>

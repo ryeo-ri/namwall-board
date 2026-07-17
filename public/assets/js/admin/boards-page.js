@@ -1004,8 +1004,7 @@ async function migratePostsDocs() {
       source: deleteField(),
       logNo: deleteField(),
       logNumber: deleteField(),
-      profile: deleteField(),
-      updatedAt: serverTimestamp()
+      profile: deleteField()
     });
 
     updated += 1;

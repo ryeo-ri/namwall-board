@@ -180,19 +180,31 @@ export function getPostSkinData(post = {}) {
 }
 
 export function getBoardAliasCandidates(rawBoardId, skinType = "") {
+  const candidates = new Set(getBoardStorageIdCandidates(rawBoardId));
   const originalBoardId = String(rawBoardId || "").trim();
   const normalizedBoardId = originalBoardId.toLowerCase();
   if (!normalizedBoardId) return [];
 
-  // Firestore string comparisons are case-sensitive. Keep the canonical document
-  // ID while also querying legacy lowercase aliases.
-  const candidates = new Set([originalBoardId, normalizedBoardId]);
   const aliasMatchedType = hasKnownAlias(normalizedBoardId) ? findSkinTypeByAlias(normalizedBoardId) : "";
-  const normalizedType = skinType ? normalizeSkinType(skinType, DEFAULT_SKIN_TYPE) : aliasMatchedType;
-  if (normalizedType) {
+  const normalizedType = aliasMatchedType && skinType
+    ? normalizeSkinType(skinType, DEFAULT_SKIN_TYPE)
+    : aliasMatchedType;
+  // A configured board ID is its own namespace even when several boards share
+  // the same skin. Expand legacy aliases only when the ID itself is a known
+  // skin alias (for example, `gal` -> `gallery`).
+  if (aliasMatchedType && normalizedType === aliasMatchedType) {
     getSkinAliases(normalizedType).forEach((alias) => candidates.add(alias));
   }
   return Array.from(candidates).filter(Boolean);
+}
+
+export function getBoardStorageIdCandidates(rawBoardId) {
+  const originalBoardId = String(rawBoardId || "").trim();
+  if (!originalBoardId) return [];
+
+  // Firestore string comparisons are case-sensitive. The lowercase form is kept
+  // only for old records; IDs belonging to the same skin are never added here.
+  return Array.from(new Set([originalBoardId, originalBoardId.toLowerCase()])).filter(Boolean);
 }
 
 export function findSkinTypeByAlias(rawBoardId) {

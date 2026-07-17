@@ -340,7 +340,7 @@ export async function loadRecentUpdates() {
       const boardId = getPostBoardId(post);
       const boardName = boardTitleMap.get(boardId.toLowerCase()) || boardId || "게시판";
       const dateSource = getRecentDateValue(post);
-      const dateStr = dateSource ? dateSource.toLocaleDateString("ko-KR") : "";
+      const dateStr = dateSource ? dateSource.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" }) : "";
       const boardUrl = `board.html?bo=${encodeURIComponent(boardId || "board")}`;
 
       // 제목이 있으면 제목, 없으면 게시판 메뉴명. LOG는 제목이 자동 번호라 게시판명 유지.
@@ -425,10 +425,12 @@ function pickRandomHomeImage(images) {
 }
 
 function getRecentDateValue(post) {
-  const value = post?.updatedAt?.toDate ? post.updatedAt.toDate() : post?.updatedAt ? new Date(post.updatedAt) : null;
-  if (value && !Number.isNaN(value.getTime())) return value;
-  const createdAt = post?.createdAt?.toDate ? post.createdAt.toDate() : new Date(post?.createdAt || 0);
-  return Number.isNaN(createdAt.getTime()) ? null : createdAt;
+  for (const fieldName of ["contentUpdatedAt", "createdAt", "updatedAt"]) {
+    const rawValue = post?.[fieldName];
+    const value = rawValue?.toDate ? rawValue.toDate() : rawValue ? new Date(rawValue) : null;
+    if (value && !Number.isNaN(value.getTime())) return value;
+  }
+  return null;
 }
 
 function getPostBoardId(post) {
@@ -462,25 +464,25 @@ async function getRecentHomePosts(isAdmin) {
 
   const promise = (async () => {
     const postsCollection = collection(db, "posts");
-    let snapshot;
-    if (isAdmin) {
-      snapshot = await getDocs(query(postsCollection, orderBy("updatedAt", "desc"), limit(30)));
-    } else {
-      try {
-        snapshot = await getDocs(query(
-          postsCollection,
-          where("isPublic", "==", true),
-          orderBy("updatedAt", "desc"),
-          limit(30)
-        ));
-      } catch (error) {
-        if (!isMissingIndexError(error)) throw error;
-        console.warn("최근 글 복합 인덱스가 준비되지 않아 공개 글 조회로 대체합니다.", error);
-        snapshot = await getDocs(query(postsCollection, where("isPublic", "==", true)));
-      }
+    const visibilityConstraints = isAdmin ? [] : [where("isPublic", "==", true)];
+    let snapshots;
+    try {
+      snapshots = await Promise.all([
+        getDocs(query(postsCollection, ...visibilityConstraints, orderBy("createdAt", "desc"), limit(30))),
+        getDocs(query(postsCollection, ...visibilityConstraints, orderBy("contentUpdatedAt", "desc"), limit(30)))
+      ]);
+    } catch (error) {
+      if (isAdmin || !isMissingIndexError(error)) throw error;
+      console.warn("최근 글 복합 인덱스가 준비되지 않아 공개 글 조회로 대체합니다.", error);
+      snapshots = [await getDocs(query(postsCollection, where("isPublic", "==", true)))];
     }
 
-    const posts = snapshot.docs
+    const docsById = new Map();
+    snapshots.forEach((snapshot) => {
+      snapshot.docs.forEach((item) => docsById.set(item.id, item));
+    });
+
+    const posts = Array.from(docsById.values())
       .map((item) => ({ id: item.id, ...item.data() }))
       .filter((post) => isVisibleOnPublicHome(post, isAdmin) && !isProfilePost(post))
       .sort((a, b) => getRecentPostTime(b) - getRecentPostTime(a))

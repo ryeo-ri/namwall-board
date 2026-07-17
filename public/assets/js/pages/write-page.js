@@ -137,6 +137,12 @@ function getBoardAliasCandidates(rawBoardId) {
   return getSkinBoardAliasCandidates(rawBoardId, findSkinTypeByAlias(rawBoardId));
 }
 
+function getBoardStorageIdCandidates(rawBoardId) {
+  const originalBoardId = String(rawBoardId || "").trim();
+  if (!originalBoardId) return [];
+  return Array.from(new Set([originalBoardId, originalBoardId.toLowerCase()]));
+}
+
 function getBoardLabel(board) {
   if (!board) return "";
   const title = board.title || board.name || board.id || "";
@@ -773,7 +779,7 @@ async function resolveNextLogNumber(board) {
   if (!boardKey) return 1;
   if (nextLogNumberCache.has(boardKey)) return nextLogNumberCache.get(boardKey);
 
-  const boardCandidates = getBoardAliasCandidates(boardKey);
+  const boardCandidates = getBoardStorageIdCandidates(boardKey);
   const authState = await getAuthSnapshot();
   const visibilityConstraints = authState.isAdmin ? [] : [where("isPublic", "==", true)];
   let posts = [];
@@ -1619,6 +1625,7 @@ async function buildPayload() {
     isSecret,
     status: isPublic ? (isSecret ? "SECRET" : "PUBLISHED") : "PRIVATE",
     updatedAt: serverTimestamp(),
+    contentUpdatedAt: serverTimestamp(),
     contentText,
     contentIsHtml: !!htmlModeInput?.checked
   };
@@ -1806,6 +1813,7 @@ function buildGuestPostPayload(payload, status = "PUBLISHED") {
     status,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    contentUpdatedAt: serverTimestamp(),
     contentText: payload.contentText || ""
   };
 

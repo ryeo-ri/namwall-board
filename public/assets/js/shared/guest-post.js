@@ -53,7 +53,8 @@ export async function createGuestbookEntry(opts = {}) {
     contentText: text,
     commentHtml: messageToHtml(message),
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
+    contentUpdatedAt: serverTimestamp()
   };
 
   if (entry.isSecret) {

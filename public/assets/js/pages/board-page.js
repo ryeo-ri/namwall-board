@@ -9,8 +9,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings } from "../shared/boards-render.js";
 import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
-import { findSkinTypeByAlias, getBoardAliasCandidates, getBoardSkinOption, getPostSkinData, getSkin, resolveBoardSkinType } from "../skins/registry.js";
-import { deletePostsByIds } from "../shared/post-maintenance.js";
+import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin, resolveBoardSkinType } from "../skins/registry.js?v=20260717-1";
+import { deletePostsByIds } from "../shared/post-maintenance.js?v=20260717-1";
 import { canWriteToBoard, getAuthSnapshot, sha256Hex, verifyGuestCode } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
 import "../shared/lightbox.js"; // window.openLightbox 등록 (목록 이미지 확대용)
@@ -100,7 +100,13 @@ function applyBoardWidth(board) {
 }
 
 function getBoardIdCandidates(board) {
-  return getBoardAliasCandidates(board?.id || boardId || "", resolveBoardSkinType(board)).slice(0, 10);
+  return getStoredBoardIdCandidates(board?.id || boardId || "").slice(0, 10);
+}
+
+function getStoredBoardIdCandidates(rawBoardId) {
+  const originalBoardId = String(rawBoardId || "").trim();
+  if (!originalBoardId) return [];
+  return Array.from(new Set([originalBoardId, originalBoardId.toLowerCase()]));
 }
 
 async function shouldQueryPublicOnly() {
@@ -205,8 +211,7 @@ function setLogDeleteStatus(text = "", isError = false) {
 }
 
 function renderDeleteStatus(status = {}) {
-  if (!status.text) return "";
-  return `<div class="board-admin-status${status.isError ? " is-error" : ""}" role="status">${escapeHtml(status.text)}</div>`;
+  return `<div class="board-admin-status${status.isError ? " is-error" : ""}" role="status" aria-live="polite">${escapeHtml(status.text || "")}</div>`;
 }
 
 function renderBoardAccessDeniedPage(board = {}) {
@@ -893,7 +898,7 @@ async function renderBoardAdminToolsUnified(skin) {
         <button class="btn board-admin-action-btn" type="button" id="clear${prefix}SelectionBtn" ${selectedCount ? "" : "disabled"}>선택 해제</button>
       ` : ""}
     </div>
-    ${renderDeleteStatus(status)}
+    ${deleteMode ? renderDeleteStatus(status) : ""}
   `;
 
   document.getElementById(`toggle${prefix}DeleteModeBtn`)?.addEventListener("click", async () => {
@@ -945,11 +950,15 @@ async function renderBoardAdminToolsUnified(skin) {
 
 async function deletePosts(postIds, modeLabel, skinType) {
   const auth = await getAuthSnapshot();
-  const usesBoardDeleteState = skinType === "BOARD" || skinType === "PROFILE" || skinType === "SCRIPT";
+  const deleteVariant = currentSkin?.capabilities?.board?.deleteModeVariant
+    || (skinType === "GALLERY" ? "gallery" : skinType === "LOG" ? "log" : "board");
+  const usesBoardDeleteState = deleteVariant === "board";
+  const usesGalleryDeleteState = deleteVariant === "gallery";
+  const usesLogDeleteState = deleteVariant === "log";
   if (!auth.isAdmin) {
     if (usesBoardDeleteState) setBoardDeleteStatus("관리자만 삭제할 수 있습니다.", true);
-    if (skinType === "GALLERY") setGalleryDeleteStatus("관리자만 삭제할 수 있습니다.", true);
-    if (skinType === "LOG") setLogDeleteStatus("관리자만 삭제할 수 있습니다.", true);
+    if (usesGalleryDeleteState) setGalleryDeleteStatus("관리자만 삭제할 수 있습니다.", true);
+    if (usesLogDeleteState) setLogDeleteStatus("관리자만 삭제할 수 있습니다.", true);
     await renderBoardAdminToolsCompact(currentSkin);
     return;
   }
@@ -958,8 +967,8 @@ async function deletePosts(postIds, modeLabel, skinType) {
   if (!uniqueIds.length) return;
 
   if (usesBoardDeleteState) setBoardDeleteStatus(`${modeLabel} 진행 중...`);
-  if (skinType === "GALLERY") setGalleryDeleteStatus(`${modeLabel} 진행 중...`);
-  if (skinType === "LOG") setLogDeleteStatus(`${modeLabel} 진행 중...`);
+  if (usesGalleryDeleteState) setGalleryDeleteStatus(`${modeLabel} 진행 중...`);
+  if (usesLogDeleteState) setLogDeleteStatus(`${modeLabel} 진행 중...`);
   await renderBoardAdminToolsCompact(currentSkin);
 
   let deletedCount = 0;
@@ -974,14 +983,14 @@ async function deletePosts(postIds, modeLabel, skinType) {
     resetGalleryPagination();
     const doneMessage = `${modeLabel} 완료 · ${deletedCount}개 삭제했습니다.`;
     if (usesBoardDeleteState) setBoardDeleteStatus(doneMessage);
-    if (skinType === "GALLERY") setGalleryDeleteStatus(doneMessage);
-    if (skinType === "LOG") setLogDeleteStatus(doneMessage);
+    if (usesGalleryDeleteState) setGalleryDeleteStatus(doneMessage);
+    if (usesLogDeleteState) setLogDeleteStatus(doneMessage);
     await renderBoardBySkin();
   } catch (error) {
     console.error("Failed to delete posts:", error);
     if (usesBoardDeleteState) setBoardDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
-    if (skinType === "GALLERY") setGalleryDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
-    if (skinType === "LOG") setLogDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
+    if (usesGalleryDeleteState) setGalleryDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
+    if (usesLogDeleteState) setLogDeleteStatus(error.message || `${modeLabel} 중 오류가 발생했습니다.`, true);
     await renderBoardAdminToolsCompact(currentSkin);
   }
 }

@@ -492,7 +492,7 @@ textarea.textarea:focus{
   border-radius: 0;
   background: transparent;
   color: var(--site-text, var(--text));
-  font-family: inherit;
+  font-family: var(--font-kr);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
@@ -818,12 +818,11 @@ textarea.textarea:focus{
   right: 0;
   bottom: 0;
   z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  overflow: auto;
 }
 .lightbox-backdrop{
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -834,16 +833,20 @@ textarea.textarea:focus{
 .lightbox-content{
   position: relative;
   z-index: 10000;
-  max-width: 95vw;
-  max-height: 95vh;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .lightbox-image{
-  max-width: 100%;
-  max-height: 95vh;
-  object-fit: contain;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  flex: 0 0 auto;
   border-radius: 0;
 }
 
@@ -1258,6 +1261,7 @@ body.site-page .board-admin-counts{
 }
 body.site-page .board-admin-status{
   width: 100%;
+  min-height: 15px;
   margin-top: 4px;
   padding: 0;
   border: 0;
@@ -1565,6 +1569,9 @@ body.site-page .board-admin-status.is-error{
 }
 .log-feed.is-comment-bottom .comments-section.log-comments{
   margin-top: 18px;
+}
+.comments-section.log-comments .comment-content{
+  white-space: normal;
 }
 .log-post-delete-mode{
   position: relative;
@@ -3980,6 +3987,7 @@ body.site-page .view-meta-action,
 body.site-page .comment-admin-actions .btn,
 body.site-page .comment-reply-btn,
 body.site-page .guestbook-delete,
+body.site-page .pagination-btn,
 body.site-page .log-manage-button,
 body.site-page .gallery-manage-button{
   font-family: var(--font-kr);
@@ -4229,7 +4237,7 @@ body.home-page .home-hero-eyebrow{
 }
 body.home-page .home-hero-intro{
   font-family: var(--font-kr);
-  font-size: 1rem;
+  font-size: 14px;
 }
 body.home-page .home-hero-image-only{
   display: grid;
