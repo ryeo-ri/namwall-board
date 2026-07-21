@@ -15,6 +15,15 @@ let processedSourceMode = "";
 let replacedAssetPaths = [];
 let analysisToken = 0;
 
+export function cleanupScriptWriter() {
+  analysisToken += 1;
+  activeContainer = null;
+  selectedFile = null;
+  processedSource = null;
+  processedSourceMode = "";
+  replacedAssetPaths = [];
+}
+
 export function renderArchiveField({ id, value, commonAttrs, wrapperAttrs }) {
   return `
     <div class="field-group write-skin-field script-import-field"${wrapperAttrs}>

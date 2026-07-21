@@ -24,14 +24,17 @@ async function getHomeSettings() {
   return homeSettingsPromise;
 }
 
-export async function initializeHomePage() {
+export async function initializeHomePage(context = {}) {
+  resetHomePageCache();
   clearLegacyHomeIntroHeightCache();
   try {
     const [settings, auth] = await Promise.all([
       getHomeSettings(),
       getAuthSnapshot()
     ]);
+    if (isInactive(context)) return;
     const settingsSnapshot = await getDoc(doc(db, "site_settings", "main"));
+    if (isInactive(context)) return;
     const homeIsPublic = settingsSnapshot.exists()
       ? settingsSnapshot.data()?.homeIsPublic !== false
       : true;
@@ -43,6 +46,7 @@ export async function initializeHomePage() {
 
     // 홈 소개의 실제 구조를 먼저 만든 뒤 화면을 공개해 초기 레이아웃 이동을 막는다.
     await loadHomeIntro();
+    if (isInactive(context)) return;
     document.body?.classList.remove("home-access-pending", "home-access-locked");
     await Promise.all([
       renderQuickMenu(),
@@ -50,9 +54,21 @@ export async function initializeHomePage() {
       loadRecentTags()
     ]);
   } catch (error) {
+    if (isInactive(context)) return;
     console.error("홈페이지 접근 확인 실패:", error);
     renderHomeAccessError();
   }
+}
+
+function resetHomePageCache() {
+  homeSettingsCache = null;
+  homeSettingsPromise = null;
+  recentPostsCache.clear();
+  recentPostsPromise.clear();
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
 }
 
 function clearLegacyHomeIntroHeightCache() {

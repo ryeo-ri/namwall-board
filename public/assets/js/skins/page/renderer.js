@@ -64,13 +64,13 @@ export function renderPageView(post = {}) {
 
   return {
     imageHtml: "",
-    contentHtml: renderInlineHtml(page.html),
+    contentHtml: renderFrame({
+      srcdoc: page.html,
+      title: page.title || post.title || "PAGE",
+      height: page.height
+    }),
     sourceText: ""
   };
-}
-
-function renderInlineHtml(html = "") {
-  return `<div class="page-inline-html" data-page-run-scripts="true">${html}</div>`;
 }
 
 function renderFrame({ src = "", srcdoc = "", title = "PAGE", height = 720 } = {}) {
@@ -82,7 +82,7 @@ function renderFrame({ src = "", srcdoc = "", title = "PAGE", height = 720 } = {
       <iframe
         class="page-frame"
         title="${escapeHtml(title)}"
-        sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts"
+        sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
         referrerpolicy="no-referrer-when-downgrade"
         loading="lazy"
         ${srcAttr}${srcdocAttr}
@@ -127,5 +127,5 @@ function escapeHtml(text) {
   }
   const div = document.createElement("div");
   div.textContent = String(text || "");
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }

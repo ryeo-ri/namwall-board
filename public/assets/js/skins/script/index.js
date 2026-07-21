@@ -3,6 +3,7 @@ import { renderScriptDetail, renderScriptList } from "./renderer.js";
 import { bindScriptViewer } from "./viewer.js";
 import {
   bindScriptWriter,
+  cleanupScriptWriter,
   cleanupReplacedScriptArchive,
   prepareScriptWrite,
   renderArchiveField
@@ -71,6 +72,9 @@ export const skin = createSkinDefinition({
   },
   bindWriteFields(context) {
     bindScriptWriter(context);
+  },
+  cleanupWriteFields() {
+    cleanupScriptWriter();
   },
   prepareWrite(context) {
     return prepareScriptWrite(context);

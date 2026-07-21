@@ -9,16 +9,14 @@ import {
   where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuthSnapshot } from "../core/state.js";
+import { navigatePublic } from "../core/spa-navigation.js";
 
-const searchInput = document.getElementById("searchInput");
-const tagInput = document.getElementById("tagInput");
-const searchBtn = document.getElementById("searchBtn");
-const resultsEl = document.getElementById("searchResults");
-const metaEl = document.getElementById("searchMeta");
-
-const params = new URLSearchParams(window.location.search);
-if (params.get("q")) searchInput.value = params.get("q");
-if (params.get("tag")) tagInput.value = params.get("tag");
+let searchInput = null;
+let tagInput = null;
+let searchBtn = null;
+let resultsEl = null;
+let metaEl = null;
+let activeSearchContext = null;
 
 function normalizeText(value) {
   return (value || "").toString().toLowerCase();
@@ -56,14 +54,14 @@ function isVisibleInSearch(post, isAdmin) {
   return status !== "PRIVATE" && status !== "SECRET";
 }
 
-async function runSearch() {
+async function runSearch(context = activeSearchContext || {}) {
   const queryText = searchInput.value.trim();
   const tagFilter = tagInput.value.trim().toLowerCase();
 
   const next = new URLSearchParams();
   if (queryText) next.set("q", queryText);
   if (tagFilter) next.set("tag", tagInput.value.trim());
-  history.replaceState(null, "", `search.html?${next.toString()}`);
+  navigatePublic(`search.html?${next.toString()}`, { replace: true, render: false, scroll: false });
 
   try {
     const auth = await getAuthSnapshot();
@@ -71,6 +69,7 @@ async function runSearch() {
       loadSearchPosts(auth.isAdmin),
       loadBoardTitleMap()
     ]);
+    if (isInactive(context)) return;
 
     const visiblePosts = posts
       .filter((post) => isVisibleInSearch(post, auth.isAdmin))
@@ -145,6 +144,7 @@ async function runSearch() {
       `;
     }).join("");
   } catch (error) {
+    if (isInactive(context)) return;
     console.error("Search failed:", error);
     resultsEl.innerHTML = '<div class="notice">검색 중 오류가 발생했습니다.</div>';
     metaEl.textContent = "";
@@ -157,8 +157,33 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-searchBtn?.addEventListener("click", runSearch);
-searchInput?.addEventListener("keypress", (e) => { if (e.key === "Enter") runSearch(); });
-tagInput?.addEventListener("keypress", (e) => { if (e.key === "Enter") runSearch(); });
+export async function initializeSearchPage(context = {}) {
+  activeSearchContext = context;
+  searchInput = document.getElementById("searchInput");
+  tagInput = document.getElementById("tagInput");
+  searchBtn = document.getElementById("searchBtn");
+  resultsEl = document.getElementById("searchResults");
+  metaEl = document.getElementById("searchMeta");
 
-if (searchInput.value || tagInput.value) runSearch();
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("q")) searchInput.value = params.get("q");
+  if (params.get("tag")) tagInput.value = params.get("tag");
+  searchBtn?.addEventListener("click", () => runSearch());
+  searchInput?.addEventListener("keypress", (e) => { if (e.key === "Enter") runSearch(); });
+  tagInput?.addEventListener("keypress", (e) => { if (e.key === "Enter") runSearch(); });
+
+  if (searchInput.value || tagInput.value) await runSearch();
+}
+
+export function cleanupSearchPage() {
+  activeSearchContext = null;
+  searchInput = null;
+  tagInput = null;
+  searchBtn = null;
+  resultsEl = null;
+  metaEl = null;
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
+}

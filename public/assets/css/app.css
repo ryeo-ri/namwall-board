@@ -198,6 +198,9 @@ body.site-page{
 body.site-page > main.container{
   flex: 1 0 auto;
 }
+body.spa-booting > [data-spa-page]{
+  visibility: hidden;
+}
 .footer{
   width: 100%;
   margin-top: auto;
@@ -821,6 +824,7 @@ textarea.textarea:focus{
   display: block;
   overflow: auto;
 }
+
 .lightbox-backdrop{
   position: fixed;
   top: 0;
@@ -2768,19 +2772,6 @@ body.site-page .board-admin-status.is-error{
   height: var(--page-frame-height, 720px);
   border: 0;
   background: var(--white);
-}
-.page-inline-html{
-  color: var(--text);
-  font-family: var(--font-kr);
-  line-height: 1.5;
-}
-.page-inline-html img{
-  max-width: 100%;
-  height: auto;
-  vertical-align: middle;
-}
-.page-inline-html a{
-  color: inherit;
 }
 .page-line-item .board-line-title::before{
   content: "PAGE";

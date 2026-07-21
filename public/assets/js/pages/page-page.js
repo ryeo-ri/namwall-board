@@ -4,10 +4,11 @@ import { getAuthSnapshot } from "../core/state.js";
 import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings } from "../shared/boards-render.js";
 import { getBoardSkinOption, getSkin, resolveBoardSkinType } from "../skins/registry.js";
+import { navigatePublic } from "../core/spa-navigation.js";
 
-const params = new URLSearchParams(window.location.search);
-const boardId = params.get("bo") || "page";
-const contentEl = document.getElementById("pageContent");
+let params = new URLSearchParams();
+let boardId = "page";
+let contentEl = null;
 let currentSiteTitle = getSiteTitle();
 
 async function loadCurrentSiteTitle() {
@@ -39,59 +40,13 @@ function renderNotice(html) {
   if (contentEl) contentEl.innerHTML = html;
 }
 
-async function activateInlinePageScripts(root = contentEl) {
-  const scripts = Array.from(root?.querySelectorAll("[data-page-run-scripts] script:not([data-page-script-activated])") || []);
-  for (const oldScript of scripts) {
-    await replaceAndRunPageScript(oldScript);
-  }
-}
-
-function replaceAndRunPageScript(oldScript) {
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    const rawSrc = String(oldScript.getAttribute("src") || "").trim();
-    Array.from(oldScript.attributes).forEach((attr) => {
-      script.setAttribute(attr.name, attr.value);
-    });
-
-    script.dataset.pageScriptActivated = "true";
-
-    if (rawSrc) {
-      script.src = normalizePageScriptSrc(rawSrc);
-      script.async = false;
-      script.defer = false;
-      script.removeAttribute("async");
-      script.removeAttribute("defer");
-      script.addEventListener("load", () => resolve(), { once: true });
-      script.addEventListener("error", () => {
-        console.warn("Failed to load PAGE script:", script.src);
-        resolve();
-      }, { once: true });
-    } else {
-      script.textContent = oldScript.textContent || "";
-    }
-
-    oldScript.replaceWith(script);
-
-    if (!rawSrc) {
-      resolve();
-    }
-  });
-}
-
-function normalizePageScriptSrc(src) {
-  const value = String(src || "").trim();
-  if (window.location.protocol === "https:" && value.startsWith("http://")) {
-    return `https://${value.slice(7)}`;
-  }
-  return value;
-}
-
-async function loadPage() {
+async function loadPage(context = {}) {
   await loadCurrentSiteTitle();
+  if (isInactive(context)) return;
 
   try {
     const boardSnap = await getDoc(doc(db, "boards", boardId));
+    if (isInactive(context)) return;
     if (!boardSnap.exists()) {
       setDocumentTitle("페이지 없음");
       renderNotice('<div class="notice">페이지를 찾을 수 없습니다.</div>');
@@ -100,11 +55,12 @@ async function loadPage() {
 
     const board = { id: boardSnap.id, ...boardSnap.data() };
     if (resolveBoardSkinType(board) !== "PAGE") {
-      location.replace(`board.html?bo=${encodeURIComponent(board.id)}`);
+      navigatePublic(`board.html?bo=${encodeURIComponent(board.id)}`, { replace: true });
       return;
     }
 
     const auth = await getAuthSnapshot();
+    if (isInactive(context)) return;
     if (isAdminOnlyBoard(board) && !auth?.isAdmin) {
       document.querySelector("main.container")?.classList.add("access-denied-shell");
       renderNotice(renderAdminOnlyBoardNotice(board.title || board.name || board.id));
@@ -130,6 +86,7 @@ async function loadPage() {
     }
 
     const skin = await getSkin(board);
+    if (isInactive(context)) return;
     const detail = await skin.renderDetail({
       id: `${board.id}-page`,
       title: board.title || board.name || board.id,
@@ -139,9 +96,9 @@ async function loadPage() {
         page: pageData
       }
     }, board, { secretUnlocked: true, isAdmin: Boolean(auth?.isAdmin) });
+    if (isInactive(context)) return;
 
     renderNotice(detail.contentHtml || '<div class="notice">표시할 PAGE 내용이 없습니다.</div>');
-    await activateInlinePageScripts();
   } catch (error) {
     console.error("Failed to load PAGE:", error);
     setDocumentTitle("오류");
@@ -149,4 +106,18 @@ async function loadPage() {
   }
 }
 
-loadPage();
+export async function initializePagePage(context = {}) {
+  params = new URLSearchParams(window.location.search);
+  boardId = params.get("bo") || "page";
+  contentEl = document.getElementById("pageContent");
+  currentSiteTitle = getSiteTitle();
+  await loadPage(context);
+}
+
+export function cleanupPagePage() {
+  contentEl = null;
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
+}

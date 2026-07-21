@@ -152,6 +152,13 @@ function updatePageContentVisibility() {
   }
 }
 
+function applyGuestPostDefaultForSkin(rawSkinType) {
+  const boardIdInput = document.getElementById("boardIdInput");
+  const guestInput = document.getElementById("boardGuestInput");
+  if (!guestInput || boardIdInput?.dataset.lockedId) return;
+  guestInput.checked = normalizeKind(rawSkinType, "BOARD") === "GUESTBOOK";
+}
+
 function formatLogImageWidth(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "";
@@ -437,6 +444,7 @@ function renderSkinCatalogOptions() {
         const input = document.getElementById("boardKindInput");
         if (!input) return;
         input.value = button.dataset.skin || "BOARD";
+        applyGuestPostDefaultForSkin(input.value);
         updateSkinFolderHint(input.value);
         await renderSkinOptionsForType(input.value);
         updatePageContentVisibility();
@@ -1275,6 +1283,7 @@ function stripHtml(html) {
   });
   document.getElementById("boardIdInput")?.addEventListener("input", markBoardIdManualEdit);
   document.getElementById("boardKindInput")?.addEventListener("input", async (event) => {
+    applyGuestPostDefaultForSkin(event.target.value);
     updateSkinFolderHint(event.target.value);
     await renderSkinOptionsForType(event.target.value);
     updatePageContentVisibility();

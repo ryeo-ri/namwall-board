@@ -3,10 +3,10 @@ import { db } from "./firebase.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getSiteTitle, loadSiteMainSettings, readCachedSiteTitle, renderTopNav } from "../shared/boards-render.js";
 import { applyDesignSettings, readCachedDesign, writeCachedDesign, writeCachedHeaderFont } from "../shared/design.js";
+import { navigatePublic } from "./spa-navigation.js";
 
 const HEADER_FONT_LINK_ID = "archiveHeaderFontLink";
 const BOOTSTRAP_FLAG = "archive_bootstrapped_v1";
-let appliedSiteTitleAsDocumentTitle = false;
 
 // 첫 실행 게이트: 첫 관리자 등록 전(미설치)이면 공개 페이지 → /setup.html
 // 판정 순서:
@@ -43,18 +43,22 @@ async function ensureBootstrapped() {
   }
 }
 
-const yearEl = document.getElementById("year");
-if (yearEl) yearEl.textContent = new Date().getFullYear();
+export async function initializeAppPage(context = {}) {
+  const yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-document.getElementById("quickSearchBtn")?.addEventListener("click", () => {
-  const tag = (document.getElementById("quickTag")?.value || "").trim();
-  if (!tag) return;
-  location.href = `search.html?tag=${encodeURIComponent(tag)}`;
-});
+  const quickSearchBtn = document.getElementById("quickSearchBtn");
+  if (quickSearchBtn) {
+    quickSearchBtn.onclick = () => {
+      const tag = (document.getElementById("quickTag")?.value || "").trim();
+      if (!tag) return;
+      navigatePublic(`search.html?tag=${encodeURIComponent(tag)}`);
+    };
+  }
 
 // 설정 완료 확인 후에만 헤더/디자인을 그린다 (미설정이면 setup.html로 이동)
-ensureBootstrapped().then((ok) => {
-  if (!ok) return;
+  const ok = await ensureBootstrapped();
+  if (!ok || isInactive(context)) return;
 
   const cachedSiteTitle = readCachedSiteTitle();
   if (cachedSiteTitle) {
@@ -67,13 +71,14 @@ ensureBootstrapped().then((ok) => {
     applyDesignSettings(cachedDesign);
   }
 
-  paintTopArea();
-});
+  await paintTopArea(context);
+}
 
-async function paintTopArea() {
+async function paintTopArea(context = {}) {
   try {
     const navEl = document.getElementById("topNav");
     const settings = navEl ? await renderTopNav(navEl) : await loadSiteMainSettings();
+    if (isInactive(context)) return;
     applyHeaderFont(settings);
     applySiteTitle(settings);
     applyDesignSettings(settings.design);
@@ -85,6 +90,7 @@ async function paintTopArea() {
     const pillAdmin = document.getElementById("pillAdmin");
     if (pillAdmin) {
       const auth = await getAuthSnapshot();
+      if (isInactive(context)) return;
       pillAdmin.textContent = `Admin: ${auth?.isAdmin ? "ON" : "OFF"}`;
     }
   } catch (error) {
@@ -98,10 +104,13 @@ function applySiteTitle(settings = {}) {
     el.textContent = siteTitle;
   });
 
-  if (appliedSiteTitleAsDocumentTitle || shouldReplaceDocumentTitle(document.title)) {
+  if (shouldReplaceDocumentTitle(document.title)) {
     document.title = siteTitle;
-    appliedSiteTitleAsDocumentTitle = true;
   }
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
 }
 
 function shouldReplaceDocumentTitle(title) {

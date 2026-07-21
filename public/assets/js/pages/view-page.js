@@ -8,13 +8,14 @@ import { renderLockIcon } from "../shared/secret-icon.js";
 import { getAuthSnapshot, sha256Hex } from "../core/state.js";
 import { isAdminOnlyBoard, renderAdminOnlyBoardNotice } from "../shared/board-access.js";
 import { showInputModal } from "../shared/ui-modal.js";
+import { navigatePublic } from "../core/spa-navigation.js";
 import { formatResponsiveWidth, getSiteTitle, loadSiteMainSettings, renderTopNav } from "../shared/boards-render.js";
 import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin, getSkinEditor } from "../skins/registry.js";
 import "../shared/lightbox.js";
 
-const params = new URLSearchParams(window.location.search);
-const postId = params.get("id");
-const viewAdminToolsEl = document.getElementById("viewAdminTools");
+let params = new URLSearchParams();
+let postId = "";
+let viewAdminToolsEl = null;
 let currentSiteTitle = getSiteTitle();
 
 async function loadCurrentSiteTitle() {
@@ -170,8 +171,9 @@ async function unlockSecretIfNeeded(post, isAdmin) {
   return { unlocked: true, cancelled: false };
 }
 
-async function loadPage() {
+async function loadPage(context = {}) {
   await loadCurrentSiteTitle();
+  if (isInactive(context)) return;
 
   if (!postId) {
     document.getElementById("viewTitle").textContent = "잘못된 접근";
@@ -183,6 +185,7 @@ async function loadPage() {
 
   try {
     const postSnap = await getDoc(doc(db, "posts", postId));
+    if (isInactive(context)) return;
     if (!postSnap.exists()) {
       document.getElementById("viewTitle").textContent = "게시물을 찾을 수 없습니다.";
       return;
@@ -193,6 +196,7 @@ async function loadPage() {
     board = { id: boardId };
     try {
       const boardSnap = await getDoc(doc(db, "boards", boardId));
+      if (isInactive(context)) return;
       if (boardSnap.exists()) {
         board = { id: boardSnap.id, ...boardSnap.data() };
       }
@@ -207,27 +211,33 @@ async function loadPage() {
     }
 
     const auth = await getAuthSnapshot();
+    if (isInactive(context)) return;
     if (isAdminOnlyBoard(board) && !auth?.isAdmin) {
       renderBoardAccessDeniedPage(board, boardId);
       return;
     }
 
     let skin = await getSkin(findSkinTypeByAlias(boardId));
+    if (isInactive(context)) return;
     try {
       skin = await getSkin(board);
+      if (isInactive(context)) return;
     } catch (_error) {
       // keep the alias skin fallback
     }
     applyViewWidth(board, skin);
     if (skin?.type === "PAGE") {
       await renderTopNav(document.getElementById("viewNav"));
+      if (isInactive(context)) return;
     }
     const skinEditor = await resolveAvailableSkinEditor(auth, post, board, skin, boardId);
+    if (isInactive(context)) return;
     renderAdminTools(auth, post, boardId, skinEditor);
     const secretAccess = await unlockSecretIfNeeded(post, auth.isAdmin);
+    if (isInactive(context)) return;
     const secretUnlocked = secretAccess.unlocked;
     if (post.isSecret && secretAccess.cancelled) {
-      location.replace(`board.html?bo=${encodeURIComponent(boardId)}`);
+      navigatePublic(`board.html?bo=${encodeURIComponent(boardId)}`, { replace: true });
       return;
     }
     const skinData = getPostSkinData(post);
@@ -249,6 +259,7 @@ async function loadPage() {
 
     if (typeof skin?.renderDetail === "function") {
       const detail = await skin.renderDetail(post, board, { secretUnlocked, isAdmin: auth.isAdmin });
+      if (isInactive(context)) return;
       renderSkinDetailResult(detail, skinData);
     } else {
       const cover = getPostCoverMedia(post);
@@ -285,6 +296,7 @@ async function loadPage() {
         secretUnlocked,
         isAdmin: auth.isAdmin
       });
+      if (isInactive(context)) return;
     }
 
     const showComments = Boolean(detailCaps.supportsComments);
@@ -296,8 +308,10 @@ async function loadPage() {
         boardId,
         commentScope: board.commentScope || "all"
       });
+      if (isInactive(context)) return;
     }
   } catch (error) {
+    if (isInactive(context)) return;
     console.error("Failed to load view page:", error);
     const permissionDenied = error?.code === "permission-denied" || /permission/i.test(error?.message || "");
     if (permissionDenied) {
@@ -369,7 +383,7 @@ function renderAdminTools(auth, post, boardId, skinEditor = null) {
 
     try {
       await deletePostsByIds([post.id]);
-      location.href = `board.html?bo=${encodeURIComponent(boardId)}`;
+      navigatePublic(`board.html?bo=${encodeURIComponent(boardId)}`);
     } catch (error) {
       console.error("Failed to delete post from view page:", error);
       window.alert(error.message || "게시물 삭제 중 오류가 발생했습니다.");
@@ -377,7 +391,21 @@ function renderAdminTools(auth, post, boardId, skinEditor = null) {
   });
 }
 
-loadPage();
+export async function initializeViewPage(context = {}) {
+  params = new URLSearchParams(window.location.search);
+  postId = params.get("id") || "";
+  viewAdminToolsEl = document.getElementById("viewAdminTools");
+  currentSiteTitle = getSiteTitle();
+  await loadPage(context);
+}
+
+export function cleanupViewPage() {
+  viewAdminToolsEl = null;
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
+}
 
 function escapeJsString(value) {
   return String(value || "")

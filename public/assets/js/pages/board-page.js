@@ -13,12 +13,13 @@ import { findSkinTypeByAlias, getBoardSkinOption, getPostSkinData, getSkin, reso
 import { deletePostsByIds } from "../shared/post-maintenance.js?v=20260717-1";
 import { canWriteToBoard, getAuthSnapshot, sha256Hex, verifyGuestCode } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
+import { navigatePublic } from "../core/spa-navigation.js";
 import "../shared/lightbox.js"; // window.openLightbox 등록 (목록 이미지 확대용)
 
-const params = new URLSearchParams(window.location.search);
-const boardId = params.get("bo") || "log";
-const targetLogNo = params.get("log") || "";
-const singleMode = params.get("single") === "Y";
+let params = new URLSearchParams();
+let boardId = "log";
+let targetLogNo = "";
+let singleMode = false;
 
 let currentBoard = null;
 let currentCategory = null;
@@ -45,7 +46,7 @@ let galleryPageState = {
   pages: new Map(),
   totalCount: 0
 };
-const boardAdminToolsEl = document.getElementById("boardAdminTools");
+let boardAdminToolsEl = null;
 let currentSiteTitle = getSiteTitle();
 
 async function loadCurrentSiteTitle() {
@@ -223,14 +224,16 @@ function renderBoardAccessDeniedPage(board = {}) {
   setDocumentTitle("관리자 전용 게시판입니다.");
 }
 
-async function loadBoard() {
+async function loadBoard(context = {}) {
   try {
     clearGalleryDeleteState();
     clearBoardDeleteState();
     clearLogDeleteState();
     await loadCurrentSiteTitle();
+    if (isInactive(context)) return;
     const boardRef = doc(db, "boards", boardId);
     const boardSnap = await getDoc(boardRef);
+    if (isInactive(context)) return;
 
     if (boardSnap.exists()) {
       currentBoard = { id: boardSnap.id, ...boardSnap.data() };
@@ -240,6 +243,7 @@ async function loadBoard() {
     }
 
     const auth = await getAuthSnapshot();
+    if (isInactive(context)) return;
     readAuthCache = auth;
     if (isAdminOnlyBoard(currentBoard) && !auth?.isAdmin) {
       renderBoardAccessDeniedPage(currentBoard);
@@ -248,12 +252,14 @@ async function loadBoard() {
 
     try {
       currentSkin = await getSkin(currentBoard);
+      if (isInactive(context)) return;
     } catch (skinError) {
       console.warn("Primary skin load failed, falling back to BOARD:", skinError);
       currentSkin = await getSkin("BOARD");
+      if (isInactive(context)) return;
     }
     if (currentSkin?.type === "PAGE") {
-      location.replace(`page.html?bo=${encodeURIComponent(currentBoard.id || boardId)}`);
+      navigatePublic(`page.html?bo=${encodeURIComponent(currentBoard.id || boardId)}`, { replace: true });
       return;
     }
     applyBoardWidth(currentBoard);
@@ -272,12 +278,14 @@ async function loadBoard() {
       if (!shouldHideWriteButton) {
         writeBtn.href = `write.html?bo=${encodeURIComponent(boardId)}`;
         await bindWriteButton(writeBtn);
+        if (isInactive(context)) return;
       }
     }
 
     resetGalleryPagination();
     try {
       await loadCategories();
+      if (isInactive(context)) return;
     } catch (categoryError) {
       console.warn("Failed to load categories:", categoryError);
       renderCategoryFilter([]);
@@ -285,12 +293,15 @@ async function loadBoard() {
 
     try {
       await renderBoardBySkin();
+      if (isInactive(context)) return;
     } catch (renderError) {
       console.error("Failed to render board skin:", renderError);
       currentSkin = await getSkin("BOARD");
+      if (isInactive(context)) return;
       await renderBoardBySkin();
     }
   } catch (error) {
+    if (isInactive(context)) return;
     console.error("Failed to load board:", error);
     if (error?.code === "permission-denied" || /permission/i.test(error?.message || "")) {
       renderBoardAccessDeniedPage(currentBoard || { title: boardId });
@@ -337,7 +348,7 @@ async function bindWriteButton(writeBtn) {
 
     const auth = await getAuthSnapshot();
     if (auth.isAdmin) {
-      location.href = writeBtn.href;
+      navigatePublic(writeBtn.href);
       return;
     }
 
@@ -348,7 +359,7 @@ async function bindWriteButton(writeBtn) {
 
     const access = await canWriteToBoard(currentBoard);
     if (access.ok) {
-      location.href = writeBtn.href;
+      navigatePublic(writeBtn.href);
       return;
     }
 
@@ -379,7 +390,7 @@ async function bindWriteButton(writeBtn) {
       }
 
       const state = await refreshWriteButtonState(writeBtn);
-      if (state.canWrite) location.href = writeBtn.href;
+      if (state.canWrite) navigatePublic(writeBtn.href);
       return;
     }
 
@@ -1116,6 +1127,49 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-const yearEl = document.getElementById("year");
-if (yearEl) yearEl.textContent = new Date().getFullYear();
-loadBoard();
+export async function initializeBoardPage(context = {}) {
+  resetBoardPageState();
+  const yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  await loadBoard(context);
+}
+
+export function cleanupBoardPage() {
+  currentBoard = null;
+  currentSkin = null;
+  currentBoardPosts = [];
+  currentGalleryPosts = [];
+  currentLogPosts = [];
+  readAuthCache = null;
+  boardAdminToolsEl = null;
+  selectedBoardPostIds.clear();
+  selectedGalleryPostIds.clear();
+  selectedLogPostIds.clear();
+  unlockedGallerySecretPostIds.clear();
+  unlockedLogSecretPostIds.clear();
+  galleryPageState.pages.clear();
+}
+
+function resetBoardPageState() {
+  cleanupBoardPage();
+  params = new URLSearchParams(window.location.search);
+  boardId = params.get("bo") || "log";
+  targetLogNo = params.get("log") || "";
+  singleMode = params.get("single") === "Y";
+  currentCategory = null;
+  currentPage = 1;
+  totalPages = 1;
+  boardDeleteMode = false;
+  boardDeleteStatus = { text: "", isError: false };
+  galleryDeleteMode = false;
+  galleryDeleteStatus = { text: "", isError: false };
+  logDeleteMode = false;
+  logDeleteStatus = { text: "", isError: false };
+  galleryPageState = { pageSize: 12, pages: new Map(), totalCount: 0 };
+  boardAdminToolsEl = document.getElementById("boardAdminTools");
+  currentSiteTitle = getSiteTitle();
+}
+
+function isInactive(context = {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
+}

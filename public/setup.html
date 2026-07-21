@@ -128,6 +128,19 @@
         </div>
         <div id="setupMsg" class="notice hidden mt-sm"></div>
       </div>
+
+      <div class="settings-block mt-md">
+        <div class="settings-block-head">
+          <strong>공개 페이지 주소 (SPA)</strong>
+        </div>
+        <p class="setup-lead">공개 화면은 <code>index.html</code> 한 문서 안에서 이동합니다. 서버의 rewrite 기능은 필요하지 않습니다.</p>
+        <ul class="setup-substeps">
+          <li><strong>홈</strong>: <code>index.html</code></li>
+          <li><strong>게시판</strong>: <code>index.html?route=board&amp;bo=게시판ID</code></li>
+          <li><strong>게시물</strong>: <code>index.html?route=view&amp;id=게시물ID&amp;bo=게시판ID</code></li>
+          <li>기존 <code>board.html?bo=...</code>, <code>view.html?id=...</code> 주소도 새 SPA 주소로 자동 연결됩니다.</li>
+        </ul>
+      </div>
     </section>
   </main>
 

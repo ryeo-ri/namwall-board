@@ -4,11 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <base href="./">
-  <title>NAMWALL</title>
+  <title>300.30</title>
   <link rel="preconnect" href="https://r2.naru.pub">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="assets/js/core/app.js">
+  <link rel="modulepreload" href="assets/js/core/spa-router.js">
+  <link rel="modulepreload" href="assets/js/core/spa-navigation.js">
   <link rel="modulepreload" href="assets/js/core/firebase.js">
   <link rel="modulepreload" href="assets/js/core/state.js">
   <link rel="modulepreload" href="assets/js/shared/boards-render.js">
@@ -20,8 +22,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 </head>
-<body class="site-page home-page home-access-pending">
-  <div class="header">
+<body class="site-page home-page home-access-pending spa-booting">
+  <div class="header" data-spa-page>
     <div class="container">
       <div class="row">
         <a class="brand" href="index.html">
@@ -37,7 +39,7 @@
     </div>
   </div>
 
-  <main class="container">
+  <main class="container" data-spa-page>
     <div id="homeIntro"></div>
 
     <div class="grid two mt-md">
@@ -73,14 +75,12 @@
 
   </main>
 
-  <footer class="footer">
+  <footer class="footer" data-spa-page>
     <div class="muted small">© NAMWALL</div>
   </footer>
 
-  <script type="module" src="assets/js/core/app.js"></script>
-  <script type="module">
-    import { initializeHomePage } from "./assets/js/pages/home-page.js?v=20260717-1";
-    initializeHomePage();
-  </script>
+  <template id="spaRouteAnchor"></template>
+  <script src="assets/js/youtube-diamond-player.js?v=20260717-2"></script>
+  <script type="module" src="assets/js/core/spa-router.js"></script>
 </body>
 </html>

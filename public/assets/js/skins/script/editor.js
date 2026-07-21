@@ -537,7 +537,7 @@ async function optimizeAvatarFile(file) {
     if (!bitmap.width || !bitmap.height) throw new Error("이미지 크기를 확인할 수 없습니다.");
     const side = Math.min(bitmap.width, bitmap.height);
     const sourceX = Math.max(0, (bitmap.width - side) / 2);
-    const sourceY = Math.max(0, (bitmap.height - side) / 2);
+    const sourceY = 0;
     const canvas = document.createElement("canvas");
     canvas.width = AVATAR_OUTPUT_SIZE;
     canvas.height = AVATAR_OUTPUT_SIZE;
@@ -983,11 +983,62 @@ function bindEvents() {
   undoButton?.addEventListener("click", undoLastChange);
   saveButton?.addEventListener("click", saveArchive);
 
-  window.addEventListener("beforeunload", (event) => {
-    if (!hasPendingChanges() || saving) return;
-    event.preventDefault();
-    event.returnValue = "";
-  });
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+  window.addEventListener("beforeunload", handleBeforeUnload);
+}
+
+function handleBeforeUnload(event) {
+  if (!hasPendingChanges() || saving) return;
+  event.preventDefault();
+  event.returnValue = "";
+}
+
+function canLeaveScriptEditor() {
+  if (saving) return false;
+  if (!hasPendingChanges()) return true;
+  return window.confirm("저장하지 않은 변경사항이 있습니다. 이 화면에서 나가시겠습니까?");
+}
+
+function unmountScriptEditor() {
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+  resetEditorState();
+  clearEditorElementReferences();
+  postId = "";
+  boardId = "";
+  post = null;
+  board = null;
+}
+
+function clearEditorElementReferences() {
+  titleEl = null;
+  metaEl = null;
+  undoButton = null;
+  saveButton = null;
+  noticeEl = null;
+  searchInput = null;
+  kindFilter = null;
+  jumpForm = null;
+  jumpInput = null;
+  countEl = null;
+  listPane = null;
+  listEl = null;
+  loadMoreButton = null;
+  emptyEl = null;
+  formEl = null;
+  indexEl = null;
+  messageKindField = null;
+  messageKindInput = null;
+  speakerEl = null;
+  contentEl = null;
+  insertBeforeButton = null;
+  insertAfterButton = null;
+  deleteButton = null;
+  previewReader = null;
+  previewMessagesEl = null;
+  avatarManagerEl = null;
+  avatarCountEl = null;
+  avatarListEl = null;
+  avatarFileInput = null;
 }
 
 function renderScriptEditorMarkup() {
@@ -1201,7 +1252,9 @@ export const editor = {
   canEdit({ post: targetPost } = {}) {
     return Boolean(getPostSkinData(targetPost).script?.archiveUrl);
   },
-  mount: mountScriptEditor
+  mount: mountScriptEditor,
+  canLeave: canLeaveScriptEditor,
+  unmount: unmountScriptEditor
 };
 
 export default editor;

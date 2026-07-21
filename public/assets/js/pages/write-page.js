@@ -32,6 +32,7 @@ import {
   sha256Hex
 } from "../core/state.js";
 import { showInputModal } from "../shared/ui-modal.js";
+import { navigatePublic } from "../core/spa-navigation.js";
 import {
   findSkinTypeByAlias,
   getBoardAliasCandidates as getSkinBoardAliasCandidates,
@@ -40,70 +41,69 @@ import {
   resolveBoardSkinType
 } from "../skins/registry.js";
 
-const params = new URLSearchParams(window.location.search);
-const editPostId = params.get("id");
-const preselectBoardId = params.get("bo") || "";
+let editPostId = "";
+let preselectBoardId = "";
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
-const boardSelect = document.getElementById("boardSelect");
-const boardCurrentValueEl = document.getElementById("boardCurrentValue");
-const authorNameInput = document.getElementById("authorNameInput");
-const authorCurrentValueEl = document.getElementById("authorCurrentValue");
-const titleInput = document.getElementById("titleInput");
-const imageUrlInput = document.getElementById("imageUrlInput");
-const thumbModeUrlRadio = document.getElementById("thumbModeUrl");
-const thumbModeFileRadio = document.getElementById("thumbModeFile");
-const thumbModeVideoRadio = document.getElementById("thumbModeVideo");
-const thumbModeTextRadio = document.getElementById("thumbModeText");
-const thumbModeTextLabel = document.getElementById("thumbModeTextLabel");
-const thumbUrlFieldsEl = document.getElementById("thumbUrlFields");
-const thumbFileFieldsEl = document.getElementById("thumbFileFields");
-const thumbVideoFieldsEl = document.getElementById("thumbVideoFields");
-const thumbVideoInput = document.getElementById("thumbVideoInput");
-const thumbPreviewEl = document.getElementById("thumbPreview");
-const thumbDropZoneEl = document.getElementById("thumbDropZone");
-const selectThumbFileBtn = document.getElementById("selectThumbFileBtn");
-const clearThumbFileBtn = document.getElementById("clearThumbFileBtn");
-const thumbFileInput = document.getElementById("thumbFileInput");
-const thumbSectionEl = document.getElementById("thumbSection");
-
-const extraItemsEl = document.getElementById("extraItems");
-const extraItemCountEl = document.getElementById("extraItemCount");
-const addExtraItemBtn = document.getElementById("addExtraItemBtn");
-const extraModeUrlRadio = document.getElementById("extraModeUrl");
-const extraModeFileRadio = document.getElementById("extraModeFile");
-const extraModeVideoRadio = document.getElementById("extraModeVideo");
-const extraUrlFieldsEl = document.getElementById("extraUrlFields");
-const extraVideoFieldsEl = document.getElementById("extraVideoFields");
-const extraFileFieldsEl = document.getElementById("extraFileFields");
-const extraImageUrlInput = document.getElementById("extraImageUrlInput");
-const extraVideoInput = document.getElementById("extraVideoInput");
-const extraDropZoneEl = document.getElementById("extraDropZone");
-const selectExtraFileBtn = document.getElementById("selectExtraFileBtn");
-const extraFileInput = document.getElementById("extraFileInput");
-
-const logNumberInput = document.getElementById("logNumberInput");
-const sourceInput = document.getElementById("sourceInput");
-const extraImageAlignInput = document.getElementById("extraImageAlignInput");
-const extraImageAlignFieldEl = document.getElementById("extraImageAlignField");
-const visibilityInput = document.getElementById("visibilityInput");
-const htmlModeInput = document.getElementById("htmlModeInput");
-const secretPwWrap = document.getElementById("secretPwWrap");
-const secretPwInput = document.getElementById("secretPwInput");
-const contentInput = document.getElementById("contentInput");
-const tagsInput = document.getElementById("tagsInput");
-const saveBtn = document.getElementById("saveBtn");
-const msgEl = document.getElementById("writeMsg");
-const uploadMsgEl = document.getElementById("uploadMsg");
-const titleFieldsEl = document.getElementById("titleFields");
-const profileOnlyFieldsEl = document.getElementById("profileOnlyFields");
-const contentFieldsEl = document.getElementById("contentFields");
-const visibilityFieldsEl = document.getElementById("visibilityFields");
-const extraFieldsEl = document.getElementById("extraFields");
-const tagFieldsEl = document.getElementById("tagFields");
-const skinFieldsTitleEl = document.getElementById("skinFieldsTitle");
-const skinFieldsContainerEl = document.getElementById("skinFieldsContainer");
-const profileSkinFieldsHelpEl = document.getElementById("profileSkinFieldsHelp");
+let boardSelect = null;
+let boardCurrentValueEl = null;
+let authorNameInput = null;
+let authorCurrentValueEl = null;
+let titleInput = null;
+let imageUrlInput = null;
+let thumbModeUrlRadio = null;
+let thumbModeFileRadio = null;
+let thumbModeVideoRadio = null;
+let thumbModeTextRadio = null;
+let thumbModeTextLabel = null;
+let thumbUrlFieldsEl = null;
+let thumbFileFieldsEl = null;
+let thumbVideoFieldsEl = null;
+let thumbVideoInput = null;
+let thumbPreviewEl = null;
+let thumbDropZoneEl = null;
+let selectThumbFileBtn = null;
+let clearThumbFileBtn = null;
+let thumbFileInput = null;
+let thumbSectionEl = null;
+let extraItemsEl = null;
+let extraItemCountEl = null;
+let addExtraItemBtn = null;
+let extraModeUrlRadio = null;
+let extraModeFileRadio = null;
+let extraModeVideoRadio = null;
+let extraUrlFieldsEl = null;
+let extraVideoFieldsEl = null;
+let extraFileFieldsEl = null;
+let extraImageUrlInput = null;
+let extraVideoInput = null;
+let extraDropZoneEl = null;
+let selectExtraFileBtn = null;
+let extraFileInput = null;
+let logNumberInput = null;
+let sourceInput = null;
+let extraImageAlignInput = null;
+let extraImageAlignFieldEl = null;
+let visibilityInput = null;
+let htmlModeInput = null;
+let secretPwWrap = null;
+let secretPwInput = null;
+let contentInput = null;
+let tagsInput = null;
+let saveBtn = null;
+let msgEl = null;
+let uploadMsgEl = null;
+let titleFieldsEl = null;
+let profileOnlyFieldsEl = null;
+let contentFieldsEl = null;
+let visibilityFieldsEl = null;
+let extraFieldsEl = null;
+let tagFieldsEl = null;
+let skinFieldsTitleEl = null;
+let skinFieldsContainerEl = null;
+let profileSkinFieldsHelpEl = null;
+let activeWriteContext = null;
+let activeWriteSkin = null;
 
 let boards = [];
 let activeBoardId = "";
@@ -119,6 +119,66 @@ let editingPost = null;
 const stagedSkinImageFiles = new Map();
 const stagedSkinImagePreviewUrls = new Map();
 const nextLogNumberCache = new Map();
+
+function bindWritePageElements() {
+  boardSelect = document.getElementById("boardSelect");
+  boardCurrentValueEl = document.getElementById("boardCurrentValue");
+  authorNameInput = document.getElementById("authorNameInput");
+  authorCurrentValueEl = document.getElementById("authorCurrentValue");
+  titleInput = document.getElementById("titleInput");
+  imageUrlInput = document.getElementById("imageUrlInput");
+  thumbModeUrlRadio = document.getElementById("thumbModeUrl");
+  thumbModeFileRadio = document.getElementById("thumbModeFile");
+  thumbModeVideoRadio = document.getElementById("thumbModeVideo");
+  thumbModeTextRadio = document.getElementById("thumbModeText");
+  thumbModeTextLabel = document.getElementById("thumbModeTextLabel");
+  thumbUrlFieldsEl = document.getElementById("thumbUrlFields");
+  thumbFileFieldsEl = document.getElementById("thumbFileFields");
+  thumbVideoFieldsEl = document.getElementById("thumbVideoFields");
+  thumbVideoInput = document.getElementById("thumbVideoInput");
+  thumbPreviewEl = document.getElementById("thumbPreview");
+  thumbDropZoneEl = document.getElementById("thumbDropZone");
+  selectThumbFileBtn = document.getElementById("selectThumbFileBtn");
+  clearThumbFileBtn = document.getElementById("clearThumbFileBtn");
+  thumbFileInput = document.getElementById("thumbFileInput");
+  thumbSectionEl = document.getElementById("thumbSection");
+  extraItemsEl = document.getElementById("extraItems");
+  extraItemCountEl = document.getElementById("extraItemCount");
+  addExtraItemBtn = document.getElementById("addExtraItemBtn");
+  extraModeUrlRadio = document.getElementById("extraModeUrl");
+  extraModeFileRadio = document.getElementById("extraModeFile");
+  extraModeVideoRadio = document.getElementById("extraModeVideo");
+  extraUrlFieldsEl = document.getElementById("extraUrlFields");
+  extraVideoFieldsEl = document.getElementById("extraVideoFields");
+  extraFileFieldsEl = document.getElementById("extraFileFields");
+  extraImageUrlInput = document.getElementById("extraImageUrlInput");
+  extraVideoInput = document.getElementById("extraVideoInput");
+  extraDropZoneEl = document.getElementById("extraDropZone");
+  selectExtraFileBtn = document.getElementById("selectExtraFileBtn");
+  extraFileInput = document.getElementById("extraFileInput");
+  logNumberInput = document.getElementById("logNumberInput");
+  sourceInput = document.getElementById("sourceInput");
+  extraImageAlignInput = document.getElementById("extraImageAlignInput");
+  extraImageAlignFieldEl = document.getElementById("extraImageAlignField");
+  visibilityInput = document.getElementById("visibilityInput");
+  htmlModeInput = document.getElementById("htmlModeInput");
+  secretPwWrap = document.getElementById("secretPwWrap");
+  secretPwInput = document.getElementById("secretPwInput");
+  contentInput = document.getElementById("contentInput");
+  tagsInput = document.getElementById("tagsInput");
+  saveBtn = document.getElementById("saveBtn");
+  msgEl = document.getElementById("writeMsg");
+  uploadMsgEl = document.getElementById("uploadMsg");
+  titleFieldsEl = document.getElementById("titleFields");
+  profileOnlyFieldsEl = document.getElementById("profileOnlyFields");
+  contentFieldsEl = document.getElementById("contentFields");
+  visibilityFieldsEl = document.getElementById("visibilityFields");
+  extraFieldsEl = document.getElementById("extraFields");
+  tagFieldsEl = document.getElementById("tagFields");
+  skinFieldsTitleEl = document.getElementById("skinFieldsTitle");
+  skinFieldsContainerEl = document.getElementById("skinFieldsContainer");
+  profileSkinFieldsHelpEl = document.getElementById("profileSkinFieldsHelp");
+}
 
 function showMsg(text, isError = false) {
   msgEl.classList.remove("hidden");
@@ -250,6 +310,8 @@ function mergePlainObjects(target = {}, source = {}) {
 }
 
 function renderSkinPostFields(skin, post = editingPost) {
+  activeWriteSkin?.cleanupWriteFields?.();
+  activeWriteSkin = skin || null;
   const fields = getSkinPostFields(skin);
   if (!skinFieldsContainerEl) return;
   if (!fields.length) {
@@ -1763,7 +1825,7 @@ async function savePost() {
         nextLogNumberCache.set(payload.boardId, Number(payload.skinData.logNo) + 1);
       }
       touchGuestCooldown();
-      location.href = nextLocation;
+      navigatePublic(nextLocation);
       return;
     }
 
@@ -1771,7 +1833,7 @@ async function savePost() {
       await updateDoc(doc(db, "posts", editPostId), payload);
       await selectedSkin.afterWrite?.({ payload, editingPost, postId: editPostId });
       showMsg("수정 완료");
-      location.href = nextLocation;
+      navigatePublic(nextLocation);
       return;
     }
 
@@ -1780,7 +1842,7 @@ async function savePost() {
     if (payload.skinType === "LOG" && Number.isFinite(Number(payload.skinData?.logNo))) {
       nextLogNumberCache.set(payload.boardId, Number(payload.skinData.logNo) + 1);
     }
-    location.href = nextLocation;
+    navigatePublic(nextLocation);
   } catch (error) {
     console.error("Failed to save post:", error);
     if (isPermissionDeniedError(error)) {
@@ -1860,11 +1922,21 @@ async function createGuestPost(payload) {
   }
 }
 
-async function init() {
+async function init(context = {}) {
+  cleanupWritePage();
+  activeWriteContext = context;
+  const params = new URLSearchParams(window.location.search);
+  editPostId = params.get("id") || "";
+  preselectBoardId = params.get("bo") || "";
+  bindWritePageElements();
+
   try {
     await loadBoards();
+    if (isInactive(context)) return;
     await setupAuthorField();
+    if (isInactive(context)) return;
     await loadEditPost();
+    if (isInactive(context)) return;
     renderExtraItems();
 
     thumbModeUrlRadio?.addEventListener("change", applyThumbModeUI);
@@ -1985,6 +2057,7 @@ async function init() {
 
     saveBtn.addEventListener("click", savePost);
   } catch (error) {
+    if (isInactive(context)) return;
     console.error("Write page init failed:", error);
     showMsg("작성 페이지 초기화 실패", true);
   }
@@ -2005,4 +2078,52 @@ function preserveLineBreaks(value) {
   return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
 }
 
-init();
+export { init as initializeWritePage };
+
+export function cleanupWritePage() {
+  document.removeEventListener("paste", handleClipboardPaste);
+  activeWriteSkin?.cleanupWriteFields?.();
+  activeWriteSkin = null;
+  editPostId = "";
+  preselectBoardId = "";
+  clearThumbPreviewBlob();
+  extraItems.forEach((item) => revokeObjectUrl(item?.previewUrl));
+  stagedSkinImagePreviewUrls.forEach((url) => revokeObjectUrl(url));
+  stagedSkinImagePreviewUrls.clear();
+  stagedSkinImageFiles.clear();
+  nextLogNumberCache.clear();
+  boards = [];
+  activeBoardId = "";
+  uploadedThumbnail = null;
+  uploadedExtraAttachments = [];
+  fixedAdminNickname = "";
+  fixedAuthorName = "";
+  extraItems = [];
+  draggedExtraItemId = "";
+  stagedThumbFile = null;
+  editingPost = null;
+  activeWriteContext = null;
+  clearWritePageElements();
+}
+
+function clearWritePageElements() {
+  boardSelect = boardCurrentValueEl = authorNameInput = authorCurrentValueEl = null;
+  titleInput = imageUrlInput = thumbModeUrlRadio = thumbModeFileRadio = null;
+  thumbModeVideoRadio = thumbModeTextRadio = thumbModeTextLabel = null;
+  thumbUrlFieldsEl = thumbFileFieldsEl = thumbVideoFieldsEl = thumbVideoInput = null;
+  thumbPreviewEl = thumbDropZoneEl = selectThumbFileBtn = clearThumbFileBtn = null;
+  thumbFileInput = thumbSectionEl = extraItemsEl = extraItemCountEl = null;
+  addExtraItemBtn = extraModeUrlRadio = extraModeFileRadio = extraModeVideoRadio = null;
+  extraUrlFieldsEl = extraVideoFieldsEl = extraFileFieldsEl = extraImageUrlInput = null;
+  extraVideoInput = extraDropZoneEl = selectExtraFileBtn = extraFileInput = null;
+  logNumberInput = sourceInput = extraImageAlignInput = extraImageAlignFieldEl = null;
+  visibilityInput = htmlModeInput = secretPwWrap = secretPwInput = null;
+  contentInput = tagsInput = saveBtn = msgEl = uploadMsgEl = null;
+  titleFieldsEl = profileOnlyFieldsEl = contentFieldsEl = visibilityFieldsEl = null;
+  extraFieldsEl = tagFieldsEl = skinFieldsTitleEl = skinFieldsContainerEl = null;
+  profileSkinFieldsHelpEl = null;
+}
+
+function isInactive(context = activeWriteContext || {}) {
+  return Boolean(context.signal?.aborted || (context.isActive && !context.isActive()));
+}
