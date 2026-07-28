@@ -41,12 +41,11 @@ export function renderArchiveField({ id, value, commonAttrs, wrapperAttrs }) {
       <div class="script-import-dropzone" data-script-dropzone tabindex="0" role="button" aria-label="Roll20 또는 코코포리아 HTML 파일 선택">
         <button type="button" class="btn" data-script-file-select>HTML 선택</button>
         <span>Roll20 또는 코코포리아 로그 HTML을 끌어놓으세요.</span>
-        <span class="muted small">불필요한 화면 코드는 제거하고 원본 로그 서식은 최대한 유지합니다.</span>
       </div>
       <input class="hidden" type="file" accept=".html,.htm,text/html" data-script-file-input>
       <label class="write-check script-image-backup-option">
         <input type="checkbox" data-script-backup-images checked>
-        <span>로그 이미지도 WebP로 경량화하여 백업</span>
+        <span>로그이미지 webP로 압축</span>
       </label>
       <div class="script-import-status" data-script-import-status aria-live="polite"></div>
       <dl class="script-import-result hidden" data-script-import-result aria-label="로그 분석 결과"></dl>

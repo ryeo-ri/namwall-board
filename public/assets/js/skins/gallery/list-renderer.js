@@ -1,5 +1,6 @@
 import { getPostCoverMedia, renderPostVideoFrame } from "../../shared/post-cover.js";
 import { renderLockIcon } from "../../shared/secret-icon.js";
+import { getPostSkinData } from "../registry.js";
 
 export function renderGalleryList(posts, board, options = {}) {
   const deleteMode = Boolean(options.deleteMode);
@@ -17,6 +18,12 @@ export function renderGalleryList(posts, board, options = {}) {
         const rawPostId = post.id || "";
         const cover = getPostCoverMedia(post);
         const title = escapeHtml(post.title || "");
+        const skinData = getPostSkinData(post);
+        const sourceMarkup = renderGallerySource(skinData.source);
+        const contentText = getGalleryContentText(post);
+        const contentMarkup = contentText
+          ? `<div class="gallery-card-content">${escapeHtml(contentText)}</div>`
+          : "";
         const extraAttachments = Array.isArray(post.extraAttachments) ? post.extraAttachments.filter((item) => item?.url) : [];
         const createdAt = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt);
         const dateStr = Number.isNaN(createdAt.getTime()) ? "" : createdAt.toLocaleDateString("ko-KR");
@@ -81,7 +88,9 @@ export function renderGalleryList(posts, board, options = {}) {
                     <div class="gallery-media gallery-media-video">
                       ${renderPostVideoFrame(cover.embedHtml, "gallery-media-video-frame")}
                     </div>
+                    ${sourceMarkup}
                   </div>
+                  ${contentMarkup}
                 `
               : cover.imageUrl
                 ? `
@@ -118,11 +127,35 @@ export function renderGalleryList(posts, board, options = {}) {
                         <span class="btn small">원본 보기</span>
                       </div>
                     </button>
+                    ${sourceMarkup}
                   </div>
+                  ${contentMarkup}
                 `
               : `
-                  <div class="gallery-media">
-                    <div class="gallery-placeholder">이미지 없음</div>
+                  <div class="gallery-media-wrap gallery-text-only-wrap">
+                    ${deleteMode ? `
+                      <div class="gallery-delete-topbar">
+                        <div class="gallery-delete-left">
+                          <label class="gallery-delete-check">
+                            <input type="checkbox" data-gallery-select="${postId}" ${isSelected ? "checked" : ""}>
+                          </label>
+                          <span class="gallery-delete-date">${escapeHtml(dateStr)}</span>
+                        </div>
+                        <div class="gallery-manage-actions">
+                          <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(rawPostId)}&bo=${encodeURIComponent(post.boardId || board?.id || "board")}" aria-label="게시물 수정">수정</a>
+                          <button type="button" class="gallery-manage-button gallery-delete-button" data-gallery-delete="${postId}" aria-label="게시물 삭제">삭제</button>
+                        </div>
+                      </div>
+                    ` : ""}
+                    ${contentText
+                      ? `<div class="gallery-text-card">${escapeHtml(contentText)}</div>`
+                      : `<div class="gallery-placeholder">내용 없음</div>`}
+                    ${extraAttachments.length || sourceMarkup ? `
+                      <div class="gallery-text-footer">
+                        ${extraAttachments.length ? renderExtraLightboxButtons(extraAttachments) : ""}
+                        ${sourceMarkup}
+                      </div>
+                    ` : ""}
                   </div>
                 `} 
           </article>
@@ -130,6 +163,44 @@ export function renderGalleryList(posts, board, options = {}) {
       }).join("")}
     </div>
   `;
+}
+
+function renderGallerySource(rawSource) {
+  const source = String(rawSource || "").trim();
+  if (!source) return "";
+
+  const url = getHttpUrl(source);
+  const content = url
+    ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="출처 링크">링크</a>`
+    : `<span>${escapeHtml(source)}</span>`;
+
+  return `<div class="gallery-source">${content}</div>`;
+}
+
+function getHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function getGalleryContentText(post = {}) {
+  const contentText = String(post.contentText || "").trim();
+  if (contentText) return contentText;
+
+  const html = String(post.commentHtml || post.contentHtml || "");
+  if (!html) return "";
+
+  const div = document.createElement("div");
+  div.innerHTML = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li)>/gi, "\n");
+  return String(div.textContent || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function renderExtraLightboxButtons(attachments) {
@@ -149,21 +220,14 @@ function renderExtraLightboxButtons(attachments) {
             aria-label="${label} 원본 보기"
             title="추가 이미지 ${index + 1}"
           >
-            <span aria-hidden="true">${isVideo ? "VIDEO" : imageGlyph()}</span>
+            <svg viewBox="0 0 16 16" class="gallery-extra-plus-icon" focusable="false" aria-hidden="true">
+              <path class="gallery-extra-plus-outline" d="M8 2v12M2 8h12"></path>
+              <path class="gallery-extra-plus-mark" d="M8 2v12M2 8h12"></path>
+            </svg>
           </button>
         `;
       }).join("")}
     </span>
-  `;
-}
-
-function imageGlyph() {
-  return `
-    <svg viewBox="0 0 24 24" class="gallery-extra-icon-svg" focusable="false" aria-hidden="true">
-      <rect x="3.5" y="5" width="17" height="14" rx="2"></rect>
-      <circle cx="9" cy="10" r="1.4"></circle>
-      <path d="M6.5 16l4.1-4.1 2.7 2.7 1.9-1.9 2.3 3.3"></path>
-    </svg>
   `;
 }
 

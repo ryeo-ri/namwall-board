@@ -66,6 +66,7 @@ let selectThumbFileBtn = null;
 let clearThumbFileBtn = null;
 let thumbFileInput = null;
 let thumbSectionEl = null;
+let thumbPanelEl = null;
 let extraItemsEl = null;
 let extraItemCountEl = null;
 let addExtraItemBtn = null;
@@ -142,6 +143,7 @@ function bindWritePageElements() {
   clearThumbFileBtn = document.getElementById("clearThumbFileBtn");
   thumbFileInput = document.getElementById("thumbFileInput");
   thumbSectionEl = document.getElementById("thumbSection");
+  thumbPanelEl = thumbSectionEl?.querySelector(".write-thumb-panel") || null;
   extraItemsEl = document.getElementById("extraItems");
   extraItemCountEl = document.getElementById("extraItemCount");
   addExtraItemBtn = document.getElementById("addExtraItemBtn");
@@ -644,13 +646,17 @@ async function setSkinFields() {
   const isPageSkin = skin.type === "PAGE";
   const isScriptSkin = skin.type === "SCRIPT";
   const isLogSkin = skin.type === "LOG";
+  const isGallerySkin = skin.type === "GALLERY";
+  const supportsTextMode = isLogSkin || writeCaps.supportsTextMode === true;
   const hideThumbnailFields = skin.type === "BOARD";
-  const hideGalleryTextFields = !!writeCaps.supportsGalleryFields;
+  const hideGalleryTitleFields = !!writeCaps.supportsGalleryFields;
   const hideContentFields = writeCaps.supportsContent === false;
+  const plainTextOnly = writeCaps.plainTextOnly === true;
   const hasSkinPostFields = getSkinPostFields(skin).length > 0;
 
   document.body.classList.toggle("profile-write-page", isProfileSkin);
   document.body.classList.toggle("script-write-page", isScriptSkin);
+  document.body.classList.toggle("gallery-write-page", isGallerySkin);
 
   if (writeCaps.disabled) {
     if (saveBtn) saveBtn.disabled = true;
@@ -660,16 +666,19 @@ async function setSkinFields() {
   }
 
   if (thumbSectionEl) thumbSectionEl.classList.toggle("hidden", hideThumbnailFields || isPageSkin);
-  thumbModeTextLabel?.classList.toggle("hidden", !isLogSkin);
-  if (!isLogSkin && thumbModeTextRadio?.checked && thumbModeFileRadio) {
+  thumbModeTextLabel?.classList.toggle("hidden", !supportsTextMode);
+  if (!supportsTextMode && thumbModeTextRadio?.checked && thumbModeFileRadio) {
     thumbModeFileRadio.checked = true;
     applyThumbModeUI();
   }
   if (profileOnlyFieldsEl) profileOnlyFieldsEl.classList.toggle("hidden", !hasSkinPostFields);
   document.getElementById("logOnlyFields").classList.toggle("hidden", !writeCaps.supportsLogFields);
   document.getElementById("galleryOnlyFields").classList.toggle("hidden", !writeCaps.supportsGalleryFields);
-  if (titleFieldsEl) titleFieldsEl.classList.toggle("hidden", !writeCaps.supportsTitle || hideGalleryTextFields || isPageSkin);
-  if (contentFieldsEl) contentFieldsEl.classList.toggle("hidden", hideGalleryTextFields || hideContentFields);
+  if (titleFieldsEl) titleFieldsEl.classList.toggle("hidden", !writeCaps.supportsTitle || hideGalleryTitleFields || isPageSkin);
+  if (contentFieldsEl) {
+    contentFieldsEl.classList.toggle("hidden", hideContentFields);
+    contentFieldsEl.querySelector(".write-inline-options")?.classList.toggle("hidden", plainTextOnly);
+  }
   if (visibilityFieldsEl) visibilityFieldsEl.classList.toggle("hidden", isPageSkin);
   if (extraFieldsEl) extraFieldsEl.classList.toggle("hidden", isPageSkin || isScriptSkin);
   // 추가 이미지 정렬은 BOARD 스킨에서만 사용한다.
@@ -687,6 +696,10 @@ async function setSkinFields() {
     applyThumbModeUI();
   }
   contentInput.placeholder = writeCaps.contentPlaceholder || (isProfileSkin ? "캐릭터 한마디" : "본문");
+  contentInput.rows = plainTextOnly ? 6 : 12;
+  if (plainTextOnly && htmlModeInput) {
+    htmlModeInput.checked = false;
+  }
   if (!writeCaps.supportsTitle) {
     titleInput.value = "";
   }
@@ -703,6 +716,7 @@ async function setSkinFields() {
     renderExtraItems();
   }
   updateSecretPasswordVisibility();
+  applyThumbModeUI();
 }
 
 function syncLogTitleFromNumber(value = "") {
@@ -747,6 +761,10 @@ function getThumbMode() {
   if (thumbModeVideoRadio?.checked) return "video";
   if (thumbModeFileRadio?.checked) return "file";
   return "url";
+}
+
+function isGalleryTextMode() {
+  return document.body.classList.contains("gallery-write-page") && getThumbMode() === "text";
 }
 
 function getExtraMode() {
@@ -943,6 +961,7 @@ function clearSelectedThumb() {
 
 function applyThumbModeUI() {
   const mode = getThumbMode();
+  if (thumbPanelEl) thumbPanelEl.classList.toggle("hidden", mode === "text");
   if (thumbUrlFieldsEl) thumbUrlFieldsEl.classList.toggle("hidden", mode !== "url");
   if (thumbFileFieldsEl) thumbFileFieldsEl.classList.toggle("hidden", mode !== "file");
   if (thumbVideoFieldsEl) thumbVideoFieldsEl.classList.toggle("hidden", mode !== "video");
@@ -1386,7 +1405,8 @@ async function resolveSkinFieldImageUploads(boardId) {
 }
 
 async function uploadSelectedImages(boardId) {
-  const thumbTask = stagedThumbFile ? 1 : 0;
+  const skipThumbnail = isGalleryTextMode();
+  const thumbTask = !skipThumbnail && stagedThumbFile ? 1 : 0;
   const extraTask = extraItems.filter((item) => item.file).length;
   const skinImageTask = stagedSkinImageFiles.size;
 
@@ -1398,7 +1418,7 @@ async function uploadSelectedImages(boardId) {
     showUploadMsg(`Storage 업로드 중 (${labels.join(", ")})...`);
   }
 
-  uploadedThumbnail = await resolveThumbnailAttachment(boardId);
+  uploadedThumbnail = skipThumbnail ? null : await resolveThumbnailAttachment(boardId);
   uploadedExtraAttachments = await resolveExtraAttachments(boardId);
   await resolveSkinFieldImageUploads(boardId);
 
@@ -1579,7 +1599,10 @@ async function loadEditPost() {
 
   const thumbMode = String(post.thumbnailMode || "").toLowerCase();
   const isVideoThumb = thumbMode === "video" || Boolean(post.thumbnailEmbedHtml);
-  if (thumbMode === "text" && thumbModeTextRadio) {
+  const isGalleryTextThumb = document.body.classList.contains("gallery-write-page")
+    && (thumbMode === "text" || (!isVideoThumb && !post.thumbnailAttachment?.url && !post.imageUrl && Boolean(post.contentText || savedContentHtml)));
+  const isTextThumb = thumbMode === "text" || isGalleryTextThumb;
+  if (isTextThumb && thumbModeTextRadio) {
     thumbModeTextRadio.checked = true;
   } else if (isVideoThumb && thumbModeVideoRadio) {
     thumbModeVideoRadio.checked = true;
@@ -1629,6 +1652,7 @@ async function buildPayload() {
   const skin = await getSkin(selected);
   const skinType = skin.type;
   const writeCaps = skin.capabilities.write;
+  const plainTextOnly = writeCaps.plainTextOnly === true;
   if (writeCaps.disabled) {
     throw new Error(`${skin.type}는 관리자 > 게시판 관리에서 내용을 수정하세요.`);
   }
@@ -1644,7 +1668,14 @@ async function buildPayload() {
   const tags = isPageSkin ? [] : tagsInput.value.split(",").map((value) => value.trim()).filter(Boolean);
 
   if (writeCaps.requiresTitle && !title) throw new Error(`${skinType}는 제목이 필요합니다.`);
-  if (allowThumbnail && thumbMode === "file" && !uploadedThumbnail?.url) throw new Error("Storage에 올릴 썸네일 파일을 선택하세요.");
+  if (
+    allowThumbnail
+    && thumbMode === "file"
+    && !uploadedThumbnail?.url
+    && (writeCaps.requiresThumbnail || !writeCaps.requiresContentOrThumbnail)
+  ) {
+    throw new Error("Storage에 올릴 썸네일 파일을 선택하세요.");
+  }
 
   const imageUrl = allowThumbnail
     ? (thumbMode === "url" ? imageUrlFromInput : (thumbMode === "file" ? (uploadedThumbnail?.url || "") : ""))
@@ -1653,8 +1684,21 @@ async function buildPayload() {
   if (allowThumbnail && writeCaps.requiresThumbnail && !hasCoverMedia) {
     throw new Error(`${skinType}는 썸네일 이미지(URL 또는 Storage 업로드 파일)가 필요합니다.`);
   }
-  const normalizedContentHtml = getContentHtmlFromInput(contentRaw);
+  const normalizedContentHtml = plainTextOnly
+    ? preserveLineBreaks(escapeHtml(contentRaw))
+    : getContentHtmlFromInput(contentRaw);
   const contentText = contentRaw.replace(/<[^>]*>/g, " ").trim();
+  if (writeCaps.supportsTextMode) {
+    if (thumbMode === "text" && !contentText) {
+      throw new Error("TEXT 유형은 본문을 입력하세요.");
+    }
+    if (thumbMode !== "text" && !hasCoverMedia) {
+      throw new Error("선택한 유형의 대표 이미지 또는 영상을 입력하세요.");
+    }
+  }
+  if (writeCaps.requiresContentOrThumbnail && !hasCoverMedia && !contentText) {
+    throw new Error("이미지 또는 글자 카드 내용을 입력하세요.");
+  }
   const visibility = isPageSkin ? "public" : (visibilityInput?.value || "public");
   const isPublic = visibility !== "private";
   const isSecret = visibility === "secret";
@@ -1676,10 +1720,10 @@ async function buildPayload() {
     title,
     tags,
     imageUrl,
-    thumbnailMode: allowThumbnail ? thumbMode : "",
+    thumbnailMode: thumbMode === "text" ? "text" : (allowThumbnail && hasCoverMedia ? thumbMode : ""),
     thumbnailAttachment: allowThumbnail && thumbMode === "file" ? uploadedThumbnail : null,
-    thumbnailEmbedHtml: allowThumbnail && thumbMode === "video" ? videoThumb.embedHtml : "",
-    thumbnailEmbedSrc: allowThumbnail && thumbMode === "video" ? videoThumb.embedSrc : "",
+    thumbnailEmbedHtml: allowThumbnail && thumbMode === "video" ? (videoThumb?.embedHtml || "") : "",
+    thumbnailEmbedSrc: allowThumbnail && thumbMode === "video" ? (videoThumb?.embedSrc || "") : "",
     extraAttachments: isPageSkin ? [] : uploadedExtraAttachments,
     authorType,
     authorName: resolvedAuthorName,
@@ -1689,7 +1733,7 @@ async function buildPayload() {
     updatedAt: serverTimestamp(),
     contentUpdatedAt: serverTimestamp(),
     contentText,
-    contentIsHtml: !!htmlModeInput?.checked
+    contentIsHtml: plainTextOnly ? false : !!htmlModeInput?.checked
   };
 
   if (writeCaps.contentField === "commentHtml") payload.commentHtml = sanitizeHTML(normalizedContentHtml, { allowIframes: true });
@@ -2112,7 +2156,7 @@ function clearWritePageElements() {
   thumbModeVideoRadio = thumbModeTextRadio = thumbModeTextLabel = null;
   thumbUrlFieldsEl = thumbFileFieldsEl = thumbVideoFieldsEl = thumbVideoInput = null;
   thumbPreviewEl = thumbDropZoneEl = selectThumbFileBtn = clearThumbFileBtn = null;
-  thumbFileInput = thumbSectionEl = extraItemsEl = extraItemCountEl = null;
+  thumbFileInput = thumbSectionEl = thumbPanelEl = extraItemsEl = extraItemCountEl = null;
   addExtraItemBtn = extraModeUrlRadio = extraModeFileRadio = extraModeVideoRadio = null;
   extraUrlFieldsEl = extraVideoFieldsEl = extraFileFieldsEl = extraImageUrlInput = null;
   extraVideoInput = extraDropZoneEl = selectExtraFileBtn = extraFileInput = null;

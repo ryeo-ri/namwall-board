@@ -36,9 +36,12 @@ export const skin = createSkinDefinition({
     write: {
       supportsTitle: false,
       supportsGalleryFields: true,
-      requiresThumbnail: true,
+      requiresThumbnail: false,
+      requiresContentOrThumbnail: true,
+      supportsTextMode: true,
+      plainTextOnly: true,
       supportsSource: true,
-      contentPlaceholder: "본문 코멘트",
+      contentPlaceholder: "이미지 없이 글자 카드로 등록할 내용을 입력하세요.",
       contentField: "commentHtml"
     }
   },
