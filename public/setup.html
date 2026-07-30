@@ -43,14 +43,13 @@
               <li>만들기를 눌러 완료합니다.</li>
               <li><strong>Firestore → 규칙</strong> 탭에 프로젝트의 <code>firestore.rules</code> 내용을 붙여넣고 <strong>게시</strong>.</li>
               <li>
-                <strong>Firestore → 인덱스</strong> 탭에서 <strong>인덱스 추가</strong>를 눌러 아래 복합 인덱스 4개를 만듭니다.
+                <strong>Firestore → 인덱스</strong> 탭에서 <strong>인덱스 추가</strong>를 눌러 아래 복합 인덱스 4개를 만듭니다. (구조화된 색인으로 생성.)
                 <ul class="setup-substeps">
-                  <li><strong>게시판 조회용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>boardId</code> 오름차순 + <code>isPublic</code> 오름차순</li>
-                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>updatedAt</code> 내림차순</li>
-                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>createdAt</code> 내림차순</li>
-                  <li><strong>최근 업데이트용</strong> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>contentUpdatedAt</code> 내림차순</li>
-                  <li><strong>CLI로 자동 추가</strong>: 프로젝트 폴더에서 <code>firebase deploy --only firestore:indexes</code>를 실행하면 <code>firestore.indexes.json</code>의 인덱스가 한 번에 등록됩니다.</li>
-                  <li><strong>수동 추가</strong>: Firebase 콘솔에서 위 항목을 하나씩 만든 뒤, 네 인덱스의 상태가 모두 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
+                  <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>boardId</code> 오름차순 + <code>isPublic</code> 오름차순</li>
+                  <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>updatedAt</code> 내림차순</li>
+                  <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>createdAt</code> 내림차순</li>
+                  <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>contentUpdatedAt</code> 내림차순</li>
+                  <li> 인덱스의 상태가 모두 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
                 </ul>
               </li>
             </ul>
@@ -127,19 +126,6 @@
           <button class="btn primary" id="setupSubmitBtn" type="button">관리자 등록 &amp; 사이트 활성화</button>
         </div>
         <div id="setupMsg" class="notice hidden mt-sm"></div>
-      </div>
-
-      <div class="settings-block mt-md">
-        <div class="settings-block-head">
-          <strong>공개 페이지 주소 (SPA)</strong>
-        </div>
-        <p class="setup-lead">공개 화면은 <code>index.html</code> 한 문서 안에서 이동합니다. 서버의 rewrite 기능은 필요하지 않습니다.</p>
-        <ul class="setup-substeps">
-          <li><strong>홈</strong>: <code>index.html</code></li>
-          <li><strong>게시판</strong>: <code>index.html?route=board&amp;bo=게시판ID</code></li>
-          <li><strong>게시물</strong>: <code>index.html?route=view&amp;id=게시물ID&amp;bo=게시판ID</code></li>
-          <li>기존 <code>board.html?bo=...</code>, <code>view.html?id=...</code> 주소도 새 SPA 주소로 자동 연결됩니다.</li>
-        </ul>
       </div>
     </section>
   </main>
