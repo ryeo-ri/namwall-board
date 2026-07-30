@@ -64,6 +64,8 @@ let indexEl = null;
 let messageKindField = null;
 let messageKindInput = null;
 let speakerEl = null;
+let speakerField = null;
+let speakerSelect = null;
 let contentEl = null;
 let insertBeforeButton = null;
 let insertAfterButton = null;
@@ -355,6 +357,7 @@ function updateControls() {
   if (contentEl) contentEl.contentEditable = saving ? "false" : "true";
   const selectedNarrator = isNarratorCharacter(getMessageSpeaker(getSelectedMessage()));
   if (messageKindInput) messageKindInput.disabled = saving || !selectedId || selectedNarrator;
+  if (speakerSelect) speakerSelect.disabled = saving || !selectedId;
   [insertBeforeButton, insertAfterButton, deleteButton].forEach((element) => {
     if (element) element.disabled = saving || !selectedId;
   });
@@ -459,6 +462,7 @@ function selectMessage(id) {
   formEl?.classList.remove("hidden");
   if (contentEl) contentEl.innerHTML = extractScriptMessageContent(message.html);
   syncSelectedKindControl(message);
+  syncSpeakerControl(message);
   renderSelectedMeta();
   renderPreview(message);
   renderMessageList({ preserveScroll: true });
@@ -472,6 +476,103 @@ function syncSelectedKindControl(message = getSelectedMessage()) {
   const visibleKind = isNarrator || Object.prototype.hasOwnProperty.call(KIND_LABELS, kind);
   messageKindField?.classList.toggle("hidden", !visibleKind);
   if (messageKindInput) messageKindInput.value = visibleKind ? (isNarrator ? "desc" : kind) : "";
+}
+
+/* 캐릭터 지정: 편집기에서 만든 메시지(원본 가져오기 구조가 없는 메시지)만 지정·변경 가능 */
+function canAssignSpeaker(message) {
+  if (!message) return false;
+  if (!getMessageSpeaker(message)) return true;
+  const root = document.createElement("div");
+  root.innerHTML = String(message.html || "");
+  return Boolean(root.querySelector(".by.script-editor-by"));
+}
+
+function syncSpeakerControl(message = getSelectedMessage()) {
+  if (!speakerField || !speakerSelect) return;
+  const assignable = canAssignSpeaker(message);
+  speakerField.classList.toggle("hidden", !assignable);
+  speakerEl?.classList.toggle("hidden", assignable);
+  if (!assignable) return;
+
+  const current = getMessageSpeaker(message);
+  const speakers = getSpeakerSummaries().map(({ speaker }) => speaker);
+  if (current && !speakers.includes(current)) speakers.unshift(current);
+  speakerSelect.innerHTML = [
+    '<option value="">캐릭터 없음</option>',
+    ...speakers.map((speaker) => `<option value="${escapeHtml(speaker)}">${escapeHtml(speaker)}</option>`),
+    '<option value="__custom__">직접 입력…</option>'
+  ].join("");
+  speakerSelect.value = current || "";
+}
+
+function findSpeakerAvatarHtml(speaker) {
+  for (const message of messages) {
+    if (getMessageSpeaker(message) !== speaker) continue;
+    const root = document.createElement("div");
+    root.innerHTML = String(message.html || "");
+    const avatar = root.querySelector(".avatar");
+    if (avatar?.querySelector("img[data-script-asset]")) return avatar.outerHTML;
+  }
+  return "";
+}
+
+function applySpeakerToMessage(message, speaker) {
+  const content = extractScriptMessageContent(message.html);
+  const structure = [];
+  if (speaker) {
+    const isCcfolia = String(archive?.source || "").toLowerCase() === "ccfolia";
+    // 아바타 매핑이 없는(롤20 등) 아카이브는 같은 캐릭터의 기존 아바타 마크업을 복사
+    if (!isCcfolia && getSpeakerAvatarIndex(speaker) == null) {
+      const avatarHtml = findSpeakerAvatarHtml(speaker);
+      if (avatarHtml) structure.push(avatarHtml);
+    }
+    const by = document.createElement("span");
+    by.className = isCcfolia ? "by ccfolia-speaker script-editor-by" : "by script-editor-by";
+    by.textContent = `${speaker}:`;
+    structure.push(by.outerHTML);
+    message.speaker = speaker;
+    const color = getSpeakerSummaries().find((summary) => summary.speaker === speaker)?.color || "";
+    if (color) message.speakerColor = color;
+    else delete message.speakerColor;
+  } else {
+    delete message.speaker;
+    delete message.speakerColor;
+  }
+  message.html = `${structure.join("")}${content}`.trim();
+  message.text = getScriptMessageText(message.html);
+  return message;
+}
+
+function handleSpeakerChange() {
+  if (saving) return;
+  const index = getMessageIndex();
+  if (index < 0) return;
+
+  let speaker = String(speakerSelect?.value || "");
+  if (speaker === "__custom__") {
+    const input = window.prompt("캐릭터 이름을 입력하세요.", "");
+    speaker = String(input || "").trim().slice(0, 40);
+    if (!speaker) {
+      syncSpeakerControl();
+      return;
+    }
+  }
+
+  const next = buildDraftMessage() || cloneMessage(messages[index]);
+  pushUndo({ type: "replace", id: selectedId, before: cloneMessage(activeEditBaseline || messages[index]) });
+  applySpeakerToMessage(next, speaker);
+  messages[index] = next;
+  dirty = true;
+  draftTouched = false;
+  activeEditBaseline = cloneMessage(next);
+  if (contentEl) contentEl.innerHTML = extractScriptMessageContent(next.html);
+  syncSpeakerControl(next);
+  syncSelectedKindControl(next);
+  renderSelectedMeta();
+  renderMessageList({ preserveScroll: true });
+  renderPreview(next);
+  updateControls();
+  showNotice(speaker ? `캐릭터를 '${speaker}'(으)로 지정했습니다.` : "캐릭터 지정을 해제했습니다.");
 }
 
 function clearSelection() {
@@ -658,7 +759,7 @@ function insertMessage(offset) {
   visibleLimit = Math.max(visibleLimit, insertIndex + 1);
   renderMessageList({ preserveScroll: true });
   selectMessage(message[INTERNAL_ID]);
-  showNotice("새 메시지를 추가했습니다. 내용을 수정한 뒤 저장하세요.");
+  showNotice("새 메시지를 추가했습니다. 캐릭터를 지정하고 내용을 수정한 뒤 저장하세요.");
 }
 
 function deleteSelectedMessage() {
@@ -974,6 +1075,7 @@ function bindEvents() {
     insertPlainText(text);
   });
   messageKindInput?.addEventListener("change", markDraftChanged);
+  speakerSelect?.addEventListener("change", handleSpeakerChange);
   insertBeforeButton?.addEventListener("click", () => insertMessage(0));
   insertAfterButton?.addEventListener("click", () => insertMessage(1));
   deleteButton?.addEventListener("click", deleteSelectedMessage);
@@ -1029,6 +1131,8 @@ function clearEditorElementReferences() {
   messageKindField = null;
   messageKindInput = null;
   speakerEl = null;
+  speakerField = null;
+  speakerSelect = null;
   contentEl = null;
   insertBeforeButton = null;
   insertAfterButton = null;
@@ -1107,6 +1211,10 @@ function renderScriptEditorMarkup() {
                   <option value="whisper">귓속말</option>
                 </select>
               </label>
+              <label for="scriptEditorSpeakerSelect" data-script-speaker-field class="hidden">
+                <span class="sr-only">캐릭터</span>
+                <select id="scriptEditorSpeakerSelect"></select>
+              </label>
               <span class="script-editor-speaker" id="scriptEditorSpeaker"></span>
             </div>
 
@@ -1174,6 +1282,8 @@ function cacheEditorElements(root, ui = {}) {
   messageKindField = root.querySelector("[data-script-kind-field]");
   messageKindInput = root.querySelector("#scriptEditorKind");
   speakerEl = root.querySelector("#scriptEditorSpeaker");
+  speakerField = root.querySelector("[data-script-speaker-field]");
+  speakerSelect = root.querySelector("#scriptEditorSpeakerSelect");
   contentEl = root.querySelector("#scriptEditorContent");
   insertBeforeButton = root.querySelector("#scriptEditorInsertBefore");
   insertAfterButton = root.querySelector("#scriptEditorInsertAfter");
