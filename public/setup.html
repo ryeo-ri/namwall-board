@@ -50,6 +50,7 @@
                   <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>createdAt</code> 내림차순</li>
                   <li> — <strong>컬렉션 ID</strong>: <code>posts</code> / <strong>쿼리 범위</strong>: 컬렉션 / <code>isPublic</code> 오름차순 + <code>contentUpdatedAt</code> 내림차순</li>
                   <li> 인덱스의 상태가 모두 <strong>사용 설정됨</strong>으로 바뀔 때까지 기다립니다. 생성에는 몇 분 정도 걸릴 수 있습니다.</li>
+                  <li>필드를 직접 입력하는 대신, 연결이 확인된 뒤 아래 <strong>2. 연결 상태</strong>의 <strong>복합 인덱스 확인</strong>에서 <strong>만들기 링크</strong>를 눌러 자동으로 만들 수도 있습니다.</li>
                 </ul>
               </li>
             </ul>
@@ -72,18 +73,24 @@
               <p>웹 앱의 이름은 자유롭게 등록.</p>
               <p><strong>Firebase SDK 추가</strong> 하단에 나오는 코드 중 <code>firebaseConfig</code>를 복사.</p>
 
-          <p class="setup-lead"> <code>assets/js/core/firebase.js</code> 파일 수정.</p>
-          <pre class="setup-code">const firebaseConfig = {
-  apiKey:
-  authDomain:
-  projectId:
-  storageBucket:
-  messagingSenderId:
-  appId:
-};</pre>
+          <div class="field-group mt-sm">
+            <label for="setupConfigPaste">복사한 코드 붙여넣기</label>
+            <textarea id="setupConfigPaste" class="textarea setup-config-paste" rows="9" spellcheck="false" placeholder="const firebaseConfig = {
+  apiKey: &quot;...&quot;,
+  authDomain: &quot;...&quot;,
+  ...
+};
+
+이 부분이 포함되게 통째로 붙여넣으면 됩니다."></textarea>
+          </div>
+          <div class="formRow">
+            <button type="button" class="btn primary" id="setupConfigBuildBtn">firebase.js 파일 만들기</button>
+          </div>
+          <div id="setupConfigResult" class="notice hidden mt-sm"></div>
           <div class="notice setup-config-note">
-            <code>firebaseConfig</code> 값을 복사한 값으로 교체한 뒤 다시 업로드 해주세요.
-            창을 새로고침 하여 하단의 연결 상태를 확인합니다.
+            버튼을 누르면 값이 채워진 <code>firebase.js</code> 파일이 자동으로 내려받아집니다.
+            받은 파일을 사이트의 <code>assets/js/core/</code> 폴더에 <strong>덮어씌워 업로드</strong>한 뒤,
+            이 페이지를 새로고침하면 아래 연결 상태가 확인됩니다. (파일을 직접 편집할 필요가 없습니다)
           </div>
         </div>
       </div>
@@ -97,6 +104,18 @@
           <span id="connText">확인 중…</span>
         </div>
         <div id="connHelp" class="muted small mt-sm hidden"></div>
+        <div id="indexHelper" class="setup-index-helper hidden mt-md">
+          <div class="settings-block-head">
+            <strong>복합 인덱스 확인</strong>
+            <button type="button" class="btn small" id="indexRecheckBtn">다시 확인</button>
+          </div>
+          <p class="muted small">
+            "누락"으로 표시된 항목은 <strong>만들기 링크</strong>를 누르면 필드가 자동으로 채워진
+            Firebase 콘솔 화면이 열립니다 — 거기서 <strong>만들기</strong> 버튼만 누르면 됩니다.
+            생성에 몇 분 걸릴 수 있으니 잠시 후 <strong>다시 확인</strong>을 눌러주세요.
+          </p>
+          <ul class="setup-index-list" id="indexList"></ul>
+        </div>
       </div>
 
       <div class="settings-block mt-md" id="adminSection">

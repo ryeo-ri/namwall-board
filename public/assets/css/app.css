@@ -2219,19 +2219,12 @@ body.site-page .board-admin-status.is-error{
   padding: 0;
 }
 .gallery-extra-plus-icon{
-  width: 13px;
-  height: 13px;
-  overflow: visible;
-  fill: none;
-  stroke-linecap: square;
-}
-.gallery-extra-plus-outline{
-  stroke: #000;
-  stroke-width: 4;
-}
-.gallery-extra-plus-mark{
-  stroke: #fff;
-  stroke-width: 2.2;
+  display: inline-block;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
 }
 .gallery-extra-floating-button:focus-visible{
   outline: 1px solid #fff;
@@ -3899,6 +3892,51 @@ body.profile-write-page .write-skin-image-preview-item .previewImage{
 .setup-status-dot[data-state="checking"]{ background: #d1a300; }
 .setup-status-dot[data-state="ok"]{ background: #2e7d32; }
 .setup-status-dot[data-state="error"]{ background: var(--danger); }
+.setup-config-paste{
+  min-height: 150px;
+  font-family: ui-monospace, Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+}
+.setup-index-helper{
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.setup-index-list{
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.setup-index-list li{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.setup-index-label{
+  min-width: 240px;
+}
+.setup-index-status{
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.setup-index-status[data-state="checking"]{ background: rgba(209, 163, 0, 0.14); color: #8a6d00; }
+.setup-index-status[data-state="ok"]{ background: rgba(46, 125, 50, 0.12); color: #2e7d32; }
+.setup-index-status[data-state="missing"]{ background: rgba(178, 32, 32, 0.1); color: var(--danger); }
+.setup-index-link{
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
 
 /* --------------------------------------------------------------------------
    6-10. 홈 (index)
