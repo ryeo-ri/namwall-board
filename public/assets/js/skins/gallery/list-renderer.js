@@ -220,10 +220,7 @@ function renderExtraLightboxButtons(attachments) {
             aria-label="${label} 원본 보기"
             title="추가 이미지 ${index + 1}"
           >
-            <svg viewBox="0 0 16 16" class="gallery-extra-plus-icon" focusable="false" aria-hidden="true">
-              <path class="gallery-extra-plus-outline" d="M8 2v12M2 8h12"></path>
-              <path class="gallery-extra-plus-mark" d="M8 2v12M2 8h12"></path>
-            </svg>
+            <span class="gallery-extra-plus-icon" aria-hidden="true">◆</span>
           </button>
         `;
       }).join("")}
