@@ -8,7 +8,7 @@
      4. 공통 컴포넌트      (카드 · 버튼 · 폼 · 알림 · 로딩 · 태그 · 페이지네이션
                             · 미리보기 · 오버레이 · 라이트박스)
      5. 댓글               (사용자 페이지 공용)
-     6. 사용자 페이지      (게시판 공통 → 스킨: board/log/gallery/profile/script/page
+     6. 사용자 페이지      (게시판 공통 → 스킨: board/log/gallery/profile/script/thread/page
                             → view / write / search → 홈)
      7. 사용자 페이지 테마 (body.site-page / body.home-page 오버라이드)
      8. 관리자 페이지      (메뉴 · 게시판 편집 · 홈 편집 · 로그인)
@@ -5397,6 +5397,161 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
   white-space: nowrap;
 }
 
+/* Thread(타래) — 카드형 목록 */
+.thread-list{
+  display: grid;
+  grid-template-columns: repeat(var(--thread-columns, 3), minmax(0, 1fr));
+  gap: 16px;
+}
+.thread-card{
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(28, 28, 28, 0.1);
+  border-radius: 10px;
+  background: #fff;
+}
+/* site-page 테마의 .card 초기화(투명·직각)보다 우선 — 타래 카드는 카드 룩 유지 */
+body.site-page .card.thread-card{
+  padding: 0;
+  border: 1px solid rgba(28, 28, 28, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+.thread-card-link{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+.thread-card-cover{
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #e9e7e0;
+}
+.thread-card-cover img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thread-card-placeholder{
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(28, 28, 28, 0.45);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.thread-card-body{
+  display: grid;
+  gap: 7px;
+  padding: 14px 16px 16px;
+}
+.thread-card-category{
+  color: var(--muted);
+  font-size: 11px;
+}
+.thread-card-title{
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.thread-card-title .thread-card-lock-icon{
+  width: 13px;
+  height: 13px;
+  margin-right: 5px;
+  vertical-align: -2px;
+  stroke: currentColor;
+  fill: none;
+}
+.thread-card-btn{
+  justify-self: start;
+  margin-top: 3px;
+}
+.thread-delete-check{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.94);
+}
+.thread-card.is-delete-selected{
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+/* Thread(타래) — 상세: 좌 썸네일/제목 · 우 내용 */
+body.thread-view-page .view-title{ display: none; }   /* 제목은 좌측 패널에 표시 */
+body.thread-view-page #viewImage{ display: none; }
+.thread-view{
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.5fr);
+  gap: 28px;
+  align-items: start;
+}
+.thread-view-side{
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.thread-view-category{
+  color: var(--muted);
+  font-size: 12px;
+}
+.thread-view-title{
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.45;
+}
+.thread-view-thumb{
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+}
+.thread-view-body{
+  min-width: 0;
+}
+.thread-view-scroll{
+  max-height: 72vh;
+  padding-right: 12px;
+  overflow-y: auto;
+}
+.thread-view-content{
+  font-size: 14px;
+  line-height: 1.8;
+}
+.thread-view-images{
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+.thread-view-image{
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.thread-view-image img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.thread-view-video iframe{
+  width: 100%;
+}
+
 /* 선택적 스킨 편집기 공통 셸 */
 .skin-editor-container{
   width: min(1180px, calc(100% - 28px));
@@ -6180,6 +6335,17 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
     min-height: 220px;
     max-height: 52vh;
   }
+  .thread-list{
+    grid-template-columns: repeat(min(var(--thread-columns, 3), 2), minmax(0, 1fr));
+  }
+  .thread-view{
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .thread-view-scroll{
+    max-height: none;
+    padding-right: 0;
+  }
 }
 
 @media (max-width: 1280px){
@@ -6231,6 +6397,9 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
     column-count: 1;
   }
   .script-list{
+    grid-template-columns: 1fr;
+  }
+  .thread-list{
     grid-template-columns: 1fr;
   }
   .script-session-facts{

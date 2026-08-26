@@ -127,6 +127,7 @@ function applyViewWidth(board = {}, skin = null) {
   if (!mainEl) return;
   document.body?.classList.toggle("page-raw-view", skin?.type === "PAGE");
   document.body?.classList.toggle("script-view-page", skin?.type === "SCRIPT");
+  document.body?.classList.toggle("thread-view-page", skin?.type === "THREAD");
   const fallback = skin?.type === "PAGE" ? 900 : "";
   const width = formatResponsiveWidth(getBoardSkinOption(board, "boardWidth", fallback));
   if (width) {

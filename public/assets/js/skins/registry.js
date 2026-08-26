@@ -7,6 +7,7 @@ const SKIN_CATALOG = [
   { type: "PROFILE", folder: "profile", aliases: ["profile"], description: "Profile board" },
   { type: "GUESTBOOK", folder: "guestbook", aliases: ["guestbook", "gb"], description: "Guestbook" },
   { type: "SCRIPT", folder: "script", aliases: ["script", "trpg"], description: "TRPG play log archive" },
+  { type: "THREAD", folder: "thread", aliases: ["thread", "tarae"], description: "Thread card board" },
   { type: "PAGE", folder: "page", aliases: ["page"], description: "Free page" }
 ];
 
