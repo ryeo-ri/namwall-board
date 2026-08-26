@@ -34,6 +34,16 @@ export const skin = createSkinDefinition({
       ],
       defaultValue: "bottom",
       help: "상세 화면에서 댓글 영역을 놓을 위치입니다."
+    },
+    detailThumb: {
+      type: "select",
+      label: "상세 썸네일",
+      options: [
+        { value: "show", label: "노출" },
+        { value: "hide", label: "숨김" }
+      ],
+      defaultValue: "show",
+      help: "상세 화면 패널에 썸네일 이미지를 표시할지 여부입니다."
     }
   },
   capabilities: {

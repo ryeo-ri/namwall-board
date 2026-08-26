@@ -352,6 +352,16 @@ function renderCommentForm(postId, writeState, context = {}) {
       </div>
 
       <div class="comment-form-body${formExpanded ? "" : " hidden"}" data-comment-form-body="${escapeHtml(postId)}">
+        ${context.allowImages ? `
+          <div class="comment-form-row comment-form-row-inline comment-image-row">
+            <button type="button" class="btn small" data-comment-image-attach="${escapeHtml(postId)}">이미지 첨부</button>
+            <input type="file" class="hidden" accept="image/*" multiple data-comment-image-input="${escapeHtml(postId)}">
+          </div>
+          <div class="comment-image-previews${getPendingCommentImages(postId).length ? "" : " hidden"}" data-comment-image-previews="${escapeHtml(postId)}">
+            ${renderPendingCommentImages(postId)}
+          </div>
+        ` : ""}
+
         ${writeState.auth?.isAdmin ? "" : `
           <div class="comment-form-row comment-form-row-name">
             <input
@@ -371,16 +381,6 @@ function renderCommentForm(postId, writeState, context = {}) {
             placeholder="내용"
           ></textarea>
         </div>
-
-        ${context.allowImages ? `
-          <div class="comment-form-row comment-form-row-inline comment-image-row">
-            <button type="button" class="btn small" data-comment-image-attach="${escapeHtml(postId)}">이미지 첨부</button>
-            <input type="file" class="hidden" accept="image/*" multiple data-comment-image-input="${escapeHtml(postId)}">
-          </div>
-          <div class="comment-image-previews${getPendingCommentImages(postId).length ? "" : " hidden"}" data-comment-image-previews="${escapeHtml(postId)}">
-            ${renderPendingCommentImages(postId)}
-          </div>
-        ` : ""}
 
         <div class="comment-form-row comment-form-row-inline comment-form-row-options">
           <label class="comment-toggle" for="comment-more-${escapeHtml(postId)}">

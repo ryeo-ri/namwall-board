@@ -57,13 +57,14 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
   const category = escapeHtml(board?.title || board?.name || "");
   const coverUrl = String(post.imageUrl || post.thumbUrl || "").trim();
   const commentPosition = String(getBoardSkinOption(board, "commentPosition", "bottom")).trim().toLowerCase();
+  const showDetailThumb = String(getBoardSkinOption(board, "detailThumb", "show")).trim().toLowerCase() !== "hide";
   const listUrl = `board.html?bo=${encodeURIComponent(post.boardId || board?.id || "")}`;
 
   const sideHtml = `
     <div class="thread-view-side">
       ${category ? `<span class="thread-view-category">${category}</span>` : ""}
       <h2 class="thread-view-title">${title}</h2>
-      ${coverUrl && secretUnlocked
+      ${coverUrl && secretUnlocked && showDetailThumb
         ? `<img class="thread-view-thumb" src="${escapeHtml(coverUrl)}" alt="${title}">`
         : ""}
     </div>
@@ -119,8 +120,27 @@ export function bindThreadDetail({ board } = {}) {
   }
 
   const toggle = document.querySelector("[data-thread-comment-toggle]");
-  if (!toggle) return;
+  const scroll = document.querySelector(".thread-view-scroll");
+  const viewComments = document.getElementById("viewComments");
+  if (!toggle || !scroll || !viewComments) return;
+
+  // 하단 모드: 댓글 목록은 본문 스크롤 영역 안에 이어 쌓이고,
+  // 아래 래퍼에는 등록 폼만 남는다 (COMMENT ▼로 열고 닫음, 기본 접힘)
   commentsWrap.classList.add("hidden", "thread-bottom-comments");
+  const inlineHost = document.createElement("div");
+  inlineHost.className = "thread-inline-comments";
+  scroll.appendChild(inlineHost);
+
+  const relocateCommentList = () => {
+    const list = viewComments.querySelector(".comments-list");
+    if (list) inlineHost.replaceChildren(list);
+    // 등록 폼은 항상 펼침 (자체 ▼ 토글 제거)
+    viewComments.querySelector(".comment-form-head")?.classList.add("hidden");
+    viewComments.querySelector("[data-comment-form-body]")?.classList.remove("hidden");
+  };
+  new MutationObserver(relocateCommentList).observe(viewComments, { childList: true });
+  relocateCommentList();
+
   toggle.addEventListener("click", () => {
     const opened = !commentsWrap.classList.toggle("hidden");
     toggle.setAttribute("aria-expanded", opened ? "true" : "false");

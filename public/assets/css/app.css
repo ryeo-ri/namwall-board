@@ -5555,9 +5555,7 @@ body.thread-view-page #viewImage{ display: none; }
   grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.5fr);
   gap: 28px;
   align-items: start;
-  padding: clamp(20px, 4vw, 42px);
-  border: 1px solid rgba(28, 28, 28, 0.08);
-  border-radius: 14px;
+  padding: clamp(16px, 3vw, 34px);
   background: #fff;
 }
 .thread-view-side{
@@ -5651,6 +5649,24 @@ body.thread-view-page #viewImage{ display: none; }
 /* 날짜 우선 댓글 헤더 */
 .comment-date-first{
   font-weight: 600;
+}
+/* 하단 모드: 본문 스크롤 영역에 이어 쌓이는 댓글 목록 */
+.thread-inline-comments{
+  margin-top: 20px;
+}
+.thread-inline-comments:empty{
+  margin-top: 0;
+}
+.thread-inline-comments .comments-list{
+  padding-top: 16px;
+  border-top: 1px dashed rgba(28, 28, 28, 0.18);
+}
+/* 하단 모드: 아래 래퍼는 큰 등록 폼만 */
+.thread-bottom-comments h3{
+  display: none;
+}
+.thread-bottom-comments .comment-memo-input{
+  min-height: 150px;
 }
 /* 댓글 위치 '좌측': 댓글 카드가 좌측 패널 아래로 이동 */
 .thread-side-comments{
