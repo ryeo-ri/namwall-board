@@ -5463,13 +5463,13 @@ body.script-write-page .write-skin-field[data-skin-field-wrap="script.summary"]{
   position: relative;
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(28, 28, 28, 0.1);
+  border: 0;
   background: #fff;
 }
-/* site-page 테마의 .card 초기화(투명·직각)보다 우선 — 타래 카드는 카드 룩 유지 */
+/* site-page 테마의 .card 초기화(투명·직각)와 정렬 — 배경만 흰색 유지 */
 body.site-page .card.thread-card{
   padding: 0;
-  border: 1px solid rgba(28, 28, 28, 0.1);
+  border: 0;
   border-radius: 0;
   background: #fff;
   box-shadow: none;
