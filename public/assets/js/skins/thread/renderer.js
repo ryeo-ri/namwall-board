@@ -39,7 +39,6 @@ function renderThreadCard(post, board, options) {
         <div class="thread-card-body">
           ${category ? `<span class="thread-card-category">${category}</span>` : ""}
           <strong class="thread-card-title">${isSecret ? renderLockIcon("thread-card-lock-icon") : ""}${title}</strong>
-          <span class="btn thread-card-btn">보기</span>
         </div>
       </a>
       ${deleteMode ? `
