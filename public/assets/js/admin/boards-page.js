@@ -808,6 +808,7 @@ async function loadBoards() {
             </div>
           </div>
           <div class="formRow board-row-actions">
+            <a class="btn" href="board.html?bo=${encodeURIComponent(board.id)}" target="_blank" rel="noopener noreferrer">게시판 보기</a>
             <button class="btn" data-edit="${board.id}">수정</button>
             <button class="btn" data-del="${board.id}">삭제</button>
           </div>
