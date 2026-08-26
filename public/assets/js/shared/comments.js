@@ -1,4 +1,4 @@
-import { db } from "../core/firebase.js";
+import { db, storage } from "../core/firebase.js";
 import {
   collection,
   doc,
@@ -7,11 +7,17 @@ import {
   query,
   orderBy,
   addDoc,
+  setDoc,
   updateDoc,
   serverTimestamp,
   deleteDoc,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import { sanitizeHTML } from "./html-sanitizer-v2.js";
 import { findSkinTypeByAlias, resolveBoardSkinType } from "../skins/registry.js";
 import { getAuthSnapshot, getGuestProofHash, isGuestUnlocked, sha256Hex, verifyGuestCode } from "../core/state.js";
@@ -26,6 +32,182 @@ const replyingToCommentByPost = new Map();
 const postCache = new Map();
 const boardCache = new Map();
 const COMMENT_UNLOCK_STORAGE_KEY = "archive_unlocked_secret_comment_ids";
+
+/* 댓글 이미지 첨부 (allowImages 컨텍스트에서만 활성) */
+const MAX_COMMENT_IMAGES = 8;
+const COMMENT_IMAGE_MAX_EDGE = 1400;
+const pendingCommentImagesByPost = new Map();
+
+function getPendingCommentImages(postId) {
+  return pendingCommentImagesByPost.get(postId) || [];
+}
+
+function clearPendingCommentImages(postId) {
+  getPendingCommentImages(postId).forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  });
+  pendingCommentImagesByPost.delete(postId);
+}
+
+// 비율 유지 리사이즈 → WebP (움짤 GIF는 원본 유지)
+async function resizeCommentImage(file) {
+  if (!/^image\//i.test(file.type || "")) throw new Error("이미지 파일만 첨부할 수 있습니다.");
+  if (/^image\/gif$/i.test(file.type)) {
+    if (file.size > 8 * 1024 * 1024) throw new Error("GIF는 8MB 이하만 첨부할 수 있습니다.");
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    if (!bitmap.width || !bitmap.height) throw new Error("이미지 크기를 확인할 수 없습니다.");
+    const scale = Math.min(1, COMMENT_IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvasContext = canvas.getContext("2d", { alpha: true });
+    if (!canvasContext) throw new Error("이미지를 변환할 수 없습니다.");
+    canvasContext.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+    if (!(blob instanceof Blob)) throw new Error("이미지 변환에 실패했습니다.");
+    return blob;
+  } finally {
+    bitmap.close?.();
+  }
+}
+
+function renderPendingCommentImages(postId) {
+  return getPendingCommentImages(postId).map((item, index) => `
+    <span class="comment-image-preview">
+      <img src="${escapeHtml(item.previewUrl)}" alt="첨부 예정 이미지">
+      <button type="button" class="comment-image-remove" data-comment-image-remove="${index}" aria-label="첨부 취소">&times;</button>
+    </span>
+  `).join("");
+}
+
+function refreshPendingCommentImages(container, postId) {
+  const previews = container.querySelector(`[data-comment-image-previews="${CSS.escape(postId)}"]`);
+  if (!previews) return;
+  previews.innerHTML = renderPendingCommentImages(postId);
+  previews.classList.toggle("hidden", !getPendingCommentImages(postId).length);
+}
+
+async function addCommentImages(container, postId, files) {
+  const incoming = Array.from(files || []).filter((file) => /^image\//i.test(file?.type || ""));
+  if (!incoming.length) return false;
+
+  const pending = getPendingCommentImages(postId);
+  if (pending.length + incoming.length > MAX_COMMENT_IMAGES) {
+    window.alert(`이미지는 댓글당 최대 ${MAX_COMMENT_IMAGES}장까지 첨부할 수 있습니다.`);
+    return true;
+  }
+
+  try {
+    for (const file of incoming) {
+      const blob = await resizeCommentImage(file);
+      pending.push({ blob, previewUrl: URL.createObjectURL(blob) });
+    }
+    pendingCommentImagesByPost.set(postId, pending);
+    refreshPendingCommentImages(container, postId);
+  } catch (error) {
+    window.alert(error?.message || "이미지를 처리하지 못했습니다.");
+  }
+  return true;
+}
+
+function bindCommentImageControls(container, postId, context) {
+  if (!context.allowImages) return;
+  const attachBtn = container.querySelector(`[data-comment-image-attach="${CSS.escape(postId)}"]`);
+  const fileInput = container.querySelector(`[data-comment-image-input="${CSS.escape(postId)}"]`);
+  const previews = container.querySelector(`[data-comment-image-previews="${CSS.escape(postId)}"]`);
+  const memoInput = document.getElementById(`comment-content-${postId}`);
+
+  attachBtn?.addEventListener("click", () => fileInput?.click());
+  fileInput?.addEventListener("change", async () => {
+    await addCommentImages(container, postId, fileInput.files);
+    fileInput.value = "";
+  });
+  memoInput?.addEventListener("paste", async (event) => {
+    const files = Array.from(event.clipboardData?.files || []).filter((file) => /^image\//i.test(file.type || ""));
+    if (!files.length) return;
+    event.preventDefault();
+    await addCommentImages(container, postId, files);
+  });
+  previews?.addEventListener("click", (event) => {
+    const removeBtn = event.target instanceof Element ? event.target.closest("[data-comment-image-remove]") : null;
+    if (!removeBtn) return;
+    const index = Number(removeBtn.dataset.commentImageRemove);
+    const pending = getPendingCommentImages(postId);
+    if (!Number.isInteger(index) || index < 0 || index >= pending.length) return;
+    if (pending[index].previewUrl) URL.revokeObjectURL(pending[index].previewUrl);
+    pending.splice(index, 1);
+    refreshPendingCommentImages(container, postId);
+  });
+}
+
+function bindCommentImageViews(container) {
+  container.querySelectorAll("[data-comment-image-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const url = String(button.dataset.commentImageView || "");
+      if (!url) return;
+      if (typeof window.openLightbox === "function") window.openLightbox(url);
+      else window.open(url, "_blank", "noopener");
+    });
+  });
+}
+
+function renderCommentImages(comment) {
+  const images = Array.isArray(comment?.images) ? comment.images.filter((item) => item?.url) : [];
+  if (!images.length) return "";
+  return `
+    <div class="comment-images">
+      ${images.map((item) => `
+        <button type="button" class="comment-image-view" data-comment-image-view="${escapeHtml(item.url)}" aria-label="댓글 이미지 원본 보기">
+          <img src="${escapeHtml(item.url)}" alt="댓글 이미지" loading="lazy">
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function commentRandomId(length = 8) {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(bytes, (byte) => byte.toString(36)).join("").slice(0, length);
+}
+
+async function createCommentUploadToken(boardId) {
+  const proofHash = getGuestProofHash();
+  if (!proofHash) throw new Error("게스트 코드를 먼저 입력하세요.");
+  const tokenRef = doc(collection(db, "guest_upload_tokens"));
+  await setDoc(tokenRef, { boardId, proofHash, createdAt: serverTimestamp() });
+  return tokenRef.id;
+}
+
+async function uploadCommentImages(postId, context, auth) {
+  const pending = getPendingCommentImages(postId);
+  if (!pending.length) return [];
+  const boardId = context.boardId || context.board?.id || "";
+  if (!boardId) throw new Error("게시판 정보를 찾을 수 없어 이미지를 올릴 수 없습니다.");
+
+  // 게스트 코드 제한 댓글은 업로드 토큰 경유, 그 외(관리자/누구나)는 직접 업로드
+  const useToken = !auth.isAdmin && context.commentScope === "guest";
+  const output = [];
+  for (const item of pending) {
+    const extension = /^image\/gif$/i.test(item.blob.type || "") ? "gif" : "webp";
+    const path = `comment_images/${boardId}/${Date.now()}_${commentRandomId(8)}.${extension}`;
+    const tokenId = useToken ? await createCommentUploadToken(boardId) : "";
+    try {
+      const snapshot = await uploadBytes(storageRef(storage, path), item.blob, {
+        contentType: item.blob.type || "image/webp",
+        cacheControl: "public,max-age=3600",
+        customMetadata: { boardId, ...(tokenId ? { uploadToken: tokenId } : {}) }
+      });
+      output.push({ url: await getDownloadURL(snapshot.ref), path: snapshot.ref.fullPath });
+    } finally {
+      if (tokenId) deleteDoc(doc(db, "guest_upload_tokens", tokenId)).catch(() => {});
+    }
+  }
+  return output;
+}
 
 function loadUnlockedSecretCommentIds() {
   try {
@@ -94,11 +276,9 @@ function formatDateTime(value) {
   return `${date.toLocaleDateString("ko-KR")} ${date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+// 길이 기준 자동 접기는 사용하지 않음 — 작성 시 "접기"를 체크한 댓글만 접는다.
 function estimateCommentFold(comment) {
-  const raw = String(comment?.content || comment?.contentHtml || "");
-  const text = raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  const lineCount = String(comment?.content || "").split(/\r?\n/).length;
-  return Boolean(comment?.more) || text.length > 160 || lineCount > 4;
+  return Boolean(comment?.more);
 }
 
 async function resolveCommentContext(postId, options = {}) {
@@ -123,7 +303,8 @@ async function resolveCommentContext(postId, options = {}) {
     board: board || { id: boardId || "" },
     boardId: boardId || board?.id || "",
     commentScope: normalizeScope(options.commentScope || board?.commentScope || board?.commentPermission || "all"),
-    manageComments: Boolean(options.manageComments)
+    manageComments: Boolean(options.manageComments),
+    allowImages: Boolean(options.allowImages)
   };
 }
 
@@ -155,7 +336,7 @@ async function resolveAdminNickname(auth) {
   ).trim();
 }
 
-function renderCommentForm(postId, writeState) {
+function renderCommentForm(postId, writeState, context = {}) {
   if (!writeState.canWrite && writeState.needsGuestUnlock) {
     return "";
   }
@@ -189,6 +370,17 @@ function renderCommentForm(postId, writeState) {
             placeholder="내용"
           ></textarea>
         </div>
+
+        ${context.allowImages ? `
+          <div class="comment-form-row comment-form-row-inline comment-image-row">
+            <button type="button" class="btn small" data-comment-image-attach="${escapeHtml(postId)}">이미지 첨부</button>
+            <span class="muted small">붙여넣기(Ctrl+V)로도 추가할 수 있습니다. (최대 ${MAX_COMMENT_IMAGES}장)</span>
+            <input type="file" class="hidden" accept="image/*" multiple data-comment-image-input="${escapeHtml(postId)}">
+          </div>
+          <div class="comment-image-previews${getPendingCommentImages(postId).length ? "" : " hidden"}" data-comment-image-previews="${escapeHtml(postId)}">
+            ${renderPendingCommentImages(postId)}
+          </div>
+        ` : ""}
 
         <div class="comment-form-row comment-form-row-inline comment-form-row-options">
           <label class="comment-toggle" for="comment-more-${escapeHtml(postId)}">
@@ -365,6 +557,7 @@ function renderCommentBodyV2(comment, context, writeState) {
       data-comment-body="${escapeHtml(comment.id)}"
       data-collapsed="${foldable && !expanded ? "Y" : "N"}"
     >${html}</div>
+    ${renderCommentImages(comment)}
   `;
 }
 
@@ -775,6 +968,17 @@ function bindCommentSubmit(postId, container, context, writeState) {
 
       const authorType = auth.isAdmin ? "ADMIN" : (isGuestUnlocked() ? "GUEST" : "PUBLIC");
       const contentHtml = sanitizeCommentHtml(content, context);
+
+      let uploadedImages = [];
+      if (context.allowImages && getPendingCommentImages(postId).length) {
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          uploadedImages = await uploadCommentImages(postId, context, auth);
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      }
+
       const commentPayload = {
         postId,
         boardId: context.boardId || context.board?.id || "",
@@ -787,6 +991,7 @@ function bindCommentSubmit(postId, container, context, writeState) {
         createdAt: serverTimestamp(),
         isDeleted: false
       };
+      if (uploadedImages.length) commentPayload.images = uploadedImages;
 
       if (isSecret) {
         const saltBytes = crypto.getRandomValues(new Uint8Array(8));
@@ -824,6 +1029,7 @@ function bindCommentSubmit(postId, container, context, writeState) {
       if (moreInput) moreInput.checked = false;
       if (secretInput) secretInput.checked = false;
       if (passInput) passInput.value = "";
+      clearPendingCommentImages(postId);
       bindCommentSecretToggle(postId);
 
       await loadComments(postId, container, context);
@@ -999,7 +1205,7 @@ export async function loadComments(postId, container, options = {}) {
 
     container.innerHTML = `
       <div class="comments-list">${commentsHTML}</div>
-      ${renderCommentForm(postId, writeState)}
+      ${renderCommentForm(postId, writeState, context)}
     `;
 
     bindCommentEditButtons(container, postId, context);
@@ -1015,6 +1221,8 @@ export async function loadComments(postId, container, options = {}) {
     bindCommentSecretUnlocks(container, context);
     bindGuestUnlock(container, context);
     bindCommentSecretToggle(postId);
+    bindCommentImageControls(container, postId, context);
+    bindCommentImageViews(container);
     bindCommentSubmit(postId, container, context, writeState);
   } catch (error) {
     console.error("Failed to load comments:", error);

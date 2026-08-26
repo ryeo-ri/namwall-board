@@ -1,5 +1,5 @@
 import { createSkinDefinition } from "../skin-definition.js";
-import { renderThreadDetail, renderThreadList } from "./renderer.js";
+import { bindThreadDetail, renderThreadDetail, renderThreadList } from "./renderer.js";
 
 export const skin = createSkinDefinition({
   type: "THREAD",
@@ -24,6 +24,16 @@ export const skin = createSkinDefinition({
       step: 1,
       placeholder: "기본 3",
       help: "한 줄에 표시할 타래 카드 수입니다."
+    },
+    commentPosition: {
+      type: "select",
+      label: "댓글 위치",
+      options: [
+        { value: "bottom", label: "하단" },
+        { value: "left", label: "좌측" }
+      ],
+      defaultValue: "bottom",
+      help: "상세 화면에서 댓글 영역을 놓을 위치입니다."
     }
   },
   capabilities: {
@@ -32,7 +42,8 @@ export const skin = createSkinDefinition({
     },
     detail: {
       supportsComments: true,
-      showThumbnail: false
+      showThumbnail: false,
+      commentImages: true
     },
     write: {
       requiresTitle: true,
@@ -45,6 +56,9 @@ export const skin = createSkinDefinition({
   },
   renderDetail(post, board, context) {
     return renderThreadDetail(post, board, context);
+  },
+  bindDetail(context) {
+    return bindThreadDetail(context);
   }
 });
 

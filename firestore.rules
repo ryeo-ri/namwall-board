@@ -195,6 +195,8 @@ service cloud.firestore {
         request.resource.data.content is string &&
         request.resource.data.content.size() > 0 &&
         request.resource.data.contentHtml is string &&
+        (!request.resource.data.keys().hasAny(['images']) ||
+          (request.resource.data.images is list && request.resource.data.images.size() <= 8)) &&
         request.resource.data.keys().hasOnly([
           'postId',
           'boardId',
@@ -208,7 +210,8 @@ service cloud.firestore {
           'secretSalt',
           'authorType',
           'createdAt',
-          'isDeleted'
+          'isDeleted',
+          'images'
         ]);
     }
 

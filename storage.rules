@@ -55,6 +55,23 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // 댓글 이미지 — 댓글이 열린 게시판(commentScope != 'guest')은 방문자도 업로드 가능,
+    // 게스트 코드 제한 게시판은 업로드 토큰 경유
+    function validOpenCommentImageUpload(boardId) {
+      return request.resource != null &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*') &&
+        firestore.exists(/databases/(default)/documents/boards/$(boardId)) &&
+        (!('commentScope' in firestore.get(/databases/(default)/documents/boards/$(boardId)).data) ||
+          firestore.get(/databases/(default)/documents/boards/$(boardId)).data.commentScope != 'guest');
+    }
+
+    match /comment_images/{boardId}/{fileName} {
+      allow read: if true;
+      allow write: if (isAdmin() && safeImageWrite()) || validGuestUpload(boardId) || validOpenCommentImageUpload(boardId);
+      allow delete: if isAdmin();
+    }
+
     match /home_intro/{fileName} {
       allow read: if true;
       allow write: if validHomeIntroUpload(fileName);

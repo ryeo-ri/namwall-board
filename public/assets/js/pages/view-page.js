@@ -307,7 +307,8 @@ async function loadPage(context = {}) {
     } else {
       await loadComments(post.id, document.getElementById("viewComments"), {
         boardId,
-        commentScope: board.commentScope || "all"
+        commentScope: board.commentScope || "all",
+        allowImages: Boolean(detailCaps.commentImages)
       });
       if (isInactive(context)) return;
     }

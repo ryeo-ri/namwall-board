@@ -1213,6 +1213,62 @@ body.site-page .comment-admin-actions [data-del-comment]{
 .comment-named-link strong{
   font-weight: 400;
 }
+/* 댓글 이미지 첨부 (commentImages 스킨 전용) */
+.comment-image-row{
+  gap: 8px;
+}
+.comment-image-previews{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.comment-image-preview{
+  position: relative;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+}
+.comment-image-preview img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.comment-image-remove{
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: rgba(17, 24, 39, 0.75);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.comment-images{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.comment-image-view{
+  max-width: min(220px, 100%);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.comment-image-view img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 
 /* ==========================================================================
    6. 사용자 페이지
@@ -5550,6 +5606,16 @@ body.thread-view-page #viewImage{ display: none; }
 }
 .thread-view-video iframe{
   width: 100%;
+}
+/* 댓글 위치 '좌측': 댓글 카드가 좌측 패널 아래로 이동 */
+.thread-side-comments{
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.thread-side-comments h3{
+  margin: 0 0 8px;
+  font-size: 13px;
 }
 
 /* 선택적 스킨 편집기 공통 셸 */

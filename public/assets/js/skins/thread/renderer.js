@@ -89,6 +89,17 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
   };
 }
 
+/* 댓글 위치 옵션(left): 기본 하단 댓글 카드를 좌측 패널 아래로 이동 */
+export function bindThreadDetail({ board } = {}) {
+  const position = String(getBoardSkinOption(board, "commentPosition", "bottom")).trim().toLowerCase();
+  if (position !== "left") return;
+  const side = document.querySelector(".thread-view-side");
+  const commentsWrap = document.getElementById("viewCommentsWrap");
+  if (!side || !commentsWrap) return;
+  commentsWrap.classList.add("thread-side-comments");
+  side.appendChild(commentsWrap);
+}
+
 function renderThreadAttachments(attachments) {
   if (!Array.isArray(attachments) || !attachments.length) return "";
   const images = attachments.filter((item) => item?.url && isImageAttachment(item));
