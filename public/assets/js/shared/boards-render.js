@@ -103,6 +103,16 @@ export async function loadBoardTitleMap() {
   }, new Map());
 }
 
+// 공개 OFF(isPublic === false) 게시판 id 집합 — 홈 최근 업데이트 등 노출 제외용
+export async function loadPrivateBoardIdSet() {
+  const boards = await loadBoardSnapshot();
+  return new Set(
+    boards
+      .filter((board) => board?.isPublic === false)
+      .map((board) => String(board.id || "").toLowerCase())
+  );
+}
+
 export function formatResponsiveWidth(value) {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return "";

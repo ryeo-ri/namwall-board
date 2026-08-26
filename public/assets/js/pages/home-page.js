@@ -1,5 +1,5 @@
 import { db } from "../core/firebase.js";
-import { formatResponsiveWidth, loadBoardTitleMap, loadSiteMainSettings } from "../shared/boards-render.js";
+import { formatResponsiveWidth, loadBoardTitleMap, loadPrivateBoardIdSet, loadSiteMainSettings } from "../shared/boards-render.js";
 import { sanitizeHTML } from "../shared/html-sanitizer-v2.js";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuthSnapshot, isGuestUnlocked, logoutAdmin, verifyGuestCode } from "../core/state.js";
@@ -498,9 +498,13 @@ async function getRecentHomePosts(isAdmin) {
       snapshot.docs.forEach((item) => docsById.set(item.id, item));
     });
 
+    // 공개 OFF 게시판의 글은 관리자에게도 최근 업데이트에 노출하지 않음
+    const privateBoardIds = await loadPrivateBoardIdSet();
+
     const posts = Array.from(docsById.values())
       .map((item) => ({ id: item.id, ...item.data() }))
       .filter((post) => isVisibleOnPublicHome(post, isAdmin) && !isProfilePost(post))
+      .filter((post) => !privateBoardIds.has(getPostBoardId(post).toLowerCase()))
       .sort((a, b) => getRecentPostTime(b) - getRecentPostTime(a))
       .slice(0, 30);
     recentPostsCache.set(cacheKey, posts);
