@@ -233,7 +233,7 @@ async function loadPage(context = {}) {
     }
     const skinEditor = await resolveAvailableSkinEditor(auth, post, board, skin, boardId);
     if (isInactive(context)) return;
-    renderAdminTools(auth, post, boardId, skinEditor);
+    renderAdminTools(auth, post, boardId, skinEditor, Boolean(skin?.capabilities?.detail?.supportsComments ?? true));
     const secretAccess = await unlockSecretIfNeeded(post, auth.isAdmin);
     if (isInactive(context)) return;
     const secretUnlocked = secretAccess.unlocked;
@@ -305,13 +305,27 @@ async function loadPage(context = {}) {
     if (!showComments) {
       commentWrap.classList.add("hidden");
     } else {
-      await loadComments(post.id, document.getElementById("viewComments"), {
+      const buildCommentOptions = (manageComments) => ({
         boardId,
         commentScope: board.commentScope || "all",
         allowImages: Boolean(detailCaps.commentImages),
-        dateFirstHeader: Boolean(detailCaps.commentDateFirst)
+        dateFirstHeader: Boolean(detailCaps.commentDateFirst),
+        manageComments
       });
+      await loadComments(post.id, document.getElementById("viewComments"), buildCommentOptions(false));
       if (isInactive(context)) return;
+
+      // 상단 '관리자' 토글: 댓글 수정/삭제 모드 (관리자 전용)
+      const commentManageBtn = document.getElementById("viewCommentManageBtn");
+      if (commentManageBtn && auth.isAdmin) {
+        let commentManageMode = false;
+        commentManageBtn.addEventListener("click", async () => {
+          commentManageMode = !commentManageMode;
+          commentManageBtn.classList.toggle("is-active", commentManageMode);
+          commentManageBtn.setAttribute("aria-pressed", commentManageMode ? "true" : "false");
+          await loadComments(post.id, document.getElementById("viewComments"), buildCommentOptions(commentManageMode));
+        });
+      }
     }
   } catch (error) {
     if (isInactive(context)) return;
@@ -360,7 +374,7 @@ async function resolveAvailableSkinEditor(auth, post, board, skin, boardId) {
   }
 }
 
-function renderAdminTools(auth, post, boardId, skinEditor = null) {
+function renderAdminTools(auth, post, boardId, skinEditor = null, canManageComments = false) {
   if (!viewAdminToolsEl) return;
 
   if (!auth?.isAdmin || !post?.id) {
@@ -373,10 +387,14 @@ function renderAdminTools(auth, post, boardId, skinEditor = null) {
   const editorLink = skinEditor
     ? `<a class="view-meta-action" href="${escapeHtml(editorPath)}?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="스킨 데이터 편집">${escapeHtml(skinEditor.label || "데이터 편집")}</a>`
     : "";
+  const commentManageButton = canManageComments
+    ? '<button type="button" class="view-meta-action" id="viewCommentManageBtn" aria-label="댓글 관리 모드" aria-pressed="false">관리자</button>'
+    : "";
   viewAdminToolsEl.classList.remove("hidden");
   viewAdminToolsEl.innerHTML = `
     ${editorLink}
     <a class="view-meta-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(boardId)}" aria-label="게시물 수정">수정</a>
+    ${commentManageButton}
     <button type="button" class="view-meta-action" id="deleteViewPostBtn" aria-label="게시물 삭제">삭제</button>
   `;
 

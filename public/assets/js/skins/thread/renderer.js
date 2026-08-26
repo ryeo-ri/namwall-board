@@ -77,13 +77,9 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
     `
     : `<div class="notice secret-cover-lock" aria-label="비밀글 잠금">${renderLockIcon("secret-cover-lock-icon")}</div>`;
 
-  // 하단 댓글 모드: 카드 우하단 COMMENT ▼ 토글 (기본 접힘, 참고 사이트 형태)
-  const commentToggleHtml = commentPosition !== "left"
-    ? `
-      <button type="button" class="thread-comment-toggle" data-thread-comment-toggle aria-expanded="false">
-        COMMENT <span class="thread-comment-caret">▼</span>
-      </button>
-    `
+  // 하단 댓글 모드: 목록 옆 '게시' 버튼이 아래 등록 폼을 열고 닫는다 (기본 접힘)
+  const postButtonHtml = commentPosition !== "left"
+    ? '<button type="button" class="btn thread-post-btn" data-thread-comment-toggle aria-expanded="false">게시</button>'
     : "";
 
   return {
@@ -94,9 +90,9 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
         <div class="thread-view-body">
           <div class="thread-view-scroll">${bodyInner}</div>
         </div>
-        ${commentToggleHtml}
       </section>
       <div class="thread-view-actions">
+        ${postButtonHtml}
         <a class="btn thread-list-btn" href="${escapeHtml(listUrl)}">목록</a>
       </div>
     `,
@@ -144,8 +140,7 @@ export function bindThreadDetail({ board } = {}) {
   toggle.addEventListener("click", () => {
     const opened = !commentsWrap.classList.toggle("hidden");
     toggle.setAttribute("aria-expanded", opened ? "true" : "false");
-    const caret = toggle.querySelector(".thread-comment-caret");
-    if (caret) caret.textContent = opened ? "▲" : "▼";
+    toggle.classList.toggle("is-active", opened);
     if (opened) commentsWrap.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }

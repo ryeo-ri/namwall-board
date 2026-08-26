@@ -5622,29 +5622,23 @@ body.thread-view-page #viewImage{ display: none; }
 .thread-view-video iframe{
   width: 100%;
 }
-/* 카드 우하단 COMMENT ▼ 토글 (하단 댓글 모드) */
-.thread-comment-toggle{
-  grid-column: 1 / -1;
-  justify-self: end;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-.thread-comment-toggle:hover{
-  text-decoration: underline;
-  text-underline-offset: 0.25em;
-}
-/* 카드 밖 우하단 목록 버튼 */
+/* 카드 밖 우하단: 게시(등록 폼 토글) · 목록 버튼 */
 .thread-view-actions{
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 14px;
+}
+.thread-post-btn.is-active{
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+/* 상단 '관리자' 댓글 관리 토글 활성 표시 */
+.view-meta-action.is-active{
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 /* 날짜 우선 댓글 헤더 */
 .comment-date-first{
