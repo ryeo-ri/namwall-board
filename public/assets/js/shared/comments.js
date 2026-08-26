@@ -304,7 +304,8 @@ async function resolveCommentContext(postId, options = {}) {
     boardId: boardId || board?.id || "",
     commentScope: normalizeScope(options.commentScope || board?.commentScope || board?.commentPermission || "all"),
     manageComments: Boolean(options.manageComments),
-    allowImages: Boolean(options.allowImages)
+    allowImages: Boolean(options.allowImages),
+    dateFirstHeader: Boolean(options.dateFirstHeader)
   };
 }
 
@@ -528,17 +529,34 @@ function renderCommentBodyV2(comment, context, writeState) {
     `;
   }
 
+  // 날짜 우선 헤더(타래 등): 이름 없이 날짜가 맨 앞에 오는 형태
+  const headerHtml = context.dateFirstHeader
+    ? `
+      <div class="comment-header">
+        <div class="comment-meta-left">
+          <span class="muted small comment-date-first">${escapeHtml(dateStr)}</span>
+        </div>
+        <div class="comment-meta-right">
+          ${replyButton}
+          ${manageButtons}
+        </div>
+      </div>
+    `
+    : `
+      <div class="comment-header">
+        <div class="comment-meta-left">
+          <span class="comment-author">${author}</span>
+        </div>
+        <div class="comment-meta-right">
+          <span class="muted small">${escapeHtml(dateStr)}</span>
+          ${replyButton}
+          ${manageButtons}
+        </div>
+      </div>
+    `;
+
   return `
-    <div class="comment-header">
-      <div class="comment-meta-left">
-        <span class="comment-author">${author}</span>
-      </div>
-      <div class="comment-meta-right">
-        <span class="muted small">${escapeHtml(dateStr)}</span>
-        ${replyButton}
-        ${manageButtons}
-      </div>
-    </div>
+    ${headerHtml}
     ${foldable ? `
       <button
         type="button"

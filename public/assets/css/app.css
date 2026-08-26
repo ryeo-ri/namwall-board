@@ -5555,11 +5555,17 @@ body.thread-view-page #viewImage{ display: none; }
   grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.5fr);
   gap: 28px;
   align-items: start;
+  padding: clamp(20px, 4vw, 42px);
+  border: 1px solid rgba(28, 28, 28, 0.08);
+  border-radius: 14px;
+  background: #fff;
 }
 .thread-view-side{
   display: grid;
   gap: 10px;
   align-content: start;
+  justify-items: center;
+  text-align: center;
 }
 .thread-view-category{
   color: var(--muted);
@@ -5583,6 +5589,17 @@ body.thread-view-page #viewImage{ display: none; }
   max-height: 72vh;
   padding-right: 12px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 28, 28, 0.45) rgba(28, 28, 28, 0.06);
+}
+.thread-view-scroll::-webkit-scrollbar{
+  width: 6px;
+}
+.thread-view-scroll::-webkit-scrollbar-track{
+  background: rgba(28, 28, 28, 0.06);
+}
+.thread-view-scroll::-webkit-scrollbar-thumb{
+  background: rgba(28, 28, 28, 0.45);
 }
 .thread-view-content{
   font-size: 14px;
@@ -5606,6 +5623,34 @@ body.thread-view-page #viewImage{ display: none; }
 }
 .thread-view-video iframe{
   width: 100%;
+}
+/* 카드 우하단 COMMENT ▼ 토글 (하단 댓글 모드) */
+.thread-comment-toggle{
+  grid-column: 1 / -1;
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.thread-comment-toggle:hover{
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+/* 카드 밖 우하단 목록 버튼 */
+.thread-view-actions{
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+/* 날짜 우선 댓글 헤더 */
+.comment-date-first{
+  font-weight: 600;
 }
 /* 댓글 위치 '좌측': 댓글 카드가 좌측 패널 아래로 이동 */
 .thread-side-comments{

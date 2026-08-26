@@ -308,7 +308,8 @@ async function loadPage(context = {}) {
       await loadComments(post.id, document.getElementById("viewComments"), {
         boardId,
         commentScope: board.commentScope || "all",
-        allowImages: Boolean(detailCaps.commentImages)
+        allowImages: Boolean(detailCaps.commentImages),
+        dateFirstHeader: Boolean(detailCaps.commentDateFirst)
       });
       if (isInactive(context)) return;
     }

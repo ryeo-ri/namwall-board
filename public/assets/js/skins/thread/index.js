@@ -43,7 +43,8 @@ export const skin = createSkinDefinition({
     detail: {
       supportsComments: true,
       showThumbnail: false,
-      commentImages: true
+      commentImages: true,
+      commentDateFirst: true
     },
     write: {
       requiresTitle: true,

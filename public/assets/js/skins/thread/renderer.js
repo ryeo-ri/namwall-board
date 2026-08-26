@@ -56,6 +56,8 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
   const title = escapeHtml(post.title || "(제목 없음)");
   const category = escapeHtml(board?.title || board?.name || "");
   const coverUrl = String(post.imageUrl || post.thumbUrl || "").trim();
+  const commentPosition = String(getBoardSkinOption(board, "commentPosition", "bottom")).trim().toLowerCase();
+  const listUrl = `board.html?bo=${encodeURIComponent(post.boardId || board?.id || "")}`;
 
   const sideHtml = `
     <div class="thread-view-side">
@@ -74,6 +76,15 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
     `
     : `<div class="notice secret-cover-lock" aria-label="비밀글 잠금">${renderLockIcon("secret-cover-lock-icon")}</div>`;
 
+  // 하단 댓글 모드: 카드 우하단 COMMENT ▼ 토글 (기본 접힘, 참고 사이트 형태)
+  const commentToggleHtml = commentPosition !== "left"
+    ? `
+      <button type="button" class="thread-comment-toggle" data-thread-comment-toggle aria-expanded="false">
+        COMMENT <span class="thread-comment-caret">▼</span>
+      </button>
+    `
+    : "";
+
   return {
     imageHtml: "",
     contentHtml: `
@@ -82,22 +93,41 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
         <div class="thread-view-body">
           <div class="thread-view-scroll">${bodyInner}</div>
         </div>
+        ${commentToggleHtml}
       </section>
+      <div class="thread-view-actions">
+        <a class="btn thread-list-btn" href="${escapeHtml(listUrl)}">목록</a>
+      </div>
     `,
     sourceText: "",
     hideTags: false
   };
 }
 
-/* 댓글 위치 옵션(left): 기본 하단 댓글 카드를 좌측 패널 아래로 이동 */
+/* 댓글 위치 옵션 — left: 좌측 패널로 이동 / bottom: COMMENT ▼ 토글(기본 접힘) */
 export function bindThreadDetail({ board } = {}) {
   const position = String(getBoardSkinOption(board, "commentPosition", "bottom")).trim().toLowerCase();
-  if (position !== "left") return;
-  const side = document.querySelector(".thread-view-side");
   const commentsWrap = document.getElementById("viewCommentsWrap");
-  if (!side || !commentsWrap) return;
-  commentsWrap.classList.add("thread-side-comments");
-  side.appendChild(commentsWrap);
+  if (!commentsWrap) return;
+
+  if (position === "left") {
+    const side = document.querySelector(".thread-view-side");
+    if (!side) return;
+    commentsWrap.classList.add("thread-side-comments");
+    side.appendChild(commentsWrap);
+    return;
+  }
+
+  const toggle = document.querySelector("[data-thread-comment-toggle]");
+  if (!toggle) return;
+  commentsWrap.classList.add("hidden", "thread-bottom-comments");
+  toggle.addEventListener("click", () => {
+    const opened = !commentsWrap.classList.toggle("hidden");
+    toggle.setAttribute("aria-expanded", opened ? "true" : "false");
+    const caret = toggle.querySelector(".thread-comment-caret");
+    if (caret) caret.textContent = opened ? "▲" : "▼";
+    if (opened) commentsWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function renderThreadAttachments(attachments) {
