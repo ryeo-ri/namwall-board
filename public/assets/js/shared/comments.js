@@ -374,7 +374,6 @@ function renderCommentForm(postId, writeState, context = {}) {
         ${context.allowImages ? `
           <div class="comment-form-row comment-form-row-inline comment-image-row">
             <button type="button" class="btn small" data-comment-image-attach="${escapeHtml(postId)}">이미지 첨부</button>
-            <span class="muted small">붙여넣기(Ctrl+V)로도 추가할 수 있습니다. (최대 ${MAX_COMMENT_IMAGES}장)</span>
             <input type="file" class="hidden" accept="image/*" multiple data-comment-image-input="${escapeHtml(postId)}">
           </div>
           <div class="comment-image-previews${getPendingCommentImages(postId).length ? "" : " hidden"}" data-comment-image-previews="${escapeHtml(postId)}">
