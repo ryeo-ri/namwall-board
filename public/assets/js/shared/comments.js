@@ -251,8 +251,10 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// 줄바꿈은 <br>로만 표현 — .comment-content(white-space: pre-wrap)에서
+// 개행문자가 함께 남으면 줄이 두 번 띄워진다.
 function preserveLineBreaks(value) {
-  return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>\n");
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
 }
 
 function isLogCommentContext(context) {
@@ -459,7 +461,8 @@ function renderReplyForm(comment, context, writeState) {
 
 function renderCommentBodyV2(comment, context, writeState) {
   const auth = writeState.auth;
-  const raw = String(comment.contentHtml || comment.content || "");
+  // 기존 저장분의 "<br> + 개행" 조합은 개행을 제거해 한 줄 띄움으로 정상화
+  const raw = String(comment.contentHtml || comment.content || "").replace(/<br>\r?\n/gi, "<br>");
   const html = enhanceCommentLinks(sanitizeHTML(raw, { allowIframes: commentIframePolicy(context) }), context.boardId);
   const author = escapeHtml(comment.nickname || "익명");
   const dateStr = formatDateTime(comment.createdAt);

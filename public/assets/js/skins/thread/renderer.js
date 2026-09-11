@@ -78,7 +78,7 @@ export function renderThreadDetail(post = {}, board = {}, context = {}) {
 
   // 하단 댓글 모드: 목록 옆 '게시' 버튼이 아래 등록 폼을 열고 닫는다 (기본 접힘)
   const postButtonHtml = commentPosition !== "left"
-    ? '<button type="button" class="btn thread-post-btn" data-thread-comment-toggle aria-expanded="false">게시</button>'
+    ? '<button type="button" class="btn thread-post-btn" data-thread-comment-toggle aria-expanded="false">글쓰기</button>'
     : "";
 
   return {
