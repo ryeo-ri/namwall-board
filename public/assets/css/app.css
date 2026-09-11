@@ -1258,7 +1258,7 @@ body.site-page .comment-admin-actions [data-del-comment]{
   margin-top: 8px;
 }
 .comment-image-view{
-  max-width: min(220px, 100%);
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
