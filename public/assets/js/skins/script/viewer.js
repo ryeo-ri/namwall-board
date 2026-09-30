@@ -86,7 +86,9 @@ export async function bindScriptViewer({ post, container, secretUnlocked }) {
   } catch (error) {
     console.error("SCRIPT archive load failed:", error);
     statusEl.classList.remove("hidden");
-    statusEl.textContent = "플레이 로그를 불러오지 못했습니다. 저장된 파일 주소와 Storage 규칙을 확인해주세요.";
+    statusEl.textContent = error?.code === "archive/fetch-blocked"
+      ? "플레이 로그 파일 요청이 브라우저에서 차단되었습니다. Storage 버킷에 CORS 설정이 필요합니다 — 설치 안내(setup.html)의 'Storage CORS 설정' 항목을 확인해주세요."
+      : "플레이 로그를 불러오지 못했습니다. 저장된 파일 주소와 Storage 규칙을 확인해주세요.";
     moreButton.classList.add("hidden");
     sentinel?.classList.add("hidden");
   }

@@ -12,7 +12,7 @@ export async function loadScriptArchive(url, options = {}) {
   const archiveUrl = String(url || "").trim();
   if (!archiveUrl) throw new Error("플레이 로그 파일 주소가 없습니다.");
 
-  const response = await fetch(archiveUrl, { cache: options.cache || "default" });
+  const response = await fetchArchiveResponse(archiveUrl, options.cache || "default");
   if (!response.ok) throw new Error(`Archive request failed: ${response.status}`);
 
   const bytes = new Uint8Array(await response.arrayBuffer());
@@ -45,6 +45,24 @@ export async function loadScriptArchive(url, options = {}) {
     narratorSpeakers: normalizeScriptNarratorSpeakers(archive.narratorSpeakers),
     messages: archive.messages.slice()
   };
+}
+
+// fetch 자체가 실패하면(주로 Storage 버킷 CORS 미설정) 캐시를 우회해 1회 재시도하고,
+// 그래도 실패하면 원인 코드를 붙여 뷰어가 구체적으로 안내할 수 있게 한다.
+async function fetchArchiveResponse(archiveUrl, cache) {
+  try {
+    return await fetch(archiveUrl, { cache });
+  } catch (networkError) {
+    const retryUrl = `${archiveUrl}${archiveUrl.includes("?") ? "&" : "?"}cors_retry=1`;
+    try {
+      return await fetch(retryUrl, { cache: "reload" });
+    } catch (_retryError) {
+      const blocked = new Error("플레이 로그 파일 요청이 차단되었습니다. (Storage CORS 설정 필요 가능성)");
+      blocked.code = "archive/fetch-blocked";
+      blocked.cause = networkError;
+      throw blocked;
+    }
+  }
 }
 
 export async function createScriptArchiveBlob(archive) {
