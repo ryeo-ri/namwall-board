@@ -93,8 +93,8 @@ function refreshSessionHintInBackground() {
     .catch(() => { /* ignore */ });
 }
 
-// 호출 주체: 관리자 > 회원 > 방문자 순으로 가장 권한 높은 핸들을 쓴다.
-export async function caller() {
+// 호출 주체: 관리자 > 회원 > 방문자 순으로 가장 권한 높은 핸들을 쓴다. (내부 전용)
+async function caller() {
   const admin = await getAdminSession();
   if (admin) { writeSessionHint("admin"); return admin; }
   const member = await getMemberSession();

@@ -264,3 +264,11 @@ function toDate(value) {
   const date = new Date(typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+// 서비스 워커 등록 — 정적 파일을 캐시해 페이지 이동 시 재다운로드를 없앤다.
+// (나루가 정적 파일을 max-age=0으로 내려줘서 매 페이지마다 전부 다시 받는 문제 보완)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* 미지원·실패 시 그냥 네트워크 사용 */ });
+  });
+}
