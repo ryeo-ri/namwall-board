@@ -1,0 +1,893 @@
+/* ==========================================================================
+   NAMWALL app2.css — 7장: 사용자 페이지 테마 · 타래 · 반응형
+   (app.css 뒤에 로드)
+   ========================================================================== */
+
+/* ==========================================================================
+   7. 사용자 페이지 테마 (body.site-page)
+   --------------------------------------------------------------------------
+   흰 배경 + 검정 텍스트의 플랫 스타일. 카드/입력의 테두리·배경을 걷어내고
+   픽셀 폰트를 적용한다.
+   --site-bg / --site-text / --site-accent 는 디자인 설정용 변수 — 미설정 시 기본값.
+   ========================================================================== */
+body.home-page{
+  background: var(--site-bg, transparent);
+  color: var(--site-text, #000);
+  font-family: var(--font-kr);
+}
+body.site-page{
+  --site-page-pad-x: clamp(12px, 3vw, 40px);
+  background: var(--site-bg, transparent);
+  color: var(--site-text, #000);
+  font-family: var(--font-kr);
+}
+body.site-page .container{
+  width: min(var(--max-w), 100%);
+  padding-left: var(--site-page-pad-x);
+  padding-right: var(--site-page-pad-x);
+}
+body.site-page main.container{
+  width: min(calc(var(--board-page-w, var(--max-w)) + (2 * var(--site-page-pad-x)) + var(--board-page-extra-w, 0px)), 100%);
+}
+body.site-page .summary-chip,
+body.site-page .skin-chip{
+  font-family: var(--font-heading, var(--font-pixel));
+  letter-spacing: 0.1em;
+}
+body.site-page .card,
+body.site-page .settings-block,
+body.site-page .option-card,
+body.site-page .recent-item,
+body.site-page .search-item,
+body.site-page .gallery-admin-tools,
+body.site-page .previewItem,
+body.site-page .write-static-field,
+body.site-page .profile-fact,
+body.site-page .board-item,
+body.site-page .log-post,
+body.site-page .gallery-card,
+body.site-page .profile-panel{
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+/* 버튼: 디자인 설정의 버튼 테두리/글자/배경을 따름 (기본: 글자색 테두리 + 투명 배경) */
+body.site-page button,
+body.site-page [role="button"],
+body.site-page .btn,
+body.site-page .log-manage-button,
+body.site-page .gallery-manage-button{
+  font-family: var(--font-heading, var(--font-pixel));
+}
+body.site-page .view-meta-action,
+body.site-page .comment-admin-actions .btn,
+body.site-page .comment-reply-btn,
+body.site-page .guestbook-delete,
+body.site-page .pagination-btn,
+body.site-page .log-manage-button,
+body.site-page .gallery-manage-button{
+  font-family: var(--font-kr);
+}
+body.site-page .btn{
+  border-radius: 0;
+  border-color: var(--site-btn-border, currentcolor);
+  background: var(--site-btn-bg, transparent);
+  color: var(--site-btn-text, inherit);
+}
+body.site-page .btn.primary{
+  background: var(--site-btn-bg, transparent);
+  color: var(--site-btn-text, inherit);
+}
+body.site-page input,
+body.site-page select,
+body.site-page textarea{
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: var(--site-text, var(--text));
+  font-family: var(--font-kr);
+}
+body.site-page .tag,
+body.site-page .summary-chip,
+body.site-page .skin-chip{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+body.site-page .tag{
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: left;
+}
+body.site-page .summary-title,
+body.site-page .board-title-row h1,
+body.site-page #viewTitle,
+body.site-page .board-description{
+  font-family: var(--font-heading, var(--font-pixel));
+  letter-spacing: 0.01em;
+}
+body.site-page h1,
+body.site-page h2,
+body.site-page h3,
+body.site-page .board-line-title,
+body.site-page .board-item-title{
+  font-family: var(--font-heading, var(--font-pixel));
+}
+body.site-page .board-header .board-title-row > div:first-child{
+  display: none;
+}
+body.site-page .board-title-row{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  justify-content: initial;
+  column-gap: 0;
+}
+body.site-page .board-actions{
+  grid-column: 2;
+  width: auto;
+  align-items: center;
+  justify-content: center;
+}
+body.site-page .notice{
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+body.site-page .board-category,
+body.site-page .log-number{
+  background: transparent;
+  color: inherit;
+}
+body.site-page .log-edit-button{
+  border: 0;
+  color: var(--muted);
+}
+/* 갤러리는 이미지 위 칩이라 밝은 텍스트 유지 */
+body.site-page .gallery-edit-button{
+  border: 0;
+  color: #fff;
+}
+body.site-page .gallery-delete-button{
+  color: #ffb4b4;
+}
+body.site-page .log-body a,
+body.site-page .view-content-body a,
+body.site-page .view-body a,
+body.site-page .board-item-title a:hover,
+body.site-page .search-title:hover,
+body.site-page .tag:hover{
+  color: var(--site-accent, inherit);
+}
+body.site-page .log-number,
+body.site-page .log-hero,
+body.site-page .log-hero-image,
+body.site-page .log-hero-video,
+body.site-page .log-inline-image,
+body.site-page .log-inline-image img,
+body.site-page .log-hero-secret{
+  border-radius: 0;
+}
+
+/* --------------------------------------------------------------------------
+   7-2. 홈 페이지 테마 (body.home-page)
+   - index는 site-page + home-page 클래스를 함께 가지므로,
+     동순위 규칙이 site-page 테마를 이기도록 반드시 site-page 테마 뒤에 둔다.
+   -------------------------------------------------------------------------- */
+body.home-page .container{
+  width: min(var(--max-w), 100%);
+  padding-left: clamp(12px, 3vw, 40px);
+  padding-right: clamp(12px, 3vw, 40px);
+}
+body.home-page .header .container{
+  width: min(var(--home-header-width, var(--max-w)), 100%);
+}
+body.home-page .pill{
+  letter-spacing: 0.12em;
+}
+body.home-page main.container{
+  width: min(var(--home-main-width, calc(var(--max-w) + (2 * var(--site-page-pad-x)))), 100%);
+  padding-top: 0;
+}
+body.home-page #homeIntro{
+  margin: 0;
+}
+body.home-page #homeIntro.home-intro-image-only{
+  width: min(var(--home-intro-width, 100%), 100%);
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+body.home-page #homeIntro.home-intro-with-copy{
+  width: min(var(--home-intro-width, var(--max-w)), 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+body.home-page .home-hero{
+  --home-copy-column: 250px;
+  --home-image-width: 100%;
+  --home-image-column: minmax(0, 1.1fr);
+  --home-image-height: var(--home-hero-min-height);
+  --home-hero-min-height: 72vh;
+  --home-hero-max-height: 82vh;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+body.home-page .home-hero-with-copy{
+  grid-template-columns: minmax(0, var(--home-copy-column)) var(--home-image-column);
+  align-items: stretch;
+}
+body.home-page .home-hero-copy{
+  width: 100%;
+  min-width: 0;
+  min-height: var(--home-hero-min-height);
+  max-height: var(--home-image-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(250, 250, 248, 0.24) transparent;
+  scrollbar-width: thin;
+  padding: 3px;
+}
+body.home-page .home-hero-copy::-webkit-scrollbar{
+  width: 3px;
+}
+body.home-page .home-hero-copy::-webkit-scrollbar-track{
+  background: transparent;
+}
+body.home-page .home-hero-copy::-webkit-scrollbar-thumb{
+  background: rgba(250, 250, 248, 0.22);
+}
+body.home-page .home-hero-copy::-webkit-scrollbar-thumb:hover{
+  background: rgba(250, 250, 248, 0.34);
+}
+body.home-page .home-hero-eyebrow{
+  padding: 0;
+  margin-bottom: 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-heading, var(--font-pixel));
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+}
+body.home-page .home-hero-intro{
+  font-family: var(--font-kr);
+  font-size: 14px;
+}
+body.home-page .home-hero-image-only{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  padding: 0;
+  border-radius: 8px;
+}
+body.home-page .home-hero-image-only .home-hero-image,
+body.home-page .home-hero-image-only .home-hero-placeholder{
+  width: min(100%, var(--home-image-width));
+  height: var(--home-image-height);
+  min-height: var(--home-hero-min-height);
+  max-height: var(--home-hero-max-height);
+  border-radius: 8px;
+  background: transparent;
+  justify-self: center;
+}
+body.home-page .home-hero-image-only .home-hero-image{
+  aspect-ratio: auto;
+  object-fit: cover;
+}
+body.home-page .home-hero-placeholder{
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-heading, var(--font-pixel));
+}
+body.home-page .grid.two.mt-md{
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 0;
+  align-items: stretch;
+}
+body.home-page .grid.two.mt-md > .card{
+  min-height: 100%;
+}
+body.home-page .card h3{
+  font-family: var(--font-heading, var(--font-pixel));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+body.home-page .recent-item{
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+body.home-page .recent-update-item{
+  align-items: center;
+  justify-content: space-between;
+}
+body.home-page .recent-update-date{
+  flex: 0 0 auto;
+  font-size: 0.84rem;
+}
+body.home-page .recent-update-board{
+  flex: 1 1 auto;
+  text-align: right;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.home-page .recent-update-title{
+  font-family: var(--font-heading, var(--font-pixel));
+}
+body.home-page .tags-list{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+body.home-page .tag{
+  font-size: 0.72rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+body.home-page .footer{
+  padding-top: 0;
+}
+
+/* Thread(타래) — 카드형 목록 */
+.thread-list{
+  display: grid;
+  grid-template-columns: repeat(var(--thread-columns, 3), minmax(0, 1fr));
+  gap: 16px;
+}
+.thread-card{
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #fff;
+}
+/* site-page 테마의 .card 초기화(투명·직각)와 정렬 — 배경만 흰색 유지 */
+body.site-page .card.thread-card{
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+.thread-card-link{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+.thread-card-cover{
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #e9e7e0;
+}
+.thread-card-cover img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thread-card-placeholder{
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(28, 28, 28, 0.45);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.thread-card-body{
+  display: grid;
+  gap: 7px;
+  padding: 14px 16px 16px;
+}
+.thread-card-category{
+  color: var(--muted);
+  font-size: 11px;
+}
+.thread-card-title{
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.thread-card-title .thread-card-lock-icon{
+  width: 13px;
+  height: 13px;
+  margin-right: 5px;
+  vertical-align: -2px;
+  stroke: currentColor;
+  fill: none;
+}
+.thread-delete-check{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.94);
+}
+.thread-card.is-delete-selected{
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+/* Thread(타래) — 상세: 좌 썸네일/제목 · 우 내용 */
+body.thread-view-page .view-title{ display: none; }   /* 제목은 좌측 패널에 표시 */
+body.thread-view-page #viewImage{ display: none; }
+.thread-view{
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.5fr);
+  gap: 28px;
+  align-items: start;
+  padding: clamp(16px, 3vw, 34px);
+  background: #fff;
+}
+.thread-view-side{
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-items: center;
+  text-align: center;
+}
+.thread-view-category{
+  color: var(--muted);
+  font-size: 12px;
+}
+.thread-view-title{
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.45;
+}
+.thread-view-tools{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.thread-view-thumb{
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+}
+.thread-view-body{
+  min-width: 0;
+}
+.thread-view-scroll{
+  max-height: 72vh;
+  padding-right: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 28, 28, 0.45) rgba(28, 28, 28, 0.06);
+}
+.thread-view-scroll::-webkit-scrollbar{
+  width: 6px;
+}
+.thread-view-scroll::-webkit-scrollbar-track{
+  background: rgba(28, 28, 28, 0.06);
+}
+.thread-view-scroll::-webkit-scrollbar-thumb{
+  background: rgba(28, 28, 28, 0.45);
+}
+.thread-view-content{
+  font-size: 14px;
+  line-height: 1.8;
+}
+.thread-view-images{
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+.thread-view-image,
+.thread-view-images button{
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.thread-view-images img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.thread-view-video iframe{
+  width: 100%;
+}
+/* 카드 밖 우하단: 글쓰기(등록 폼 토글) · 목록 버튼 */
+.thread-view-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.thread-post-btn.is-active{
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.view-meta-action.is-active{
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.comment-date-first{
+  font-weight: 600;
+}
+/* 하단 모드: 본문 스크롤 영역에 이어 쌓이는 댓글 목록 */
+.thread-inline-comments{
+  margin-top: 20px;
+}
+.thread-inline-comments:empty{
+  margin-top: 0;
+}
+.thread-inline-comments .comments-list{
+  padding-top: 16px;
+  border-top: 1px dashed rgba(28, 28, 28, 0.18);
+}
+/* 하단 모드: 아래 래퍼는 큰 등록 폼만 */
+.thread-bottom-comments h3{
+  display: none;
+}
+.thread-bottom-comments .comment-memo-input{
+  min-height: 150px;
+}
+/* 댓글 위치 '좌측': 댓글 카드가 좌측 패널 아래로 이동 */
+.thread-side-comments{
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.thread-side-comments h3{
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   9. 반응형
+   ========================================================================== */
+@media (max-width: 920px){
+  /* 공통 레이아웃 */
+  .grid.two{ grid-template-columns: 1fr; }
+  .header .row{ flex-wrap: wrap; }
+  .pills{ justify-content: flex-start; }
+
+  /* 홈 히어로 */
+  .home-hero{
+    grid-template-columns: 1fr;
+  }
+  .home-hero-image,
+  .home-hero-placeholder{
+    min-height: 260px;
+  }
+
+  /* 홈 페이지 */
+  body.site-page .header .container{
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  body.home-page .header .container{
+    width: min(var(--home-header-width, var(--max-w)), 100%);
+  }
+  body.site-page .header .row{
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  body.site-page .brand{
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.home-page .brand{
+    max-width: calc(100% - 120px);
+  }
+  body.home-page .pills,
+  body.site-page .pills{
+    order: 2;
+    flex: 0 0 auto;
+    margin-left: auto;
+    width: auto;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  body.site-page .nav{
+    order: 3;
+    width: 100%;
+    flex: 0 0 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  body.site-page .nav::-webkit-scrollbar{
+    display: none;
+  }
+  body.site-page .nav a{
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  body.home-page .pill{
+    padding: 5px 8px;
+    font-size: 0.66rem;
+  }
+  body.home-page .home-hero{
+    margin-top: 14px;
+    padding: 12px;
+    gap: 0;
+  }
+  body.home-page .home-hero-with-copy{
+    grid-template-columns: 1fr;
+  }
+  body.home-page .home-hero-copy{
+    min-height: 0;
+    max-height: none;
+    padding: 3px;
+  }
+  body.home-page .home-hero-eyebrow{
+    margin-bottom: 0;
+  }
+  body.home-page .home-hero-image,
+  body.home-page .home-hero-placeholder{
+    width: min(100%, var(--home-image-width));
+    height: auto;
+    min-height: 180px;
+    max-height: 52vh;
+  }
+  body.home-page .home-hero[style*="--home-image-height"] .home-hero-image,
+  body.home-page .home-hero[style*="--home-image-height"] .home-hero-placeholder{
+    aspect-ratio: 16 / 10;
+    min-height: 180px;
+    max-height: 52vh;
+  }
+  body.home-page .home-hero-image-only .home-hero-image,
+  body.home-page .home-hero-image-only .home-hero-placeholder{
+    aspect-ratio: 16 / 10;
+  }
+  body.home-page .home-hero-placeholder{
+    font-size: 16px;
+  }
+  body.home-page .grid.two.mt-md{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  body.home-page .grid.two.mt-md > .card{
+    min-height: 0;
+  }
+  body.home-page .card{
+    padding: 14px;
+  }
+  body.home-page .recent-item{
+    padding: 10px 12px;
+    line-height: 1.25;
+  }
+  body.home-page .recent-update-item{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  body.home-page .recent-update-date{
+    white-space: nowrap;
+    line-height: 1.15;
+  }
+  body.home-page .recent-update-board{
+    width: auto;
+    min-width: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+  body.home-page .tags-list{
+    gap: 5px;
+  }
+
+  /* log 스킨 */
+  .log-post{
+    padding: 16px;
+  }
+  .log-post-content{
+    flex-direction: column;
+    gap: 16px;
+  }
+  .log-content-column{
+    width: 100%;
+  }
+  .log-media-column{
+    flex-basis: auto;
+    max-width: 100%;
+    width: auto;
+  }
+  .log-feed.has-log-media-width .log-media-column{
+    width: 100%;
+    max-width: 100%;
+  }
+  .log-hero-video{
+    width: 100%;
+  }
+  .post-cover-video-frame{
+    width: 100%;
+    max-width: 100%;
+  }
+  .log-inline-video,
+  .view-inline-video{
+    min-width: 0;
+    width: 100%;
+  }
+  .log-feed.is-unlimited-image .log-media-column{
+    width: auto;
+  }
+  .view-content-body iframe,
+  .view-body iframe,
+  .log-body iframe,
+  .comments-section .comment-content iframe{
+    width: 100%;
+    max-width: 100%;
+  }
+  .log-body{
+    font-size: 16px;
+  }
+  .log-inline-gallery{
+    grid-template-columns: 1fr;
+  }
+
+  /* gallery 스킨 */
+  .gallery-masonry{
+    column-count: min(var(--gallery-columns, 4), 2);
+    column-gap: 12px;
+  }
+
+  /* 게시판 */
+  .board-title-row{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .thread-list{
+    grid-template-columns: repeat(min(var(--thread-columns, 3), 2), minmax(0, 1fr));
+  }
+  .thread-view{
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .thread-view-scroll{
+    max-height: none;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 1280px){
+  .gallery-masonry{
+    column-count: min(var(--gallery-columns, 4), 3);
+  }
+}
+
+@media (max-width: 640px){
+  .gallery-masonry{
+    column-count: 1;
+  }
+  .thread-list{
+    grid-template-columns: 1fr;
+  }
+  .comment-form-top{
+    grid-template-columns: 1fr;
+  }
+  .comment-form-row-inline{
+    flex-wrap: wrap;
+  }
+  .comment-name-input{
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+  .comment-secret-pass-wrap{
+    flex: 1 1 100%;
+  }
+  .comment-pass-input{
+    width: min(120px, 100%);
+  }
+  .comment-gate{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .search-item-card{
+    grid-template-columns: 1fr;
+  }
+  .search-thumb{
+    justify-self: start;
+  }
+  body.home-page .recent-update-item{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  body.home-page .recent-update-date{
+    white-space: nowrap;
+    line-height: 1.15;
+  }
+  body.home-page .recent-update-board{
+    width: auto;
+    min-width: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+  body.site-page .header .container{
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  body.site-page .header .row{
+    gap: 8px;
+  }
+  body.site-page .brand{
+    font-size: 1.2rem;
+  }
+  body.site-page .nav a{
+    height: 36px;
+    padding: 0 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+  body.home-page .pill{
+    font-size: 0.62rem;
+  }
+  body.home-page .home-hero{
+    margin-top: 12px;
+    padding: 10px;
+  }
+  body.home-page .home-hero-placeholder{
+    font-size: 14px;
+  }
+  body.home-page .card{
+    padding: 12px;
+  }
+  body.home-page .recent-item{
+    padding: 9px 10px;
+    gap: 10px;
+    line-height: 1.25;
+  }
+}

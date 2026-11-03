@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
+  <title>게시판</title>
+  <script src="assets/js/core/legacy-spa-redirect.js"></script>
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="index.html">
+          <span class="dot"></span><span id="siteTitle"></span>
+        </a>
+        <nav class="nav" id="topNav">
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card board-header">
+      <div class="board-title-row">
+        <div>
+          <h1 id="boardTitle">게시판</h1>
+          <p class="muted small" id="boardDescription"></p>
+        </div>
+        <div class="board-actions">
+          <a class="btn primary hidden" href="write.html" id="writeBtn" hidden>WRITE</a>
+          <div id="boardAdminTools" class="hidden"></div>
+        </div>
+      </div>
+
+      <div id="paginationTop" class="pagination mt-md"></div>
+      <div id="categoryFilter" class="category-filter mt-sm"></div>
+    </section>
+
+    <div id="boardContent" class="board-content">
+      <div class="loading-indicator" role="status" aria-live="polite">
+        <span class="sr-only">게시물을 불러오는 중</span>
+      </div>
+    </div>
+
+    <div id="pagination" class="pagination mt-md"></div>
+  </main>
+
+  <footer class="footer">
+    <div class="muted small">© NAMWALL</div>
+  </footer>
+
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"f5d3b54061e0459080bdc7fbfcc9294d","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

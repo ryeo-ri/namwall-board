@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
+  <title>관리자 로그인</title>
+  <link rel="preconnect" href="https://r2.naru.pub">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="modulepreload" href="assets/js/core/firebase.js">
+  <link rel="modulepreload" href="assets/js/core/state.js">
+  <link rel="modulepreload" href="assets/js/admin/login-page.js">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+</head>
+<body class="site-page admin-login-page">
+  <main class="container admin-login-shell">
+    <section class="card admin-login-panel">
+      <div class="admin-login-head">
+        <div>
+          <p class="admin-login-kicker">ADMIN ACCESS</p>
+          <h1>관리자 로그인</h1>
+        </div>
+      </div>
+
+      <div class="grid tight mt-md">
+        <div class="field-group">
+          <label for="adminEmail">이메일</label>
+          <input id="adminEmail" type="email" placeholder="관리자 이메일">
+        </div>
+        <div class="field-group">
+          <label for="adminPassword">비밀번호</label>
+          <input id="adminPassword" type="password" placeholder="관리자 비밀번호">
+        </div>
+      </div>
+
+      <div class="formRow mt-md admin-login-actions">
+        <button class="btn primary" id="adminLoginBtn">로그인</button>
+        <button class="btn" id="adminLogoutBtn">로그아웃</button>
+        <a class="btn" href="index.html">홈</a>
+      </div>
+      <div id="adminMsg" class="notice hidden mt-md"></div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/js/admin/login-page.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"f5d3b54061e0459080bdc7fbfcc9294d","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

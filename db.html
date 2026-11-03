@@ -1,0 +1,12 @@
+<ul id="posts"></ul>
+<script type="module">
+  import { createNaru } from "https://sdk.naru.pub/sdk/1.0.0/naru.js";
+
+  const naru = createNaru();
+  const { documents } = await naru.collection("posts").list();
+  for (const post of documents) {
+    const item = document.createElement("li");
+    item.textContent = post.data.title;
+    document.querySelector("#posts").append(item);
+  }
+</script>

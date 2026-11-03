@@ -1,0 +1,615 @@
+/* SCRIPT 스킨 — TRPG 플레이 로그 (원본 namwall app.css의 Script 섹션 이식)
+   board.html(목록) · view.html(상세 뷰어) · write.html(가져오기 폼)에서 로드 */
+
+/* 목록: 세션 카드 그리드 */
+.script-list{
+  display: grid;
+  grid-template-columns: repeat(var(--script-columns, 3), minmax(0, 1fr));
+  gap: 14px;
+}
+.script-card{
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+}
+body.site-page .card.script-card{
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+.script-card-link{
+  display: block;
+  height: 100%;
+}
+.script-card-cover{
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #d9d6cd;
+}
+.script-card-cover img{
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.script-session-cover img{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.script-card-placeholder{
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  background:
+    linear-gradient(135deg, transparent 0 48%, rgba(28,28,28,.07) 48% 52%, transparent 52%),
+    #dedbd2;
+  color: rgba(28,28,28,.55);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: .16em;
+}
+.script-card-body{
+  display: grid;
+  gap: 7px;
+  padding: 13px 14px 15px;
+}
+.script-card-facts{
+  display: flex;
+  gap: 5px;
+  min-height: 18px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.script-card-facts span + span::before{
+  content: "/";
+  margin-right: 5px;
+  color: var(--cream-dk);
+}
+.script-card-title{
+  font-size: 17px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.script-card-players{
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 상세: 세션 정보(hero) */
+.script-session-hero{
+  display: grid;
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.28fr);
+  gap: 0;
+  overflow: hidden;
+  background: #252525;
+  color: #f7f5ef;
+}
+.script-session-cover{
+  min-height: 260px;
+  overflow: hidden;
+  background: #3b3b3b;
+}
+.script-session-image-button{
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  max-height: inherit;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.script-session-image-button:hover,
+.script-session-image-button:focus,
+.script-session-image-button:focus-visible{
+  outline: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.script-session-info{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: clamp(22px, 4vw, 42px);
+}
+.script-session-kicker{
+  color: rgba(247,245,239,.55);
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: .18em;
+}
+.script-session-facts{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px 20px;
+}
+.script-session-facts div{
+  display: grid;
+  gap: 4px;
+}
+.script-session-facts span{
+  color: rgba(247,245,239,.48);
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+.script-session-facts strong{
+  font-size: 14px;
+  line-height: 1.35;
+}
+.script-session-summary{
+  margin: 0;
+  color: rgba(247,245,239,.78);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* 상세: 아카이브 뷰어 */
+.script-reader{
+  margin-top: 18px;
+  background: #f8f8f8;
+}
+.script-reader-status{
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 28px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+/* 로그 본문(가져온 플랫폼 HTML) — 소설 조판에 가까운 스크립트 형태.
+   아카이브에 포함된 시트 CSS(.script-reader 스코프)와 인라인 스타일이 있으면 그쪽이 우선한다. */
+.script-messages{
+  padding: 36px 22px 46px;
+  background: #fff;
+  color: #26241f;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+.script-message{
+  position: relative;
+  max-width: 640px;      /* 소설 본문 폭 */
+  margin: 0 auto;
+  padding: 0 0 0 38px;   /* 아바타 여백 칸 — 아바타가 없어도 컬럼 정렬 유지 */
+  overflow-wrap: break-word;
+}
+/* 발화(턴) 단위 리듬 */
+.script-message-speaker-start{
+  margin-top: 26px;
+}
+.script-messages > .script-message:first-child{
+  margin-top: 0;
+}
+.script-message-continuation{
+  margin-top: 6px;
+}
+.script-message-standalone{
+  margin-top: 22px;
+  margin-bottom: 22px;
+}
+/* 캐릭터 큐: 대사 위 작은 라벨 줄 */
+.script-message .by{
+  display: block;
+  margin-bottom: 2px;
+  color: #8a8578;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.script-message.ccfolia-message .ccfolia-speaker{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  color: #6d695f;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.script-message.ccfolia-message .ccfolia-speaker::before{
+  content: "";
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  background: var(--script-speaker-color, #8a8578);
+}
+.script-message.ccfolia-roll .ccfolia-roll-content{
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid rgba(28,28,28,.12);
+  background: #f7f6f2;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.script-message.ccfolia-roll-success .ccfolia-roll-content{
+  border-color: #bfd3b4;
+  background: #f2f7ef;
+}
+.script-message.ccfolia-roll-critical .ccfolia-roll-content{
+  border-color: #9fbe8d;
+  background: #eaf4e5;
+  font-weight: 700;
+}
+.script-message.ccfolia-roll-fail .ccfolia-roll-content{
+  border-color: #d8b7b2;
+  background: #faf0ee;
+}
+.script-message.ccfolia-roll-fumble .ccfolia-roll-content{
+  border-color: #c88f89;
+  background: #f7e7e5;
+  font-weight: 700;
+}
+/* 날짜 표기 숨김 */
+.script-message .tstamp{
+  display: none !important;
+}
+.script-message .spacer{
+  display: none !important;
+}
+/* 아바타: 캐릭터 큐 옆 26px 정사각 크롭 */
+.script-message .avatar{
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  float: none !important;
+  width: 26px !important;
+  height: 26px;
+  margin: 0 !important;
+  overflow: hidden;
+}
+.script-message .avatar img{
+  display: block;
+  width: 26px !important;
+  height: 26px !important;
+  max-width: none;
+  object-fit: cover;
+}
+/* 지문/내레이션: 큐 없는 이탤릭 단락 — 옅은 배경 블록 */
+.script-message.desc,
+.script-message.emote{
+  margin-top: 26px;
+  margin-bottom: 26px;
+  padding: 12px 16px;
+  background: #f8f8f8;
+  color: #5d5a52;
+  font-style: italic;
+  line-height: 1.6;
+  text-align: center;
+}
+/* 연속 나레이션: 사이 흰 틈 없이 한 블록으로 이어붙임
+   (음수 마진이 앞 블록의 margin-bottom 26px를 상쇄) */
+.script-message.desc + .script-message.desc,
+.script-message.desc + .script-message.emote,
+.script-message.emote + .script-message.desc,
+.script-message.emote + .script-message.emote{
+  margin-top: -26px;
+  padding-top: 0;
+}
+/* 귓속말 */
+.script-message.private,
+.script-message.whisper{
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  padding-right: 12px;
+  background: #f3f3f3;
+}
+/* 연속 귓속말: 사이 흰 틈 없이 한 블록으로 이어붙임 */
+.script-message.private + .script-message.private,
+.script-message.private + .script-message.whisper,
+.script-message.whisper + .script-message.private,
+.script-message.whisper + .script-message.whisper{
+  margin-top: -12px;
+  padding-top: 0;
+}
+/* 로그 속 이미지 */
+.script-message img{
+  max-width: 100%;
+  height: auto;
+}
+.script-message table{
+  max-width: 100%;
+}
+/* 굴림값 칩 (색상 유지) */
+.script-message .inlinerollresult{
+  padding: 0 4px;
+  border: 2px solid #f0df73;
+  background: #fff3a6;
+  font-weight: 700;
+  cursor: help;
+}
+.script-message .inlinerollresult.fullcrit{
+  border-color: #3fb315;
+}
+.script-message .inlinerollresult.fullfail{
+  border-color: #b31515;
+}
+.script-message .inlinerollresult.importantroll{
+  border-color: #4a57ed;
+}
+.script-message .formula,
+.script-message .rolled{
+  display: inline-block;
+  margin: 2px 0;
+  padding: 2px 6px;
+  border: 1px solid rgba(28, 28, 28, 0.18);
+  background: #faf9f4;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+.script-message .formula .inlinerollresult{
+  font-size: inherit;
+}
+.script-message .formattedformula{
+  display: block;
+  float: none;
+  margin: 4px 0;
+  padding: 0;
+}
+.script-message .rolled{
+  color: #000;
+  font-size: 1.25em;
+  font-weight: 700;
+}
+/* 성공/실패 강조 (색상 유지) */
+.script-message .diceroll.critsuccess .didroll{
+  color: #247305;
+  font-weight: 700;
+}
+.script-message .diceroll.critfail .didroll{
+  color: #730505;
+  font-weight: 700;
+}
+.script-message .basicdiceroll.critsuccess{
+  color: #00a000;
+}
+.script-message .basicdiceroll.critfail{
+  color: #c21f1f;
+  font-weight: 700;
+}
+/* 판정 표(롤 템플릿): 본문 폭보다 좁은 컴팩트 카드 */
+.script-reader [class*="sheet-rolltemplate-"]{
+  max-width: 420px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.script-reader [class*="sheet-rolltemplate-"] table{
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(28, 28, 28, 0.35);
+  background: #fff;
+  color: #1c1c1c;
+}
+.script-reader [class*="sheet-rolltemplate-"] caption{
+  padding: 6px 10px;
+  background: #1c1c1c;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  text-align: center;
+}
+.script-reader [class*="sheet-rolltemplate-"] th,
+.script-reader [class*="sheet-rolltemplate-"] td{
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(28, 28, 28, 0.12);
+  vertical-align: middle;
+}
+.script-reader [class*="sheet-rolltemplate-"] tr:last-child > *{
+  border-bottom: 0;
+}
+.script-reader [class*="sheet-rolltemplate-"] .sheet-template_label{
+  width: 1%;
+  color: #55524a;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.script-reader [class*="sheet-rolltemplate-"] .sheet-template_value{
+  text-align: left;
+}
+.script-reader [class*="sheet-rolltemplate-"] .inlinerollresult{
+  display: inline-block;
+  min-width: 1.6em;
+  text-align: center;
+}
+.script-load-more{
+  display: block;
+  margin: 14px auto;
+}
+.script-reader-sentinel{
+  width: 100%;
+  height: 1px;
+}
+
+/* 글쓰기: 세션 정보 2단 그리드 + 로그 가져오기 */
+.write-skin-fields{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.write-skin-field-full{
+  grid-column: 1 / -1;
+}
+.script-source-controls{
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.script-source-controls label{
+  margin: 0;
+  white-space: nowrap;
+}
+.script-source-controls select{
+  width: min(180px, 100%);
+  min-height: 34px;
+  background: #fff;
+}
+.script-source-help{
+  flex: 1 1 220px;
+}
+.script-import-dropzone{
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-height: 126px;
+  padding: 20px;
+  border: 1px dashed rgba(28,28,28,.2);
+  background: #fff;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+.script-import-dropzone.is-dragover{
+  background: #efede6;
+  border-color: var(--ink);
+}
+.write-page .script-import-dropzone .btn{
+  align-self: center;   /* grid dropzone의 stretch로 버튼이 늘어나지 않게 */
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.script-image-backup-option{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.script-import-status{
+  min-height: 18px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.script-import-status.is-error{
+  color: var(--danger);
+}
+.script-import-result{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 8px 0 0;
+  padding: 1px;
+  background: var(--line);
+}
+.script-import-result-item{
+  min-width: 0;
+  padding: 8px 9px;
+  background: #fff;
+}
+.script-import-result-item:nth-child(2){
+  grid-column: span 2;
+}
+.script-import-result dt{
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.script-import-result dd{
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 반응형 */
+@media (max-width: 920px){
+  .script-list{
+    grid-template-columns: repeat(min(var(--script-columns, 3), 2), minmax(0, 1fr));
+  }
+  .script-session-hero{
+    grid-template-columns: 1fr;
+  }
+  .script-session-cover{
+    min-height: 220px;
+    max-height: 52vh;
+  }
+}
+
+@media (max-width: 640px){
+  body.script-view-page main.container{
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.script-view-page .view-card{
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.script-view-page .view-head{
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  body.script-view-page .script-session-info{
+    padding: 20px 12px;
+  }
+  body.script-view-page .script-messages{
+    padding: 28px 5px 38px;
+  }
+  body.script-view-page .script-message{
+    padding-left: 34px;
+  }
+  body.script-view-page .script-message.desc,
+  body.script-view-page .script-message.emote{
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .script-import-result{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .script-import-result-item:nth-child(2){
+    grid-column: span 1;
+  }
+  .script-list{
+    grid-template-columns: 1fr;
+  }
+  .script-session-facts{
+    grid-template-columns: 1fr;
+  }
+  .write-skin-fields{
+    grid-template-columns: 1fr;
+  }
+}

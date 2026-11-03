@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
+  <title>300.30</title>
+  <link rel="preconnect" href="https://r2.naru.pub">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="modulepreload" href="assets/js/core/app.js">
+  <link rel="modulepreload" href="assets/js/core/spa-router.js">
+  <link rel="modulepreload" href="assets/js/core/spa-navigation.js">
+  <link rel="modulepreload" href="assets/js/core/firebase.js">
+  <link rel="modulepreload" href="assets/js/core/state.js">
+  <link rel="modulepreload" href="assets/js/shared/boards-render.js">
+  <link rel="modulepreload" href="assets/js/skins/registry.js">
+  <link rel="modulepreload" href="assets/js/pages/home-page.js?v=20260717-1">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <script src="assets/js/core/font-boot.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+</head>
+<body class="site-page home-page home-access-pending spa-booting">
+  <div class="header" data-spa-page>
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="index.html">
+          <span class="dot"></span><span id="siteTitle"></span>
+        </a>
+        <nav class="nav" id="topNav">
+        </nav>
+        <div class="pills">
+          <span class="pill" id="pillGuest">Guest: </span>
+          <span class="pill" id="pillAdmin">Admin: </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container" data-spa-page>
+    <div id="homeIntro"></div>
+
+    <div class="grid two mt-md">
+      <section class="card">
+        <h3>최근 업데이트</h3>
+        <div class="grid tight" id="recentList">
+          <div class="loading-indicator" role="status" aria-live="polite">
+            <span class="sr-only">최근 업데이트를 불러오는 중</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h3>빠른 메뉴</h3>
+        <div id="quickMenu" class="grid tight"></div>
+
+        <hr class="sep">
+        <h3>검색</h3>
+        <div class="formRow">
+          <input id="quickTag" placeholder="태그 입력 후 검색">
+          <button class="btn" id="quickSearchBtn">검색</button>
+        </div>
+
+        <hr class="sep">
+        <h3>최근 태그</h3>
+        <div id="recentTags">
+          <div class="loading-indicator" role="status" aria-live="polite">
+            <span class="sr-only">최근 태그를 불러오는 중</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+
+  <footer class="footer" data-spa-page>
+    <div class="muted small">© NAMWALL</div>
+  </footer>
+
+  <template id="spaRouteAnchor"></template>
+  <script src="assets/js/youtube-diamond-player.js?v=20260826"></script>
+  <script type="module" src="assets/js/core/spa-router.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"f5d3b54061e0459080bdc7fbfcc9294d","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

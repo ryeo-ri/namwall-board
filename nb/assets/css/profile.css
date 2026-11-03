@@ -1,0 +1,440 @@
+/* PROFILE 스킨 — 캐릭터 프로필 (원본 namwall app.css 6-5 profile 섹션 이식)
+   board.html(카드 목록) · view.html(상세) · write.html(입력 폼)에서 로드
+   ※ 원본의 삭제 모드·비디오 임베드·미사용 클래스는 나루판에서 쓰지 않아 제외 */
+
+/* 카드 목록 */
+.profile-list{
+  display: grid;
+  grid-template-columns: repeat(var(--profile-columns, 4), minmax(0, 250px));
+  justify-content: center;
+  gap: 14px;
+}
+.profile-card{
+  position: relative;
+  padding: 0;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: transparent;
+}
+body.site-page .card.profile-card{
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.profile-card-link{
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+.profile-card-media{
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+.profile-card-media .profile-media-image{
+  object-fit: cover;
+}
+.profile-card-media .profile-media-placeholder{
+  position: absolute;
+  inset: 0;
+}
+.profile-card-namebar{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  gap: 2px;
+  padding: 36px 14px 12px;
+  background: linear-gradient(to top, rgba(28, 28, 28, 0.85), rgba(28, 28, 28, 0));
+  color: var(--cream-lt);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.profile-card-name{
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+.profile-card-namebar .profile-name-en,
+.profile-card-overlay .profile-name-en{
+  color: rgba(245, 243, 238, 0.72);
+}
+.profile-card-overlay{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(28, 28, 28, 0.94) 35%, rgba(28, 28, 28, 0.5));
+  color: var(--cream-lt);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.profile-card:hover .profile-card-overlay,
+.profile-card:focus-within .profile-card-overlay{
+  opacity: 1;
+}
+.profile-card:hover .profile-card-namebar{
+  opacity: 0;
+}
+.profile-card-overlay .profile-card-name{
+  font-size: 22px;
+}
+.profile-card-overlay .profile-meta-row{
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.profile-card-overlay .profile-chip{
+  background: rgba(245, 243, 238, 0.14);
+  border-color: rgba(245, 243, 238, 0.28);
+  color: var(--cream-lt);
+  gap: 4px;
+  padding: 2px 6px;
+  min-height: 20px;
+  font-size: 9px;
+}
+.profile-card-overlay .profile-chip-label{
+  color: rgba(245, 243, 238, 0.6);
+  font-size: 8px;
+}
+.profile-card-overlay .profile-card-quote{
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(245, 243, 238, 0.85);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.profile-card-meta{
+  margin-top: 0;
+}
+
+/* 공통 조각 */
+.profile-meta-row{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.profile-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--cream-lt);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.profile-chip-label{
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.profile-panel{
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--white);
+  box-shadow: none;
+  overflow: hidden;
+}
+.profile-panel-label{
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.profile-panel-title{
+  display: block;
+  font-size: 15px;
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+.profile-facts{
+  display: grid;
+  gap: 8px;
+}
+.profile-media-button{
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.profile-media-image{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+.profile-media-placeholder{
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.profile-name-en{
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* 상세 (view) */
+.profile-hero{
+  display: block;
+  background: var(--white);
+  gap: 18px;
+}
+.profile-hero-main{
+  display: grid;
+  grid-template-columns: minmax(260px, 0.92fr) minmax(260px, 1.08fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.profile-copy{
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+}
+.profile-view-sections{
+  gap: 8px;
+}
+.profile-view-hero{
+  padding: 0;
+}
+.profile-view-hero .profile-hero-main{
+  align-items: stretch;
+}
+.profile-view-hero .profile-copy{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  align-content: start;
+  gap: 16px;
+  background: transparent; /* 상세: 네임카드 뒤 흰 배경 제거 */
+}
+/* 상세 네임카드: 크림색 대신 회색조 배경 */
+.profile-view-hero .profile-namecard{
+  background: #e9e9e9;
+  border-color: rgba(28, 28, 28, 0.12);
+}
+.profile-view-hero .profile-panel-title{
+  word-break: break-word;
+}
+.profile-view-hero .profile-panel{
+  height: 100%;
+}
+.profile-view-sections .profile-panel{
+  display: grid;
+  gap: 8px;
+}
+.profile-view-sections .profile-panel-title{
+  margin-bottom: 0;
+}
+.profile-hero-visual{
+  position: relative;
+  min-height: 300px;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: transparent;
+}
+.profile-hero-media{
+  height: 100%;
+}
+.profile-hero-media .profile-media-image{
+  object-fit: contain;
+}
+.profile-file-label{
+  position: absolute;
+  z-index: 2;
+  left: 10px;
+  top: 10px;
+  padding: 3px 6px;
+  border: 1px solid rgba(28, 28, 28, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+/* 네임카드 */
+.profile-namecard{
+  display: grid;
+  gap: 12px;
+  padding: 18px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--cream-lt);
+}
+.profile-namecard-quote{
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.profile-namecard-main{
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.profile-namecard-main-no-photo{
+  grid-template-columns: minmax(0, 1fr);
+}
+.profile-namecard-photo{
+  width: 150px;
+  max-width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 8px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--cream-lt);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+}
+.profile-namecard-photo img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile-namecard-photo-button{
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: zoom-in;
+}
+.profile-namecard-body{
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.profile-namecard-name{
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.profile-namecard-meta{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+}
+.profile-namecard-fact{
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.profile-namecard-key{
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.profile-namecard-tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.profile-namecard-tags .tag{
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(28, 28, 28, 0.14);
+  background: var(--white);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+/* 추가 이미지 */
+.profile-extra{
+  display: grid;
+  gap: 8px;
+}
+.profile-extra-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+}
+.profile-extra-thumb{
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--cream-lt);
+  cursor: zoom-in;
+  aspect-ratio: 1 / 1;
+}
+.profile-extra-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 반응형 */
+@media (max-width: 920px){
+  .profile-hero,
+  .profile-hero-main{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .profile-list{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .profile-namecard-main{
+    grid-template-columns: 1fr;
+  }
+  .profile-hero-visual{
+    min-height: 240px;
+  }
+}
