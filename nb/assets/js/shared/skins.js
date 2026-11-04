@@ -20,11 +20,10 @@ export function renderBoardList(posts, board, opts = {}) {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const count = post.commentCount > 0 ? ` <span class="muted small">[${post.commentCount}]</span>` : "";
         const author = post.isOwnerPost ? "" : `<span class="muted small">${escapeHtml(post.nickname || "익명")}</span> `;
-        // 관리자 모드(ADMIN 토글): 체크박스·번호 + 날짜·수정·삭제 — GALLERY와 같은 형식(투명 배경)
+        // 관리자 모드(ADMIN 토글): 체크박스 + 날짜·수정·삭제 — GALLERY와 같은 형식(투명 배경, 번호 없음)
         const check = opts.selectable
           ? `<label class="gallery-delete-check"><input type="checkbox" data-post-select="${post.id}" aria-label="선택"></label>`
           : "";
-        const no = opts.selectable ? `<span class="gallery-manage-no">${post.id}</span> ` : "";
         const manage = (opts.showManage && post.editable)
           ? ` <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" aria-label="게시물 수정">수정</a> <button type="button" class="gallery-manage-button gallery-delete-button" data-del-post="${post.id}" aria-label="게시물 삭제">삭제</button>`
           : "";
@@ -32,7 +31,7 @@ export function renderBoardList(posts, board, opts = {}) {
           <article class="search-item board-line-item" data-post-id="${post.id}">
             ${check}
             <a href="${url}" class="board-line-title">${post.isSecret ? renderLockIcon("board-line-lock-icon") : ""}${title}${count}</a>
-            <span class="board-line-date">${no}${author}${escapeHtml(formatDate(post.createdAt))}${manage}</span>
+            <span class="board-line-date">${author}${escapeHtml(formatDate(post.createdAt))}${manage}</span>
           </article>
         `;
       }).join("")}

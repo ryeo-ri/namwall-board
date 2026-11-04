@@ -13,13 +13,12 @@ export function renderThreadList(posts, board, opts = {}) {
       ${posts.map((post) => {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const title = escapeHtml(post.title || "(제목 없음)");
-        // 관리자 모드(ADMIN 토글): 카드 위에 체크박스·번호·날짜·수정·삭제 줄 — GALLERY와 같은 형식(투명 배경)
+        // 관리자 모드(ADMIN 토글): 카드 위에 체크박스·날짜·수정·삭제 줄 — GALLERY와 같은 형식(투명 배경, 번호 없음)
         const canManage = Boolean(opts.showManage && post.editable);
         const adminBar = (opts.selectable || canManage) ? `
           <div class="gallery-delete-topbar">
             <div class="gallery-delete-left">
               ${opts.selectable ? `<label class="gallery-delete-check"><input type="checkbox" data-post-select="${post.id}" aria-label="선택"></label>` : ""}
-              <span class="gallery-manage-no">${post.id}</span>
               <span class="gallery-delete-date">${escapeHtml(formatDate(post.createdAt))}</span>
             </div>
             ${canManage ? `

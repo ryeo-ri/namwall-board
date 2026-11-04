@@ -151,6 +151,35 @@ body.site-page .comment-admin-actions [data-del-comment]{
 /* 방명록 폼의 메시지 영역 */
 .gb-msg{ margin-top: 4px; }
 
+/* 댓글 폼 '이미지 첨부' — 접기·비밀 토글과 같은 크기의 작은 버튼 */
+.comment-image-attach,
+body.site-page .btn.comment-image-attach{
+  min-height: 22px;
+  min-width: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  font-family: var(--font-kr);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* 타래 상세: 댓글 폼 항상 펼침 — ▼ 토글 숨김 (view 상세와 동일 규칙) */
+#threadComments .comment-form-head{
+  display: none;
+}
+#threadComments .comment-form-body{
+  display: block !important;
+}
+
 /* ==========================================================================
    관리자 페이지 (원본 NAMWALL 8장 이식 — body 클래스 없음: 크림 기본 테마)
    ========================================================================== */
