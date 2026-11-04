@@ -364,17 +364,12 @@ async function refreshBoards() {
   listEl.querySelectorAll("[data-board-delete]").forEach((button) => {
     button.addEventListener("click", async () => {
       const id = button.dataset.boardDelete;
-      if (!window.confirm(`게시판 "${id}"을 삭제할까요?`)) return;
-      const withPosts = window.confirm(
-        `이 게시판의 글과 댓글도 함께 삭제할까요?\n\n` +
-        `확인: 글까지 모두 삭제 (되돌릴 수 없습니다)\n` +
-        `취소: 게시판 설정만 삭제 (글은 남고, 같은 ID로 다시 만들면 다시 보입니다)`
-      );
+      if (!window.confirm(`게시판 "${id}"을 삭제할까요?\n이 게시판의 글·댓글·방명록도 DB에서 모두 삭제됩니다. 되돌릴 수 없습니다.`)) return;
       try {
-        await runMutate("site:removeBoard", { id, withPosts });
+        await runMutate("site:removeBoard", { id });
         clearSiteCache();
         await refreshBoards();
-        showListMsg(withPosts ? "게시판과 글을 모두 삭제했습니다." : "게시판 설정만 삭제했습니다. (글은 남아 있음)");
+        showListMsg("게시판과 글을 모두 삭제했습니다.");
       } catch (error) {
         showListMsg(naruErrorMessage(error, "삭제에 실패했습니다."), true);
       }

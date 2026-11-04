@@ -95,13 +95,10 @@ export async function linkOwnerMember(ctx, args) {
 export async function removeBoard(ctx, args) {
   requireOwner(ctx);
   const id = String((args && args.id) || "").trim();
-  // 기본: 게시판 설정만 지운다 — 글은 남고, 같은 ID로 다시 만들면 다시 보인다.
-  // withPosts: 글·댓글·방명록까지 모두 지운다 (되돌릴 수 없음).
-  if ((args && args.withPosts) === true) {
-    await ctx.sql`DELETE FROM comments WHERE post_id IN (SELECT id FROM posts WHERE board_id = ${id})`;
-    await ctx.sql`DELETE FROM posts WHERE board_id = ${id}`;
-    await ctx.sql`DELETE FROM guestbook WHERE board_id = ${id}`;
-  }
+  // 게시판을 지우면 그 글·댓글·방명록도 DB에서 함께 지운다 (되돌릴 수 없음)
+  await ctx.sql`DELETE FROM comments WHERE post_id IN (SELECT id FROM posts WHERE board_id = ${id})`;
+  await ctx.sql`DELETE FROM posts WHERE board_id = ${id}`;
+  await ctx.sql`DELETE FROM guestbook WHERE board_id = ${id}`;
   await ctx.sql`DELETE FROM boards WHERE id = ${id}`;
   return null;
 }
