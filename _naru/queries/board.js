@@ -273,8 +273,9 @@ export async function recentTags(ctx) {
     .map(([tag]) => tag);
 }
 
-/* ── 검색 — 공개 게시판의 글에서 제목·본문·출처·태그 LIKE 검색 ──
-   태그는 부분 일치: "낮밤"으로도 "#낮밤서"가 찾아진다 (# 유무 무관). */
+/* ── 검색 — 공개 게시판의 글에서 제목·본문·출처·태그·댓글 LIKE 검색 ──
+   태그는 부분 일치: "낮밤"으로도 "#낮밤서"가 찾아진다 (# 유무 무관).
+   댓글 본문도 검색하며(원본 namwall과 동일), 비밀 댓글은 관리자에게만 걸린다. */
 export async function search(ctx, args) {
   const owner = await isOwner(ctx);
   const q = String((args && args.q) || "").trim().slice(0, 100);
@@ -283,19 +284,24 @@ export async function search(ctx, args) {
 
   const like = `%${q}%`;
   const tagLike = `%${tag}%`;
+  const commentWhere = `c.post_id = p.id AND c.body LIKE ?${owner ? "" : " AND c.is_secret = 0"}`;
   const sql = `
     SELECT p.id, p.title, p.board_id, p.body, p.thumb, p.tags, p.source, p.log_no, p.is_secret,
            p.created_at, p.updated_at, b.title AS board_title
+           ${q ? `, (SELECT c.body FROM comments c WHERE ${commentWhere} ORDER BY c.id DESC LIMIT 1) AS comment_match` : ""}
     FROM posts p JOIN boards b ON b.id = p.board_id
     WHERE b.is_public = 1
       ${owner ? "" : "AND p.is_secret = 0"}
       ${owner || ctx.member ? "" : "AND p.member_only = 0"}
       ${tag ? "AND p.tags LIKE ?" : ""}
-      ${q ? "AND (p.title LIKE ? OR p.body LIKE ? OR p.source LIKE ? OR p.tags LIKE ?)" : ""}
+      ${q ? `AND (p.title LIKE ? OR p.body LIKE ? OR p.source LIKE ? OR p.tags LIKE ?
+             OR EXISTS (SELECT 1 FROM comments c WHERE ${commentWhere}))` : ""}
     ORDER BY p.id DESC LIMIT 50`;
+  // 바인딩은 SQL의 ? 등장 순서: SELECT의 댓글 발췌 → 태그 → 제목·본문·출처·태그 → 댓글 EXISTS
   const values = [];
+  if (q) values.push(like);
   if (tag) values.push(tagLike);
-  if (q) values.push(like, like, like, like);
+  if (q) values.push(like, like, like, like, like);
   const { rows } = await ctx.sql(sql, values);
 
   return rows.map((row) => ({
@@ -304,6 +310,7 @@ export async function search(ctx, args) {
     boardId: row.board_id,
     boardTitle: row.board_title,
     excerpt: row.is_secret ? "" : String(row.body || "").slice(0, 300),
+    commentMatch: row.is_secret ? "" : String(row.comment_match || "").slice(0, 200),
     thumb: row.is_secret ? "" : row.thumb,
     tags: parseJson(row.tags, []),
     logNo: row.log_no || 0,

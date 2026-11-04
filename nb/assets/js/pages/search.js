@@ -1,4 +1,4 @@
-// 검색 — 제목·본문·출처·태그 (서버 쿼리, 원본 search-item-card 마크업)
+// 검색 — 제목·본문·출처·태그·댓글 (서버 쿼리, 원본 search-item-card 마크업)
 import { runQuery, naruErrorMessage } from "../core/naru-client.js";
 import { renderHeader, escapeHtml, formatDate } from "../core/site.js";
 
@@ -53,6 +53,11 @@ async function runSearch() {
       const title = escapeHtml(item.title || (item.logNo ? String(item.logNo) : "(제목 없음)"));
       const content = String(item.excerpt || "").replace(/<[^>]*>/g, " ").trim();
       const excerpt = escapeHtml(content.length > 200 ? `${content.substring(0, 200)}...` : content);
+      // 댓글에서 일치한 경우: 일치한 댓글 발췌를 한 줄 보여준다
+      const commentText = String(item.commentMatch || "").replace(/<[^>]*>/g, " ").trim();
+      const commentLine = commentText
+        ? `<p class="search-excerpt muted small">댓글: ${escapeHtml(commentText.length > 120 ? `${commentText.substring(0, 120)}...` : commentText)}</p>`
+        : "";
       const tagsHtml = (item.tags || [])
         .map((t) => `<a class="tag" href="search.html?tag=${encodeURIComponent(t)}">${escapeHtml(t)}</a>`)
         .join("");
@@ -69,6 +74,7 @@ async function runSearch() {
             </div>
             <a href="${viewUrl}" class="search-title">${item.isSecret ? "🔒 " : ""}${title}</a>
             ${excerpt ? `<p class="search-excerpt">${excerpt}</p>` : ""}
+            ${commentLine}
             ${tagsHtml ? `<div class="search-tags">${tagsHtml}</div>` : ""}
           </div>
           ${item.thumb ? `
