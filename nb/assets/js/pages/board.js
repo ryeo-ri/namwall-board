@@ -47,7 +47,7 @@ async function init() {
 
   // 분류 칩: 게시판에 분류가 설정돼 있으면 목록 위에 표시 — 클릭하면 그 분류 글만 본다
   const categories = Array.isArray(board.options?.categories) ? board.options.categories : [];
-  if (categories.length && listEl) {
+  if (categories.length && listEl && listEl.parentElement) {
     const chipLink = (label, cat) => {
       const href = `board.html?bo=${encodeURIComponent(board.id)}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}`;
       return `<a class="tag${cat === activeCategory ? " is-active" : ""}" href="${href}">${escapeHtml(label)}</a>`;
@@ -55,7 +55,7 @@ async function init() {
     const chips = document.createElement("div");
     chips.className = "board-category-chips";
     chips.innerHTML = [chipLink("전체", ""), ...categories.map((cat) => chipLink(cat, cat))].join("");
-    listEl.parentElement?.insertBefore(chips, listEl);
+    listEl.parentElement.insertBefore(chips, listEl);
   }
 
   const canWrite = boot.owner || (board.memberWrite && boot.me);
@@ -120,7 +120,11 @@ async function init() {
       deleteAllBtn.textContent = "삭제 중…";
       try {
         for (;;) {
-          const { posts } = await runQuery("board:posts", { board: board.id, size: 50 });
+          const { posts } = await runQuery("board:posts", {
+            board: board.id,
+            size: 50,
+            ...(activeCategory ? { category: activeCategory } : {})
+          });
           if (!posts.length) break;
           for (const post of posts) await runMutate("post:remove", { id: post.id });
         }
