@@ -4,10 +4,10 @@ import { loadBoot, clearSiteCache, escapeHtml } from "../core/site.js";
 
 const SKINS = [
   { type: "BOARD", label: "목록형 게시판" },
-  { type: "GALLERY", label: "이미지 갤러리" },
-  { type: "LOG", label: "로그 피드" },
+  { type: "GALLERY", label: "갤러리" },
+  { type: "LOG", label: "로그" },
   { type: "THREAD", label: "타래" },
-  { type: "SCRIPT", label: "TRPG 플레이 로그" },
+  { type: "SCRIPT", label: "TRPG 로그백업" },
   { type: "GUESTBOOK", label: "방명록" },
   { type: "PROFILE", label: "캐릭터 프로필" }
 ];

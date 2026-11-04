@@ -6,8 +6,8 @@ import { renderGalleryList, bindGallery } from "../skins/gallery.js";
 import { renderThreadList } from "../skins/thread.js";
 import { renderLogFeed, bindLogFeed } from "../skins/log.js";
 
-const DEFAULT_PAGE_SIZE = 20;
-const LOG_PAGE_SIZE = 10;
+// 페이지당 게시물 수 — 전 스킨 공통 기본 10 (게시판 설정 pageSize로 변경 가능)
+const DEFAULT_PAGE_SIZE = 10;
 
 // 목록 스킨 관리자 모드 — 켜면 각 글에 수정·삭제와 선택 체크박스 표시 (원본 ADMIN 토글)
 // GUESTBOOK(항목별 D 버튼)·SCRIPT·PROFILE은 제외
@@ -126,21 +126,21 @@ async function init() {
     prefetch && prefetch.skinType === skinType ? prefetch.promise : null);
 }
 
-function pageSizeFor(board, skinType) {
+function pageSizeFor(board) {
   if (board.pageSize > 0) return Math.min(board.pageSize, 50);
-  return skinType === "LOG" ? LOG_PAGE_SIZE : DEFAULT_PAGE_SIZE;
+  return DEFAULT_PAGE_SIZE;
 }
 
 // 스킨에 맞는 목록 쿼리 — 첫 화면 병렬 프리페치와 renderList가 같은 인자를 쓰도록 공용화
 function listQuery(board, skinType, before) {
   if (skinType === "GUESTBOOK") {
     return runQuery("board:guestbook", {
-      board: board.id, size: pageSizeFor(board, skinType), ...(before ? { before } : {})
+      board: board.id, size: pageSizeFor(board), ...(before ? { before } : {})
     });
   }
   return runQuery("board:posts", {
     board: board.id,
-    size: pageSizeFor(board, skinType),
+    size: pageSizeFor(board),
     // LOG는 본문까지, GALLERY는 추가 이미지(attachments)까지 목록에서 그린다
     ...(skinType === "LOG" || skinType === "GALLERY" ? { withBody: true } : {}),
     ...(before ? { before } : {})
