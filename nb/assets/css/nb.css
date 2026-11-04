@@ -437,6 +437,78 @@ body.site-page .comment-admin-actions [data-del-comment]{
   min-height: 30px;
   padding: 6px 10px;
 }
+/* 게시판 목록 — 한 줄 행: 램프(메뉴 노출) · 순서 · ID 링크 · 제목 · 설명 · 스킨 · 상태
+   메뉴에서 꺼진 게시판은 행 전체를 흐리게(불꺼짐) 표시한다. */
+.board-line{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.board-line.is-menu-off{
+  opacity: 0.55;
+  background: rgba(15, 23, 42, 0.035);
+}
+.board-line-lamp{
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffd34d;
+  box-shadow: 0 0 6px rgba(255, 200, 0, 0.85);
+}
+.board-line.is-menu-off .board-line-lamp{
+  background: #c7c7c7;
+  box-shadow: none;
+}
+.board-line-order{
+  flex: 0 0 auto;
+  min-width: 22px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.board-line-id{
+  flex: 0 0 auto;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.board-line-id:hover{
+  color: var(--olive-dk);
+}
+.board-line-title{
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-line-desc{
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.board-line-skin{
+  flex: 0 0 auto;
+}
+.board-line .board-row-actions{
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
 /* 저장 버튼: 가운데 정렬 + 강조 */
 .board-editor-save-row{
   justify-content: center;
@@ -479,5 +551,13 @@ body.site-page .comment-admin-actions [data-del-comment]{
   }
   .board-row-actions{
     justify-content: flex-start;
+  }
+  /* 한 줄 행: 좁은 화면에서는 설명이 둘째 줄로 내려간다 */
+  .board-line{
+    flex-wrap: wrap;
+  }
+  .board-line-desc{
+    flex-basis: 100%;
+    order: 9;
   }
 }

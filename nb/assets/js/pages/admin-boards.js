@@ -155,7 +155,7 @@ function bindForm() {
    "boardBoardWidthInput", "boardColumnsInput", "boardCommentPosInput", "boardImageWidthInput"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", updateSummary);
   });
-  ["menuVisibleInput", "boardPublicInput", "boardMemberWriteInput", "boardDetailThumbInput"].forEach((id) => {
+  ["menuVisibleInput", "boardAdminOnlyInput", "boardMemberWriteInput", "boardDetailThumbInput"].forEach((id) => {
     document.getElementById(id)?.addEventListener("change", updateSummary);
   });
 
@@ -204,7 +204,7 @@ function updateSummary() {
 
   const chips = [
     { label: "메뉴 노출", on: checked("menuVisibleInput") },
-    { label: "공개", on: checked("boardPublicInput") },
+    { label: "관리자 전용", on: checked("boardAdminOnlyInput") },
     { label: "회원 글쓰기", on: checked("boardMemberWriteInput") }
   ];
   const chipsEl = document.getElementById("boardSummaryChips");
@@ -222,7 +222,7 @@ function resetForm(message = "") {
   document.getElementById("boardCommentPosInput").value = "bottom";
   document.getElementById("boardDetailThumbInput").checked = true;
   document.getElementById("menuVisibleInput").checked = true;
-  document.getElementById("boardPublicInput").checked = true;
+  document.getElementById("boardAdminOnlyInput").checked = false;
   document.getElementById("boardMemberWriteInput").checked = false;
   if (titleImageStaged) URL.revokeObjectURL(titleImageStaged.previewUrl);
   titleImageStaged = null;
@@ -282,7 +282,7 @@ async function save() {
       menuOrder: Number(getValue("menuOrderInput")) || 0,
       pageSize: Number(getValue("pageSizeInput")) || 0,
       menuVisible: checked("menuVisibleInput"),
-      isPublic: checked("boardPublicInput"),
+      isPublic: !checked("boardAdminOnlyInput"),
       memberWrite: checked("boardMemberWriteInput"),
       options
     });
@@ -305,31 +305,29 @@ async function refreshBoards() {
   const listEl = document.getElementById("boardsList");
   if (!listEl) return;
 
+  // 한 줄 행: 램프(메뉴 노출) · 순서 · ID(새 창 바로가기) · 제목 · 설명 · 스킨 · 상태
+  // 메뉴에서 꺼진 게시판은 행 전체를 흐리게(불꺼짐) 표시한다.
   listEl.innerHTML = boards.length
-    ? boards.map((board) => `
-        <div class="board-list-item">
-          <div class="board-row-compact">
-            <div class="board-row-main">
-              <div class="board-row-title">
-                <strong>${escapeHtml(board.title || board.id)}</strong>
-                <span class="muted small">${escapeHtml(board.id)}</span>
-              </div>
-              <div class="board-row-meta">
-                <span class="summary-chip is-on">${escapeHtml(board.skinType)}</span>
-                <span class="summary-chip ${board.menuVisible ? "is-on" : "is-off"}">메뉴 ${board.menuVisible ? "ON" : "OFF"}</span>
-                <span class="summary-chip ${board.isPublic ? "is-on" : "is-off"}">공개 ${board.isPublic ? "ON" : "OFF"}</span>
-                <span class="summary-chip ${board.memberWrite ? "is-on" : "is-off"}">회원쓰기 ${board.memberWrite ? "ON" : "OFF"}</span>
-                ${board.pageSize ? `<span class="muted small">${board.pageSize}개씩</span>` : ""}
-              </div>
-            </div>
-            <div class="board-row-actions">
-              <button type="button" class="btn small" data-board-edit="${escapeHtml(board.id)}">수정</button>
-              <a class="btn small" href="board.html?bo=${encodeURIComponent(board.id)}" target="_blank" rel="noopener noreferrer">보기</a>
-              <button type="button" class="btn small" data-board-delete="${escapeHtml(board.id)}">삭제</button>
-            </div>
-          </div>
+    ? boards.map((board) => {
+        const skinInfo = SKINS.find((item) => item.type === board.skinType);
+        const skinLabel = skinInfo ? skinInfo.label : board.skinType;
+        return `
+        <div class="board-list-item board-line ${board.menuVisible ? "" : "is-menu-off"}">
+          <span class="board-line-lamp" title="${board.menuVisible ? "메뉴에 노출 중" : "메뉴에서 꺼져 있음"}"></span>
+          <span class="board-line-order" title="메뉴 순서">${Number(board.menuOrder) || 0}</span>
+          <a class="board-line-id" href="board.html?bo=${encodeURIComponent(board.id)}" target="_blank" rel="noopener noreferrer" title="게시판을 새 창에서 열기">${escapeHtml(board.id)}</a>
+          <strong class="board-line-title">${escapeHtml(board.title || board.id)}</strong>
+          <span class="board-line-desc" title="${escapeHtml(board.description || "")}">${escapeHtml(board.description || "")}</span>
+          <span class="summary-chip is-on board-line-skin" title="${escapeHtml(board.skinType)}">${escapeHtml(skinLabel)}</span>
+          ${board.isPublic ? "" : '<span class="summary-chip is-off">관리자 전용</span>'}
+          ${board.memberWrite ? '<span class="summary-chip is-on">회원쓰기</span>' : ""}
+          <span class="board-row-actions">
+            <button type="button" class="btn small" data-board-edit="${escapeHtml(board.id)}">수정</button>
+            <button type="button" class="btn small" data-board-delete="${escapeHtml(board.id)}">삭제</button>
+          </span>
         </div>
-      `).join("")
+      `;
+      }).join("")
     : '<div class="notice small">게시판이 없습니다. 아래 게시판 생성 버튼으로 추가하세요.</div>';
 
   listEl.querySelectorAll("[data-board-edit]").forEach((button) => {
@@ -345,7 +343,7 @@ async function refreshBoards() {
       setValue("pageSizeInput", board.pageSize || "");
       setValue("menuOrderInput", board.menuOrder || 0);
       document.getElementById("menuVisibleInput").checked = board.menuVisible;
-      document.getElementById("boardPublicInput").checked = board.isPublic;
+      document.getElementById("boardAdminOnlyInput").checked = !board.isPublic;
       document.getElementById("boardMemberWriteInput").checked = board.memberWrite;
       setValue("boardBoardWidthInput", board.options?.boardWidth ?? "");
       setValue("boardColumnsInput", board.options?.galleryColumns ?? "");
