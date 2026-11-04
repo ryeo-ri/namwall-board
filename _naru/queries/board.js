@@ -273,15 +273,16 @@ export async function recentTags(ctx) {
     .map(([tag]) => tag);
 }
 
-/* ── 검색 — 공개 게시판의 글에서 제목·본문·출처·태그 LIKE 검색 ── */
+/* ── 검색 — 공개 게시판의 글에서 제목·본문·출처·태그 LIKE 검색 ──
+   태그는 부분 일치: "낮밤"으로도 "#낮밤서"가 찾아진다 (# 유무 무관). */
 export async function search(ctx, args) {
   const owner = await isOwner(ctx);
   const q = String((args && args.q) || "").trim().slice(0, 100);
-  const tag = String((args && args.tag) || "").trim().slice(0, 30);
+  const tag = String((args && args.tag) || "").trim().slice(0, 30).replace(/^#+/, "");
   if (!q && !tag) return [];
 
   const like = `%${q}%`;
-  const tagLike = `%"${tag}"%`;
+  const tagLike = `%${tag}%`;
   const sql = `
     SELECT p.id, p.title, p.board_id, p.body, p.thumb, p.tags, p.source, p.log_no, p.is_secret,
            p.created_at, p.updated_at, b.title AS board_title

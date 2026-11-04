@@ -6,7 +6,7 @@
 //   HTML은 빈 틀이고 내용은 JS가 쿼리로 그리므로, 캐시 우선이어도 내용은 항상 최신이다.
 // - API 호출(_query 등)은 절대 캐시하지 않는다
 
-const CACHE_NAME = "nb-static-v1";
+const CACHE_NAME = "nb-static-v2";
 
 const isAssetRequest = (url) =>
   (url.origin === self.location.origin && url.pathname.includes("/nb/assets/"))

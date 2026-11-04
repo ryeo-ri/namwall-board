@@ -15,6 +15,9 @@ const SETTING_KEYS = {
   homeImageWidth: 8,
   homeImageHeight: 8,
   homeHeaderWidth: 8,
+  homeShowRecent: 4,     // "0"이면 홈 하단 메뉴에서 최근 업데이트 숨김
+  homeShowSearch: 4,     // "0"이면 홈 하단 메뉴에서 검색 숨김
+  homeShowTags: 4,       // "0"이면 홈 하단 메뉴에서 최근 태그 숨김
   design: 4000,          // 디자인 설정 JSON (색·폰트)
   headerFontFamily: 80   // 로고/내비 폰트
 };

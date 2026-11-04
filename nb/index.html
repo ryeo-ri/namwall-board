@@ -39,8 +39,8 @@
   <main class="container">
     <div id="homeIntro"></div>
 
-    <div class="grid two mt-md">
-      <section class="card">
+    <div class="grid two mt-md" id="homeMenuGrid">
+      <section class="card" id="homeRecentCard">
         <h3>최근 업데이트</h3>
         <div class="grid tight" id="recentList">
           <div class="loading-indicator" role="status" aria-live="polite">
@@ -49,18 +49,22 @@
         </div>
       </section>
 
-      <aside class="card">
-        <h3>검색</h3>
-        <div class="formRow">
-          <input id="quickTag" placeholder="태그 입력 후 검색">
-          <button class="btn" id="quickSearchBtn">검색</button>
+      <aside class="card" id="homeAsideCard">
+        <div id="homeSearchBlock">
+          <h3>검색</h3>
+          <div class="formRow">
+            <input id="quickTag" placeholder="태그 입력 후 검색">
+            <button class="btn" id="quickSearchBtn">검색</button>
+          </div>
         </div>
 
-        <hr class="sep">
-        <h3>최근 태그</h3>
-        <div id="recentTags">
-          <div class="loading-indicator" role="status" aria-live="polite">
-            <span class="sr-only">최근 태그를 불러오는 중</span>
+        <div id="homeTagsBlock">
+          <hr class="sep">
+          <h3>최근 태그</h3>
+          <div id="recentTags">
+            <div class="loading-indicator" role="status" aria-live="polite">
+              <span class="sr-only">최근 태그를 불러오는 중</span>
+            </div>
           </div>
         </div>
       </aside>

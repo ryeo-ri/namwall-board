@@ -8,11 +8,38 @@ async function init() {
   const boot = await renderHeader();
 
   renderHomeIntro(boot);
+  const visible = applyHomeMenuVisibility(boot.settings || {});
   await Promise.all([
-    loadRecentUpdates(boot),
-    loadRecentTags()
+    visible.recent ? loadRecentUpdates(boot) : null,
+    visible.tags ? loadRecentTags() : null
   ]);
-  bindQuickSearch();
+  if (visible.search) bindQuickSearch();
+}
+
+/* ── 하단 메뉴(최근 업데이트·검색·최근 태그) 노출 — 관리자 홈 관리에서 끔/켬.
+   설정이 없으면(기존 사이트) 모두 보이고, "0"으로 저장된 항목만 숨긴다. ── */
+function applyHomeMenuVisibility(settings) {
+  const recent = settings.homeShowRecent !== "0";
+  const search = settings.homeShowSearch !== "0";
+  const tags = settings.homeShowTags !== "0";
+
+  document.getElementById("homeRecentCard")?.classList.toggle("hidden", !recent);
+  document.getElementById("homeSearchBlock")?.classList.toggle("hidden", !search);
+  document.getElementById("homeTagsBlock")?.classList.toggle("hidden", !tags);
+  // 검색이 꺼지면 태그 블록 위의 구분선도 필요 없다
+  document.querySelector("#homeTagsBlock .sep")?.classList.toggle("hidden", !search);
+
+  const asideVisible = search || tags;
+  document.getElementById("homeAsideCard")?.classList.toggle("hidden", !asideVisible);
+
+  const grid = document.getElementById("homeMenuGrid");
+  if (grid) {
+    const bothHidden = !recent && !asideVisible;
+    grid.classList.toggle("hidden", bothHidden);
+    // 한 칸만 남으면 그 칸이 전체 폭을 쓴다
+    grid.style.gridTemplateColumns = (recent && asideVisible) ? "" : "minmax(0, 1fr)";
+  }
+  return { recent, search, tags };
 }
 
 /* ── 히어로: 소개 텍스트 칼럼(옵션) + 대표 이미지(여러 장 중 랜덤) ── */

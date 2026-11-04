@@ -320,10 +320,14 @@ body.home-page .card h3{
 body.home-page .recent-item{
   display: flex;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 4px 14px;
+  line-height: 1.3;
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+body.home-page #recentList .grid.tight{
+  gap: 3px;
 }
 body.home-page .recent-update-item{
   align-items: center;
@@ -705,7 +709,7 @@ body.thread-view-page #viewImage{ display: none; }
     padding: 14px;
   }
   body.home-page .recent-item{
-    padding: 10px 12px;
+    padding: 4px 12px;
     line-height: 1.25;
   }
   body.home-page .recent-update-item{
@@ -887,7 +891,7 @@ body.thread-view-page #viewImage{ display: none; }
     padding: 12px;
   }
   body.home-page .recent-item{
-    padding: 9px 10px;
+    padding: 4px 10px;
     gap: 10px;
     line-height: 1.25;
   }

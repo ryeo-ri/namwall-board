@@ -31,6 +31,10 @@ function fillForm() {
   setValue("ownerNameInput", savedSettings.ownerName || "");
   setValue("homeHeaderWidthInput", savedSettings.homeHeaderWidth || "");
   document.getElementById("homeShowTextInput").checked = savedSettings.homeShowText === "1";
+  // 하단 메뉴 노출 — 설정이 없으면(기존 사이트) 켜진 것으로 본다
+  setChecked("homeShowRecentInput", savedSettings.homeShowRecent !== "0");
+  setChecked("homeShowSearchInput", savedSettings.homeShowSearch !== "0");
+  setChecked("homeShowTagsInput", savedSettings.homeShowTags !== "0");
   setValue("homeIntroWidthInput", savedSettings.homeIntroWidth || "");
   setValue("homeIntroHtmlInput", savedSettings.intro || "");
   setValue("homeImageWidthInput", savedSettings.homeImageWidth || "");
@@ -148,28 +152,22 @@ async function save() {
   const saveBtn = document.getElementById("saveHomeBtn");
   if (saveBtn) saveBtn.disabled = true;
   try {
-    await runMutate("site:saveSettings", {
+    const values = {
       title: getValue("siteTitleInput").trim(),
       ownerName: getValue("ownerNameInput").trim(),
       intro: getValue("homeIntroHtmlInput"),
       homeShowText: document.getElementById("homeShowTextInput")?.checked ? "1" : "",
-      homeIntroWidth: getValue("homeIntroWidthInput").trim(),
-      homeImageWidth: getValue("homeImageWidthInput").trim(),
-      homeImageHeight: getValue("homeImageHeightInput").trim(),
-      homeHeaderWidth: getValue("homeHeaderWidthInput").trim()
-    });
-    clearSiteCache();
-    savedSettings = {
-      ...savedSettings,
-      title: getValue("siteTitleInput").trim(),
-      ownerName: getValue("ownerNameInput").trim(),
-      intro: getValue("homeIntroHtmlInput"),
-      homeShowText: document.getElementById("homeShowTextInput")?.checked ? "1" : "",
+      homeShowRecent: getChecked("homeShowRecentInput") ? "1" : "0",
+      homeShowSearch: getChecked("homeShowSearchInput") ? "1" : "0",
+      homeShowTags: getChecked("homeShowTagsInput") ? "1" : "0",
       homeIntroWidth: getValue("homeIntroWidthInput").trim(),
       homeImageWidth: getValue("homeImageWidthInput").trim(),
       homeImageHeight: getValue("homeImageHeightInput").trim(),
       homeHeaderWidth: getValue("homeHeaderWidthInput").trim()
     };
+    await runMutate("site:saveSettings", values);
+    clearSiteCache();
+    savedSettings = { ...savedSettings, ...values };
     showMsg("저장했습니다.");
   } catch (error) {
     showMsg(naruErrorMessage(error, "저장에 실패했습니다."), true);
@@ -188,6 +186,8 @@ function parseImages(value) {
 
 function getValue(id) { return document.getElementById(id)?.value || ""; }
 function setValue(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ""; }
+function getChecked(id) { return !!document.getElementById(id)?.checked; }
+function setChecked(id, value) { const el = document.getElementById(id); if (el) el.checked = !!value; }
 function showMsg(text, isError = false) {
   const el = document.getElementById("homeMsg");
   if (!el) return;
