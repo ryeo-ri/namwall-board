@@ -6,7 +6,7 @@
 <base href="./">
 <title>관리자</title>
 <link rel="stylesheet" href="assets/css/app.css?v=3">
-<link rel="stylesheet" href="assets/css/nb.css?v=5">
+<link rel="stylesheet" href="assets/css/nb.css?v=6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -128,39 +128,6 @@
 
           <div class="settings-block mt-md">
             <div class="settings-block-head">
-              <strong>하단 메뉴</strong>
-              <span class="muted small">홈 하단에 보일 메뉴를 고릅니다. 끄면 그 자리 없이 채워집니다.</span>
-            </div>
-            <div class="grid tight">
-              <div class="field-group">
-                <label class="option-card option-card-compact" for="homeShowRecentInput">
-                  <span class="option-card-main">
-                    <input type="checkbox" id="homeShowRecentInput">
-                    <span class="option-card-title">최근 업데이트 표시</span>
-                  </span>
-                </label>
-              </div>
-              <div class="field-group">
-                <label class="option-card option-card-compact" for="homeShowSearchInput">
-                  <span class="option-card-main">
-                    <input type="checkbox" id="homeShowSearchInput">
-                    <span class="option-card-title">검색 표시</span>
-                  </span>
-                </label>
-              </div>
-              <div class="field-group">
-                <label class="option-card option-card-compact" for="homeShowTagsInput">
-                  <span class="option-card-main">
-                    <input type="checkbox" id="homeShowTagsInput">
-                    <span class="option-card-title">최근 태그 표시</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-block mt-md">
-            <div class="settings-block-head">
               <strong>이미지</strong>
               <span class="muted small">여러 장 등록하면 홈에 랜덤으로 표시됩니다.</span>
             </div>
@@ -195,6 +162,33 @@
             <div class="mt-sm">
               <div class="muted small mb-sm">저장된 이미지</div>
               <div id="homeImageItems" class="previewGrid admin-image-preview-list"></div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md">
+            <div class="settings-block-head">
+              <strong>하단 메뉴</strong>
+              <span class="muted small">홈 하단에 보일 메뉴를 고릅니다. 끄면 그 자리 없이 채워집니다.</span>
+            </div>
+            <div class="option-grid three">
+              <label class="option-card option-card-compact" for="homeShowRecentInput">
+                <span class="option-card-main">
+                  <input type="checkbox" id="homeShowRecentInput">
+                  <span class="option-card-title">최근 업데이트</span>
+                </span>
+              </label>
+              <label class="option-card option-card-compact" for="homeShowSearchInput">
+                <span class="option-card-main">
+                  <input type="checkbox" id="homeShowSearchInput">
+                  <span class="option-card-title">검색</span>
+                </span>
+              </label>
+              <label class="option-card option-card-compact" for="homeShowTagsInput">
+                <span class="option-card-main">
+                  <input type="checkbox" id="homeShowTagsInput">
+                  <span class="option-card-title">최근 태그</span>
+                </span>
+              </label>
             </div>
           </div>
 
