@@ -274,6 +274,7 @@ export async function recentTags(ctx) {
 }
 
 /* ── 검색 — 공개 게시판의 글에서 제목·본문·출처·태그·댓글 LIKE 검색 ──
+   관리자는 관리자 전용(비공개) 게시판의 글도 검색된다.
    태그는 부분 일치: "낮밤"으로도 "#낮밤서"가 찾아진다 (# 유무 무관).
    댓글 본문도 검색하며(원본 namwall과 동일), 비밀 댓글은 관리자에게만 걸린다. */
 export async function search(ctx, args) {
@@ -290,7 +291,7 @@ export async function search(ctx, args) {
            p.created_at, p.updated_at, b.title AS board_title
            ${q ? `, (SELECT c.body FROM comments c WHERE ${commentWhere} ORDER BY c.id DESC LIMIT 1) AS comment_match` : ""}
     FROM posts p JOIN boards b ON b.id = p.board_id
-    WHERE b.is_public = 1
+    WHERE ${owner ? "1 = 1" : "b.is_public = 1"}
       ${owner ? "" : "AND p.is_secret = 0"}
       ${owner || ctx.member ? "" : "AND p.member_only = 0"}
       ${tag ? "AND p.tags LIKE ?" : ""}

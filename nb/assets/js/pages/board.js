@@ -80,7 +80,7 @@ async function init() {
 
     // 선택삭제: 체크된 글만 지운다 (스킨별 체크박스 모두 수집)
     selectDeleteBtn.addEventListener("click", async () => {
-      const ids = [...listEl.querySelectorAll(".log-select-check:checked, [data-gallery-select]:checked")]
+      const ids = [...listEl.querySelectorAll(".log-select-check:checked, [data-gallery-select]:checked, [data-post-select]:checked")]
         .map((input) => Number(input.dataset.logSelect || input.dataset.gallerySelect || input.dataset.postSelect))
         .filter(Boolean);
       if (!ids.length) return window.alert("삭제할 글을 먼저 체크하세요.");
@@ -193,7 +193,7 @@ async function renderList(board, skinType, listEl, boot, before = 0, accumulated
   }
 }
 
-// BOARD·THREAD 목록의 삭제(D) 버튼 — LOG·GALLERY는 각 스킨의 bind가 처리한다
+// BOARD·THREAD 목록의 삭제 버튼 — LOG·GALLERY는 각 스킨의 bind가 처리한다
 function bindPostDelete(listEl, reload) {
   listEl.querySelectorAll("[data-del-post]").forEach((btn) => {
     btn.addEventListener("click", async () => {

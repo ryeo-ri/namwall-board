@@ -20,18 +20,19 @@ export function renderBoardList(posts, board, opts = {}) {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const count = post.commentCount > 0 ? ` <span class="muted small">[${post.commentCount}]</span>` : "";
         const author = post.isOwnerPost ? "" : `<span class="muted small">${escapeHtml(post.nickname || "익명")}</span> `;
-        // 관리자 모드(ADMIN 토글): 선택 체크박스 + 수정·삭제 — LOG·GALLERY와 같은 동작
+        // 관리자 모드(ADMIN 토글): 체크박스·번호 + 날짜·수정·삭제 — GALLERY와 같은 형식(투명 배경)
         const check = opts.selectable
-          ? `<label class="log-select-wrap"><input type="checkbox" class="log-select-check" data-post-select="${post.id}" aria-label="선택"></label>`
+          ? `<label class="gallery-delete-check"><input type="checkbox" data-post-select="${post.id}" aria-label="선택"></label>`
           : "";
+        const no = opts.selectable ? `<span class="gallery-manage-no">${post.id}</span> ` : "";
         const manage = (opts.showManage && post.editable)
-          ? ` <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" title="수정">E</a> <button type="button" class="text-action danger" data-del-post="${post.id}" title="삭제">D</button>`
+          ? ` <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" aria-label="게시물 수정">수정</a> <button type="button" class="gallery-manage-button gallery-delete-button" data-del-post="${post.id}" aria-label="게시물 삭제">삭제</button>`
           : "";
         return `
           <article class="search-item board-line-item" data-post-id="${post.id}">
             ${check}
             <a href="${url}" class="board-line-title">${post.isSecret ? renderLockIcon("board-line-lock-icon") : ""}${title}${count}</a>
-            <span class="board-line-date">${author}${escapeHtml(formatDate(post.createdAt))}${manage}</span>
+            <span class="board-line-date">${no}${author}${escapeHtml(formatDate(post.createdAt))}${manage}</span>
           </article>
         `;
       }).join("")}

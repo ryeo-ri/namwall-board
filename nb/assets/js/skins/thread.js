@@ -1,6 +1,6 @@
 // THREAD(타래) 스킨 — 카드형 목록 + 좌(제목·썸네일)/우(본문 스크롤) 분할 상세
 // 댓글 위치 옵션(options.commentPosition): bottom(기본, 본문 스크롤에 쌓임) / left(좌측 패널)
-import { escapeHtml } from "../core/site.js";
+import { escapeHtml, formatDate } from "../core/site.js";
 import { sanitizeHTML } from "../shared/sanitizer.js";
 
 /* ── 목록: 테두리·라운드 없는 카드 그리드 ── */
@@ -13,14 +13,23 @@ export function renderThreadList(posts, board, opts = {}) {
       ${posts.map((post) => {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const title = escapeHtml(post.title || "(제목 없음)");
-        // 관리자 모드(ADMIN 토글): 카드 위에 선택 체크박스 + 수정·삭제 줄 — LOG·GALLERY와 같은 동작
-        const check = opts.selectable
-          ? `<label class="log-select-wrap"><input type="checkbox" class="log-select-check" data-post-select="${post.id}" aria-label="선택"></label>`
-          : "";
-        const manage = (opts.showManage && post.editable)
-          ? `<span class="gallery-manage-actions"><a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" title="수정">E</a> <button type="button" class="text-action danger" data-del-post="${post.id}" title="삭제">D</button></span>`
-          : "";
-        const adminBar = (check || manage) ? `<div class="gallery-delete-topbar">${check}${manage}</div>` : "";
+        // 관리자 모드(ADMIN 토글): 카드 위에 체크박스·번호·날짜·수정·삭제 줄 — GALLERY와 같은 형식(투명 배경)
+        const canManage = Boolean(opts.showManage && post.editable);
+        const adminBar = (opts.selectable || canManage) ? `
+          <div class="gallery-delete-topbar">
+            <div class="gallery-delete-left">
+              ${opts.selectable ? `<label class="gallery-delete-check"><input type="checkbox" data-post-select="${post.id}" aria-label="선택"></label>` : ""}
+              <span class="gallery-manage-no">${post.id}</span>
+              <span class="gallery-delete-date">${escapeHtml(formatDate(post.createdAt))}</span>
+            </div>
+            ${canManage ? `
+              <div class="gallery-manage-actions">
+                <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" aria-label="게시물 수정">수정</a>
+                <button type="button" class="gallery-manage-button gallery-delete-button" data-del-post="${post.id}" aria-label="게시물 삭제">삭제</button>
+              </div>
+            ` : ""}
+          </div>
+        ` : "";
         return `
           <article class="thread-card" data-post-id="${post.id}">
             ${adminBar}

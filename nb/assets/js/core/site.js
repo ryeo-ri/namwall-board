@@ -135,6 +135,14 @@ export async function renderHeader() {
   applyDesignSettings(parseDesignJson(settings.design));
   applyHeaderFont(settings.headerFontFamily || "");
 
+  // 헤더 가로(설정 homeHeaderWidth) — 홈뿐 아니라 모든 페이지에서 같은 폭 유지
+  // (CSS는 body.home-page에만 변수 적용이라, 여기서 요소에 직접 지정한다)
+  const headerContainer = document.querySelector(".header .container");
+  if (headerContainer) {
+    const headerWidth = formatResponsiveWidth(settings.homeHeaderWidth);
+    headerContainer.style.width = headerWidth ? `min(${headerWidth}, 100%)` : "";
+  }
+
   if (navEl) {
     navEl.innerHTML = boards
       .filter((board) => board.menuVisible)
