@@ -109,13 +109,39 @@ export function renderGalleryCard(post, board, options = {}) {
   `;
 }
 
+// 출처 표시 — [라벨]URL 형식이면 라벨만 링크로, 나머지는 일반 텍스트 (여러 개 가능)
+// URL만 적으면 '링크', 그 외 텍스트는 그대로 보여준다.
 function renderGallerySource(rawSource) {
   const source = String(rawSource || "").trim();
   if (!source) return "";
-  const url = getHttpUrl(source);
-  const content = url
-    ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="출처 링크">링크</a>`
-    : `<span>${escapeHtml(source)}</span>`;
+
+  const linkPattern = /\[([^\]\r\n]+)\](https?:\/\/\S+)/gi;
+  let content = "";
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkPattern.exec(source)) !== null) {
+    content += escapeHtml(source.slice(lastIndex, match.index));
+
+    const url = getHttpUrl(match[2]);
+    if (url) {
+      content += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">${escapeHtml(match[1].trim())}</a>`;
+    } else {
+      content += escapeHtml(match[0]);
+    }
+
+    lastIndex = linkPattern.lastIndex;
+  }
+
+  if (lastIndex > 0) {
+    content += escapeHtml(source.slice(lastIndex));
+  } else {
+    const url = getHttpUrl(source);
+    content = url
+      ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">링크</a>`
+      : `<span>${escapeHtml(source)}</span>`;
+  }
+
   return `<div class="gallery-source">${content}</div>`;
 }
 
