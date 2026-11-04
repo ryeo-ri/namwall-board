@@ -129,6 +129,7 @@ async function init() {
         renderProfileImagePreview("head");
       }
       applySkinFields(boot);
+      applyCategoryField(post.category || "");
       renderThumbPreview();
       renderExtraList();
     } catch (error) {
@@ -174,6 +175,26 @@ function applySkinFields(boot) {
       module.bindScriptWriter(document.getElementById("scriptFields"), editingScriptData);
     });
   }
+  applyCategoryField();
+}
+
+/* ── 분류: 게시판 설정(options.categories)이 있으면 드롭다운 표시 ── */
+function applyCategoryField(selected = "") {
+  const row = document.getElementById("categoryFields");
+  const select = document.getElementById("categorySelect");
+  if (!row || !select) return;
+  const categories = Array.isArray(currentBoard?.options?.categories) ? currentBoard.options.categories : [];
+  row.classList.toggle("hidden", !categories.length);
+  if (!categories.length) {
+    select.innerHTML = "";
+    return;
+  }
+  const current = selected || select.value;
+  select.innerHTML = [
+    '<option value="">선택 안 함</option>',
+    ...categories.map((cat) => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`)
+  ].join("");
+  if (categories.includes(current)) select.value = current;
 }
 
 /* ── PROFILE: 전신/두상 이미지 — URL 직접 입력 또는 파일(저장 시 업로드) ── */
@@ -414,6 +435,7 @@ async function save(boot, msgEl) {
       thumb: thumbUrl,
       source,
       tags: getValue("tagsInput"),
+      category: getValue("categorySelect"),
       secret: isSecret,
       memberOnly: visibility === "members"
     };

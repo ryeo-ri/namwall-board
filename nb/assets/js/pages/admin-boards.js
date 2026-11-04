@@ -216,7 +216,7 @@ function updateSummary() {
 }
 
 function resetForm(message = "") {
-  ["boardIdInput", "boardTitleInput", "boardTitleImageInput", "boardDescInput",
+  ["boardIdInput", "boardTitleInput", "boardTitleImageInput", "boardDescInput", "boardCategoriesInput",
    "pageSizeInput", "menuOrderInput", "boardBoardWidthInput", "boardColumnsInput", "boardImageWidthInput"].forEach((id) => setValue(id, ""));
   document.getElementById("boardIdInput").readOnly = false;
   document.getElementById("boardCommentPosInput").value = "bottom";
@@ -271,6 +271,12 @@ async function save() {
     if (fields.includes("imageWidth")) {
       const imageWidthRaw = getValue("boardImageWidthInput").trim();
       if (imageWidthRaw !== "") options.imageWidth = Number(imageWidthRaw);
+    }
+    // 분류: | 로 구분해 입력 — 비우면 사용 안 함
+    const categoriesRaw = getValue("boardCategoriesInput").trim();
+    if (categoriesRaw) {
+      const categories = categoriesRaw.split("|").map((item) => item.trim()).filter(Boolean);
+      if (categories.length) options.categories = categories;
     }
 
     await runMutate("site:saveBoard", {
@@ -340,6 +346,7 @@ async function refreshBoards() {
       setValue("boardTitleInput", board.title);
       setValue("boardTitleImageInput", board.titleImageUrl || "");
       setValue("boardDescInput", board.description || "");
+      setValue("boardCategoriesInput", (board.options?.categories || []).join("|"));
       setValue("pageSizeInput", board.pageSize || "");
       setValue("menuOrderInput", board.menuOrder || 0);
       document.getElementById("menuVisibleInput").checked = board.menuVisible;

@@ -13,10 +13,12 @@ const DEFAULT_PAGE_SIZE = 10;
 // GUESTBOOK(항목별 D 버튼)·SCRIPT·PROFILE은 제외
 const ADMIN_TOGGLE_SKINS = ["LOG", "GALLERY", "THREAD", "BOARD"];
 let adminMode = false;
+let activeCategory = ""; // 분류 칩으로 고른 분류 (URL ?cat=)
 
 async function init() {
   const params = new URLSearchParams(location.search);
   const boardId = params.get("bo") || "";
+  activeCategory = (params.get("cat") || "").trim();
   const listEl = document.getElementById("boardContent");
   const titleEl = document.getElementById("boardTitle");
   const descriptionEl = document.getElementById("boardDescription");
@@ -42,6 +44,19 @@ async function init() {
   if (titleEl) titleEl.textContent = board.title || board.id;
   if (descriptionEl) descriptionEl.textContent = board.description || "";
   document.title = `${board.title || board.id}`;
+
+  // 분류 칩: 게시판에 분류가 설정돼 있으면 목록 위에 표시 — 클릭하면 그 분류 글만 본다
+  const categories = Array.isArray(board.options?.categories) ? board.options.categories : [];
+  if (categories.length && listEl) {
+    const chipLink = (label, cat) => {
+      const href = `board.html?bo=${encodeURIComponent(board.id)}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}`;
+      return `<a class="tag${cat === activeCategory ? " is-active" : ""}" href="${href}">${escapeHtml(label)}</a>`;
+    };
+    const chips = document.createElement("div");
+    chips.className = "board-category-chips";
+    chips.innerHTML = [chipLink("전체", ""), ...categories.map((cat) => chipLink(cat, cat))].join("");
+    listEl.parentElement?.insertBefore(chips, listEl);
+  }
 
   const canWrite = boot.owner || (board.memberWrite && boot.me);
   if (writeBtn && canWrite && skinType !== "GUESTBOOK") {
@@ -143,6 +158,7 @@ function listQuery(board, skinType, before) {
     size: pageSizeFor(board),
     // LOG는 본문까지, GALLERY는 추가 이미지(attachments)까지 목록에서 그린다
     ...(skinType === "LOG" || skinType === "GALLERY" ? { withBody: true } : {}),
+    ...(activeCategory ? { category: activeCategory } : {}),
     ...(before ? { before } : {})
   });
 }

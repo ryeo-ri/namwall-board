@@ -27,20 +27,26 @@ export async function posts(ctx, args) {
   const size = Math.min(Math.max(Number(args && args.size) || 20, 1), LIST_MAX);
   const before = Number(args && args.before) || 0;
   const withBody = (args && args.withBody) === true;
+  // 분류 필터 (게시판 분류 칩에서 사용)
+  const category = String((args && args.category) || "").trim().slice(0, 30);
 
   // 회원 공개 글은 비회원에게 목록에서도 숨긴다
   const seeMemberOnly = owner || !!ctx.member;
   const beforeId = before || Number.MAX_SAFE_INTEGER;
   const sql = `
-    SELECT p.id, p.title, p.author_id, p.is_secret, p.member_only, p.thumb, p.source, p.tags, p.log_no, p.skin_data, p.created_at,
+    SELECT p.id, p.title, p.author_id, p.is_secret, p.member_only, p.thumb, p.source, p.tags, p.log_no, p.category, p.skin_data, p.created_at,
            ${withBody ? "p.body, p.images, p.attachments, p.updated_at," : ""}
            pr.nickname,
            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
     FROM posts p LEFT JOIN profiles pr ON pr.member_id = p.author_id
     WHERE p.board_id = ? AND p.id < ?
       ${seeMemberOnly ? "" : "AND p.member_only = 0"}
+      ${category ? "AND p.category = ?" : ""}
     ORDER BY p.id DESC LIMIT ?`;
-  const { rows } = await ctx.sql(sql, [board.id, beforeId, size + 1]);
+  const values = [board.id, beforeId];
+  if (category) values.push(category);
+  values.push(size + 1);
+  const { rows } = await ctx.sql(sql, values);
 
   const me = callerId(ctx);
   const more = rows.length > size;
@@ -58,6 +64,7 @@ export async function posts(ctx, args) {
         source: row.source,
         tags: parseJson(row.tags, []),
         logNo: row.log_no || 0,
+        category: row.category || "",
         skinData: (!row.is_secret || owner || mine) ? parseJson(row.skin_data, {}) : {},
         commentCount: row.comment_count,
         createdAt: row.created_at,
@@ -114,6 +121,7 @@ export async function post(ctx, args) {
     tags: parseJson(row.tags, []),
     source: row.source,
     logNo: row.log_no || 0,
+    category: row.category || "",
     skinData: parseJson(row.skin_data, {}),
     nickname: row.author_id ? row.nickname : null,
     isOwnerPost: !row.author_id,

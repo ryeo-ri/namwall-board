@@ -35,6 +35,16 @@ function cleanOptions(ctx, raw) {
   if (source.detailThumb === false) out.detailThumb = false;
   const imageWidth = Number(source.imageWidth);
   if (Number.isFinite(imageWidth) && imageWidth >= 0) out.imageWidth = Math.min(2400, Math.round(imageWidth));
+  // 분류 목록 — 글 작성 드롭다운·목록 칩에 사용 (최대 20개, 각 30자)
+  if (Array.isArray(source.categories)) {
+    const categories = [];
+    for (const item of source.categories) {
+      const value = String(item || "").trim().slice(0, 30);
+      if (value && !categories.includes(value)) categories.push(value);
+      if (categories.length >= 20) break;
+    }
+    if (categories.length) out.categories = categories;
+  }
   const json = JSON.stringify(out);
   if (json.length > 2000) ctx.fail("INVALID_REQUEST", "스킨 옵션이 너무 큽니다.");
   return json;

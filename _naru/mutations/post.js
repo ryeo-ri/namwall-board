@@ -26,6 +26,19 @@ function cleanTags(ctx, raw) {
   return JSON.stringify(tags);
 }
 
+// 분류 — 게시판 설정(options.categories)에 있는 값만 저장 (설정이 없거나 빈 값이면 "")
+function cleanCategory(ctx, raw, board) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  let categories = [];
+  try {
+    const options = JSON.parse(board.options || "{}");
+    if (Array.isArray(options.categories)) categories = options.categories.map((item) => String(item));
+  } catch (_error) { /* ignore */ }
+  if (!categories.includes(value)) ctx.fail("INVALID_REQUEST", "이 게시판에 없는 분류입니다.");
+  return value;
+}
+
 // SCRIPT 스킨 부가 데이터 — 허용 키만 걸러 JSON으로 저장
 const SCRIPT_TEXT_FIELDS = {
   system: 120, scenario: 200, gm: 120, players: 1000, playedAt: 20, summary: 2000,
@@ -120,6 +133,7 @@ export async function write(ctx, args) {
   const images = parseImages(args && args.images, ctx);
   const attachments = cleanAttachments(ctx, args && args.attachments);
   const tags = cleanTags(ctx, args && args.tags);
+  const category = cleanCategory(ctx, args && args.category, board);
   const skinData = cleanSkinData(ctx, args && args.skinData, board);
   const isSecret = (args && args.secret) === true ? 1 : 0;
   // 회원 공개: 로그인 회원(과 관리자)만 열람. 비밀글과는 동시에 쓸 수 없다(선택지가 하나).
@@ -143,9 +157,9 @@ export async function write(ctx, args) {
 
     const { rows } = await ctx.sql`
       INSERT INTO posts (board_id, author_id, title, body, thumb, images, attachments, tags, source, log_no,
-                         skin_data, is_secret, member_only, secret_hash, created_at, updated_at)
+                         category, skin_data, is_secret, member_only, secret_hash, created_at, updated_at)
       VALUES (${board.id}, ${authorId}, ${title}, ${body}, ${thumb}, ${images}, ${attachments}, ${tags}, ${source}, ${logNo},
-              ${skinData}, ${isSecret}, ${memberOnly}, ${secretHash}, ${ctx.now}, ${ctx.now})
+              ${category}, ${skinData}, ${isSecret}, ${memberOnly}, ${secretHash}, ${ctx.now}, ${ctx.now})
       RETURNING id`;
     return { id: rows[0].id };
   }
@@ -167,7 +181,7 @@ export async function write(ctx, args) {
   await ctx.sql`
     UPDATE posts SET board_id = ${board.id}, title = ${title}, body = ${body}, thumb = ${thumb},
       images = ${images}, attachments = ${attachments}, tags = ${tags}, source = ${source}, log_no = ${logNo},
-      skin_data = ${skinData}, is_secret = ${isSecret}, member_only = ${memberOnly}, secret_hash = ${secretHash}, updated_at = ${ctx.now}
+      category = ${category}, skin_data = ${skinData}, is_secret = ${isSecret}, member_only = ${memberOnly}, secret_hash = ${secretHash}, updated_at = ${ctx.now}
     WHERE id = ${editId}`;
   return { id: editId };
 }
