@@ -155,6 +155,10 @@ export async function renderHeader() {
       .join("");
   }
 
+  // 원본 namwall과 동일: login·admin pill은 홈에서만 보인다 (게시판·상세 등에서는 숨김)
+  if (!document.body.classList.contains("home-page")) {
+    document.querySelector(".header .pills")?.classList.add("hidden");
+  }
   renderPills(boot);
 
   // 로그인 복귀 직후 세션 확립이 페이지 로드보다 늦는 경우 보정:
