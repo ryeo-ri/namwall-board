@@ -46,13 +46,21 @@
 }
 .view-attachment-link:hover{ text-decoration: underline; }
 
-/* 상세 수정/삭제 텍스트 링크 */
-.text-action{
+/* 상세 수정/삭제 텍스트 링크 — a와 button이 같은 폰트·기준선을 쓰도록 통일
+   (body.site-page button의 픽셀 폰트 규칙을 이기려면 높은 선택자가 필요) */
+.text-action,
+body.site-page .text-action,
+body.site-page button.text-action{
+  display: inline-flex;
+  align-items: center;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--muted);
+  font: inherit;
+  font-family: var(--font-kr);
   font-size: 12px;
+  line-height: 1;
   cursor: pointer;
 }
 .text-action.danger{ color: var(--danger); }
@@ -67,6 +75,78 @@
 
 /* 댓글: 날짜-먼저 헤더(타래) 시 작성자명이 우측으로 */
 .comment-meta-right .comment-author{ font-weight: 600; }
+
+/* LOG 관리자 모드: 선택삭제 체크박스 */
+.log-select-wrap{
+  display: inline-flex;
+  align-items: center;
+}
+.log-select-check{
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  cursor: pointer;
+  accent-color: currentcolor;
+}
+
+/* 갤러리 관리자 바: 이미지 위 오버레이(절대배치) 대신 그림 상단의 작은 줄글로 — 잘림 방지 */
+.gallery-delete-topbar{
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 4px;
+}
+.gallery-delete-left{ gap: 5px; }
+.gallery-manage-actions{ gap: 5px; }
+.gallery-manage-no{
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+.gallery-delete-date,
+.gallery-manage-button,
+body.site-page .gallery-manage-button,
+body.site-page .gallery-edit-button,
+body.site-page .gallery-delete-button{
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: var(--font-kr);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.gallery-manage-button:hover,
+.gallery-manage-button:focus-visible{
+  background: transparent;
+  text-decoration: underline;
+}
+.gallery-delete-check input{
+  width: 14px;
+  height: 14px;
+  min-height: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* 댓글 삭제(D): 날짜 옆에 바짝 붙이고 색은 회색으로 */
+.comment-admin-actions,
+body.site-page .comment-admin-actions{
+  margin-left: 0;
+  gap: 4px;
+}
+.comment-admin-actions [data-del-comment],
+body.site-page .comment-admin-actions [data-del-comment]{
+  color: var(--muted);
+}
 
 /* 방명록 폼의 메시지 영역 */
 .gb-msg{ margin-top: 4px; }

@@ -1,27 +1,68 @@
 // GALLERY 스킨 — masonry 썸네일 목록 (원본 남월보드 마크업)
-// 이미지 클릭 = 라이트박스, 출처 표시, 댓글 없음. 비밀글은 서버 검증 후 열람.
-import { runQuery, naruErrorMessage } from "../core/naru-client.js";
-import { escapeHtml } from "../core/site.js";
+// 이미지 클릭 = 라이트박스, 추가 이미지는 카드 위 ◆ 플로팅 버튼, 출처 표시, 댓글 없음.
+// 관리자 모드(showManage·selectable): 카드 상단 바에 번호·날짜·수정·삭제와 선택 체크박스.
+// 비밀글은 서버 검증 후 열람.
+import { runQuery, runMutate, naruErrorMessage } from "../core/naru-client.js";
+import { escapeHtml, formatDate } from "../core/site.js";
 import { renderLockIcon } from "../shared/secret-icon.js";
 
-export function renderGalleryList(posts, board) {
+export function renderGalleryList(posts, board, options = {}) {
   if (!posts.length) return '<div class="notice">아직 게시물이 없습니다.</div>';
   const columns = clampColumns(board.options?.galleryColumns, 4);
 
   return `
     <div class="gallery-masonry" style="--gallery-columns:${columns}">
-      ${posts.map((post) => renderGalleryCard(post, board)).join("")}
+      ${posts.map((post) => renderGalleryCard(post, board, options)).join("")}
     </div>
   `;
 }
 
-export function renderGalleryCard(post, board) {
+export function renderGalleryCard(post, board, options = {}) {
+  const showManage = options.showManage !== false;
+  const selectable = options.selectable === true;
   const title = escapeHtml(post.title || "");
   const contentMarkup = post.title
     ? `<div class="gallery-card-content">${title}</div>`
     : "";
-  const editLink = post.editable
-    ? `<div class="gallery-text-footer"><a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}">수정</a></div>`
+
+  // 카드 상단 바(그림 위 줄글): (관리자 모드) 선택 체크박스 + 번호 + 날짜 + 수정·삭제
+  const canManage = Boolean(post.editable && showManage);
+  const manageBar = canManage || selectable
+    ? `
+      <div class="gallery-delete-topbar">
+        <div class="gallery-delete-left">
+          ${selectable ? `<label class="gallery-delete-check"><input type="checkbox" data-gallery-select="${post.id}"></label>` : ""}
+          <span class="gallery-manage-no">${post.id}</span>
+          <span class="gallery-delete-date">${escapeHtml(formatDate(post.createdAt))}</span>
+        </div>
+        ${canManage ? `
+          <div class="gallery-manage-actions">
+            <a class="gallery-manage-button gallery-edit-button" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" aria-label="게시물 수정">수정</a>
+            <button type="button" class="gallery-manage-button gallery-delete-button" data-gallery-delete="${post.id}" aria-label="게시물 삭제">삭제</button>
+          </div>
+        ` : ""}
+      </div>
+    `
+    : "";
+
+  // 추가 이미지: 카드 위 ◆ 플로팅 버튼 — 클릭하면 라이트박스 (원본 gallery-extra-floating)
+  const extras = Array.isArray(post.attachments) ? post.attachments.filter((item) => item?.url) : [];
+  const extraLayer = extras.length
+    ? `
+      <div class="gallery-extra-layer">
+        <span class="gallery-extra-floating" aria-label="추가 이미지 ${extras.length}개">
+          ${extras.map((item, index) => `
+            <button
+              type="button"
+              class="gallery-extra-floating-button"
+              onclick="openLightbox('${escapeJsString(item.url)}')"
+              aria-label="${escapeHtml(item.name || `추가 이미지 ${index + 1}`)} 원본 보기"
+              title="추가 이미지 ${index + 1}"
+            ><span class="gallery-extra-plus-icon" aria-hidden="true">◆</span></button>
+          `).join("")}
+        </span>
+      </div>
+    `
     : "";
 
   let mediaHtml;
@@ -58,11 +99,12 @@ export function renderGalleryCard(post, board) {
   return `
     <article class="gallery-card" data-post-id="${post.id}">
       <div class="gallery-media-wrap${post.thumb || post.isSecret ? "" : " gallery-text-only-wrap"}">
+        ${manageBar}
+        ${extraLayer}
         ${mediaHtml}
         ${renderGallerySource(post.source)}
       </div>
       ${contentMarkup}
-      ${editLink}
     </article>
   `;
 }
@@ -77,8 +119,8 @@ function renderGallerySource(rawSource) {
   return `<div class="gallery-source">${content}</div>`;
 }
 
-// 비밀글 열람 — 서버가 비밀번호를 확인하고 전체 글을 돌려주면 카드를 다시 그린다
-export function bindGallery(root, board) {
+// 비밀글 열람(서버 확인 후 카드 교체) + 삭제(이벤트 위임: 다시 그려도 유지)
+export function bindGallery(root, board, reload, options = {}) {
   root.querySelectorAll("[data-gallery-unlock]").forEach((button) => {
     const id = Number(button.dataset.galleryUnlock);
     const box = root.querySelector(`[data-gallery-secret="${id}"]`);
@@ -89,7 +131,7 @@ export function bindGallery(root, board) {
         const post = await runQuery("board:post", { id, password: input?.value || "" });
         const card = root.querySelector(`.gallery-card[data-post-id="${id}"]`);
         if (card) {
-          card.outerHTML = renderGalleryCard({ ...post, isSecret: false }, board);
+          card.outerHTML = renderGalleryCard({ ...post, isSecret: false }, board, options);
         }
       } catch (error) {
         if (errorEl) {
@@ -103,6 +145,25 @@ export function bindGallery(root, board) {
       if (event.key === "Enter") { event.preventDefault(); tryUnlock(); }
     });
   });
+
+  // 삭제 — 루트에 한 번만 위임 바인딩
+  if (!root.dataset.galleryDeleteBound) {
+    root.dataset.galleryDeleteBound = "1";
+    root.addEventListener("click", async (event) => {
+      const button = event.target instanceof Element ? event.target.closest("[data-gallery-delete]") : null;
+      if (!button) return;
+      const id = Number(button.dataset.galleryDelete);
+      if (!id || !window.confirm("이 게시물을 삭제할까요?")) return;
+      button.disabled = true;
+      try {
+        await runMutate("post:remove", { id });
+        await reload?.();
+      } catch (error) {
+        window.alert(naruErrorMessage(error, "삭제에 실패했습니다."));
+        button.disabled = false;
+      }
+    });
+  }
 }
 
 function getHttpUrl(value) {

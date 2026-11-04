@@ -284,28 +284,34 @@ function renderThumbPreview() {
     : "";
 }
 
-/* ── 추가 이미지: staged 목록 (저장 시 업로드) ── */
+/* ── 추가 이미지: staged 목록 (저장 시 업로드) ──
+   파일은 고르는 즉시 목록에 담기고('추가' 버튼 불필요), URL 모드만 '추가'로 담는다. */
 function bindExtraControls() {
   const fileRadio = document.getElementById("extraModeFile");
   const urlRadio = document.getElementById("extraModeUrl");
   const fileFields = document.getElementById("extraFileFields");
   const urlFields = document.getElementById("extraUrlFields");
+  const addBtn = document.getElementById("addExtraItemBtn");
+  const addRow = addBtn?.closest(".write-extra-add-row");
   const applyMode = () => {
     const isFile = !urlRadio?.checked;
     fileFields?.classList.toggle("hidden", !isFile);
     urlFields?.classList.toggle("hidden", isFile);
+    addRow?.classList.toggle("hidden", isFile); // 파일 모드는 자동 추가
   };
   fileRadio?.addEventListener("change", applyMode);
   urlRadio?.addEventListener("change", applyMode);
+  applyMode();
 
   const fileInput = document.getElementById("extraFileInput");
-  const pending = []; // '추가' 버튼 전 임시 선택
   const addFiles = (files) => {
-    Array.from(files || []).forEach((file) => {
-      if (!/^image\//i.test(file.type || "")) return;
-      pending.push(file);
+    const incoming = Array.from(files || []).filter((file) => /^image\//i.test(file.type || ""));
+    if (!incoming.length) return;
+    incoming.forEach((file) => {
+      extraStaged.push({ blob: file, name: file.name || "", previewUrl: URL.createObjectURL(file) });
     });
-    showUploadMsg(pending.length ? `선택됨 ${pending.length}개 — '추가'를 누르면 목록에 담깁니다.` : "");
+    showUploadMsg("");
+    renderExtraList();
   };
   document.getElementById("selectExtraFileBtn")?.addEventListener("click", () => fileInput?.click());
   fileInput?.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
@@ -320,20 +326,13 @@ function bindExtraControls() {
     if (files.length) { event.preventDefault(); addFiles(files); }
   });
 
-  document.getElementById("addExtraItemBtn")?.addEventListener("click", () => {
+  // URL 모드: '추가' 버튼으로 담는다
+  addBtn?.addEventListener("click", () => {
     const urlInput = document.getElementById("extraImageUrlInput");
-    if (urlRadio?.checked) {
-      const url = String(urlInput?.value || "").trim();
-      if (!url) return showUploadMsg("URL을 입력하세요.");
-      extraStaged.push({ url, name: url.split("/").pop() || "", previewUrl: url });
-      if (urlInput) urlInput.value = "";
-    } else {
-      if (!pending.length) return showUploadMsg("먼저 파일을 선택하세요.");
-      pending.forEach((file) => {
-        extraStaged.push({ blob: file, name: file.name || "", previewUrl: URL.createObjectURL(file) });
-      });
-      pending.length = 0;
-    }
+    const url = String(urlInput?.value || "").trim();
+    if (!url) return showUploadMsg("URL을 입력하세요.");
+    extraStaged.push({ url, name: url.split("/").pop() || "", previewUrl: url });
+    if (urlInput) urlInput.value = "";
     showUploadMsg("");
     renderExtraList();
   });
@@ -380,7 +379,6 @@ async function save(boot, msgEl) {
   const secretPw = getValue("secretPwInput");
 
   if (skin !== "GALLERY" && skin !== "LOG" && !title) return alertMsg(msgEl, "제목을 입력하세요.");
-  if (skin === "GALLERY" && !source) return alertMsg(msgEl, "갤러리 글은 출처를 입력해야 합니다.");
   if (skin === "SCRIPT" && !thumbStaged) return alertMsg(msgEl, "대표 이미지를 선택하세요.");
   if (isSecret && !secretPw && !editingId) return alertMsg(msgEl, "비밀글 비밀번호를 입력하세요.");
 

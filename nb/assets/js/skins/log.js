@@ -16,20 +16,22 @@ function resolveLogLayout(board) {
 }
 
 // showManage: 수정·삭제 버튼 표시 여부 — 관리자는 ADMIN 토글이 켜졌을 때만 보인다
+// selectable: 관리자 모드의 선택삭제용 체크박스 표시 여부
 export function renderLogFeed(posts, board, options = {}) {
   if (!posts.length) return '<div class="notice">아직 게시물이 없습니다.</div>';
   const layout = resolveLogLayout(board);
   const hasMediaWidth = Boolean(layout.imageWidth && layout.imageWidth !== "none");
   const showManage = options.showManage !== false;
+  const selectable = options.selectable === true;
 
   return `
     <div class="log-feed${layout.commentPosition === "bottom" ? " is-comment-bottom" : ""}${layout.imageWidth === "none" ? " is-unlimited-image" : ""}${hasMediaWidth ? " has-log-media-width" : ""}"${hasMediaWidth ? ` style="--log-media-width:${layout.imageWidth};"` : ""}>
-      ${posts.map((post) => renderLogEntry(post, board, layout, showManage)).join("")}
+      ${posts.map((post) => renderLogEntry(post, board, layout, showManage, selectable)).join("")}
     </div>
   `;
 }
 
-export function renderLogEntry(post, board, layout, showManage = true) {
+export function renderLogEntry(post, board, layout, showManage = true, selectable = false) {
   const dateStr = escapeHtml(formatDateTime(post.createdAt));
   const author = post.isOwnerPost ? ownerDisplayName() : (post.nickname || "익명");
   const locked = post.isSecret && post.body == null;
@@ -52,6 +54,10 @@ export function renderLogEntry(post, board, layout, showManage = true) {
         <button type="button" class="log-manage-button log-delete-button" data-log-delete="${post.id}">삭제</button>
       </div>
     `
+    : "";
+  // 관리자 모드 선택삭제용 체크박스
+  const selectHtml = selectable
+    ? `<label class="log-select-wrap" title="선택삭제 대상"><input type="checkbox" class="log-select-check" data-log-select="${post.id}"></label>`
     : "";
 
   const mediaHtml = locked ? `
@@ -115,8 +121,9 @@ export function renderLogEntry(post, board, layout, showManage = true) {
 
   return `
     <article class="card log-post mt-sm" data-post-id="${post.id}">
-      ${(metaHtml || manageHtml) ? `
+      ${(metaHtml || manageHtml || selectHtml) ? `
         <div class="log-top-meta">
+          ${selectHtml}
           ${metaHtml}
           ${manageHtml}
         </div>
@@ -154,6 +161,7 @@ export function renderLogEntry(post, board, layout, showManage = true) {
 export function bindLogFeed(root, board, posts, reload, options = {}) {
   const layout = resolveLogLayout(board);
   const showManage = options.showManage !== false;
+  const selectable = options.selectable === true;
 
   // 글별 댓글
   posts.forEach((post) => {
@@ -175,7 +183,7 @@ export function bindLogFeed(root, board, posts, reload, options = {}) {
         const article = root.querySelector(`.log-post[data-post-id="${id}"]`);
         if (article) {
           const wrap = document.createElement("div");
-          wrap.innerHTML = renderLogEntry({ ...post, isSecret: false }, board, layout, showManage);
+          wrap.innerHTML = renderLogEntry({ ...post, isSecret: false }, board, layout, showManage, selectable);
           article.replaceWith(wrap.firstElementChild);
           const container = root.querySelector(`#log-comments-${id}`);
           if (container) loadComments(id, container, { compact: true, logStyle: true });

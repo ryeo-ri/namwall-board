@@ -1,5 +1,5 @@
 // 게시판 — 스킨별 목록 (BOARD / GUESTBOOK / GALLERY / THREAD / LOG / SCRIPT / PROFILE)
-import { runQuery, naruErrorMessage } from "../core/naru-client.js";
+import { runQuery, runMutate, naruErrorMessage } from "../core/naru-client.js";
 import { renderHeader, getBoardById, applyBoardWidth, escapeHtml, peekCachedBoards } from "../core/site.js";
 import { normalizeSkinType, renderBoardList, renderGuestbook, bindGuestbook } from "../shared/skins.js";
 import { renderGalleryList, bindGallery } from "../skins/gallery.js";
@@ -9,8 +9,8 @@ import { renderLogFeed, bindLogFeed } from "../skins/log.js";
 const DEFAULT_PAGE_SIZE = 20;
 const LOG_PAGE_SIZE = 10;
 
-// LOG 스킨 관리자 모드 — 켜면 각 글에 수정·삭제 버튼 표시 (원본 ADMIN 토글)
-let logAdminMode = false;
+// LOG·GALLERY 스킨 관리자 모드 — 켜면 각 글에 수정·삭제와 선택 체크박스 표시 (원본 ADMIN 토글)
+let adminMode = false;
 
 async function init() {
   const params = new URLSearchParams(location.search);
@@ -48,20 +48,75 @@ async function init() {
     writeBtn.classList.remove("hidden");
   }
 
-  // LOG: 관리자에게 ADMIN 토글 버튼 — 켜면 수정·삭제 버튼이 나타난다
-  if (skinType === "LOG" && boot.owner) {
+  // LOG·GALLERY: 관리자에게 ADMIN 토글 버튼 — 켜면 글마다 수정·삭제와 선택 체크박스,
+  // 상단에 선택삭제·전체삭제 버튼이 나타난다
+  if ((skinType === "LOG" || skinType === "GALLERY") && boot.owner) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "btn";
     toggle.id = "logAdminToggleBtn";
     toggle.textContent = "ADMIN";
+
+    const selectDeleteBtn = document.createElement("button");
+    selectDeleteBtn.type = "button";
+    selectDeleteBtn.className = "btn hidden";
+    selectDeleteBtn.textContent = "선택삭제";
+
+    const deleteAllBtn = document.createElement("button");
+    deleteAllBtn.type = "button";
+    deleteAllBtn.className = "btn hidden";
+    deleteAllBtn.textContent = "전체삭제";
+
     toggle.addEventListener("click", async () => {
-      logAdminMode = !logAdminMode;
-      toggle.textContent = logAdminMode ? "관리자종료" : "ADMIN";
-      toggle.classList.toggle("primary", logAdminMode);
+      adminMode = !adminMode;
+      toggle.textContent = adminMode ? "관리자종료" : "ADMIN";
+      toggle.classList.toggle("primary", adminMode);
+      selectDeleteBtn.classList.toggle("hidden", !adminMode);
+      deleteAllBtn.classList.toggle("hidden", !adminMode);
       await renderList(board, skinType, listEl, boot);
     });
-    writeBtn?.parentElement?.prepend(toggle);
+
+    // 선택삭제: 체크된 글만 지운다 (LOG·GALLERY 체크박스 모두 수집)
+    selectDeleteBtn.addEventListener("click", async () => {
+      const ids = [...listEl.querySelectorAll(".log-select-check:checked, [data-gallery-select]:checked")]
+        .map((input) => Number(input.dataset.logSelect || input.dataset.gallerySelect))
+        .filter(Boolean);
+      if (!ids.length) return window.alert("삭제할 글을 먼저 체크하세요.");
+      if (!window.confirm(`선택한 ${ids.length}개 글을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+      selectDeleteBtn.disabled = true;
+      try {
+        for (const id of ids) await runMutate("post:remove", { id });
+        await renderList(board, skinType, listEl, boot);
+      } catch (error) {
+        window.alert(naruErrorMessage(error, "삭제에 실패했습니다."));
+        await renderList(board, skinType, listEl, boot);
+      } finally {
+        selectDeleteBtn.disabled = false;
+      }
+    });
+
+    // 전체삭제: 이 게시판의 모든 글을 페이지 단위로 받아 하나씩 지운다 (일괄 삭제 API 없음)
+    deleteAllBtn.addEventListener("click", async () => {
+      if (!window.confirm(`"${board.title || board.id}" 게시판의 글을 전부 삭제할까요? 되돌릴 수 없습니다.`)) return;
+      if (!window.confirm("정말로 모든 글과 그 댓글이 삭제됩니다. 계속할까요?")) return;
+      deleteAllBtn.disabled = true;
+      deleteAllBtn.textContent = "삭제 중…";
+      try {
+        for (;;) {
+          const { posts } = await runQuery("board:posts", { board: board.id, size: 50 });
+          if (!posts.length) break;
+          for (const post of posts) await runMutate("post:remove", { id: post.id });
+        }
+      } catch (error) {
+        window.alert(naruErrorMessage(error, "전체 삭제 중 오류가 났습니다. 남은 글을 확인하세요."));
+      } finally {
+        deleteAllBtn.disabled = false;
+        deleteAllBtn.textContent = "전체삭제";
+        await renderList(board, skinType, listEl, boot);
+      }
+    });
+
+    writeBtn?.parentElement?.prepend(toggle, selectDeleteBtn, deleteAllBtn);
   }
 
   // 미리 던진 쿼리는 스킨이 캐시와 같을 때만 사용 (게시판 설정이 바뀐 경우 대비)
@@ -84,7 +139,8 @@ function listQuery(board, skinType, before) {
   return runQuery("board:posts", {
     board: board.id,
     size: pageSizeFor(board, skinType),
-    ...(skinType === "LOG" ? { withBody: true } : {}),
+    // LOG는 본문까지, GALLERY는 추가 이미지(attachments)까지 목록에서 그린다
+    ...(skinType === "LOG" || skinType === "GALLERY" ? { withBody: true } : {}),
     ...(before ? { before } : {})
   });
 }
@@ -107,14 +163,15 @@ async function renderList(board, skinType, listEl, boot, before = 0, accumulated
     const all = [...accumulated, ...posts];
     const reload = () => renderList(board, skinType, listEl, boot);
 
+    // 관리자는 ADMIN 토글이 켜졌을 때만 수정·삭제 노출, 일반 작성자는 자기 글에 항상 노출
+    const showManage = boot.owner ? adminMode : true;
+    const selectable = Boolean(boot.owner && adminMode); // 선택삭제 체크박스
     if (skinType === "LOG") {
-      // 관리자는 ADMIN 토글이 켜졌을 때만 수정·삭제 노출, 일반 작성자는 자기 글에 항상 노출
-      const showManage = boot.owner ? logAdminMode : true;
-      listEl.innerHTML = renderLogFeed(all, board, { showManage });
-      bindLogFeed(listEl, board, all, reload, { showManage });
+      listEl.innerHTML = renderLogFeed(all, board, { showManage, selectable });
+      bindLogFeed(listEl, board, all, reload, { showManage, selectable });
     } else if (skinType === "GALLERY") {
-      listEl.innerHTML = renderGalleryList(all, board);
-      bindGallery(listEl, board);
+      listEl.innerHTML = renderGalleryList(all, board, { showManage, selectable });
+      bindGallery(listEl, board, reload, { showManage, selectable });
     } else if (skinType === "THREAD") {
       listEl.innerHTML = renderThreadList(all, board);
     } else if (skinType === "SCRIPT") {

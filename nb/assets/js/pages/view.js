@@ -85,8 +85,8 @@ async function init() {
   if (toolsEl && post.editable) {
     toolsEl.classList.remove("hidden");
     toolsEl.innerHTML = `
-      <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId)}">수정</a>
-      <button type="button" class="text-action danger" id="deletePostBtn">삭제</button>
+      <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId)}" title="수정">E</a>
+      <button type="button" class="text-action danger" id="deletePostBtn" title="삭제">D</button>
     `;
     document.getElementById("deletePostBtn")?.addEventListener("click", async () => {
       if (!window.confirm(`게시물 "${post.title || post.id}"을 삭제할까요?`)) return;
@@ -178,8 +178,8 @@ function renderThreadMode(post, board, listUrl) {
 
   const toolsHtml = post.editable
     ? `
-      <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId)}">수정</a>
-      <button type="button" class="text-action danger" id="deletePostBtn">삭제</button>
+      <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(post.boardId)}" title="수정">E</a>
+      <button type="button" class="text-action danger" id="deletePostBtn" title="삭제">D</button>
     `
     : "";
   main.innerHTML = renderThreadDetail(post, board, { listUrl, toolsHtml });

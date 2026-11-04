@@ -109,7 +109,14 @@ export function bindThreadDetail(root, board) {
     const opened = !wrap.classList.toggle("hidden");
     toggle.setAttribute("aria-expanded", opened ? "true" : "false");
     toggle.classList.toggle("is-active", opened);
-    if (opened) wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (opened) {
+      // 댓글 폼이 ▼ 토글로 접혀 있으면 바로 펼친 상태로 보여준다
+      const formBody = wrap.querySelector(".comment-form-body");
+      if (formBody?.classList.contains("hidden")) {
+        wrap.querySelector("[data-comment-form-toggle]")?.click();
+      }
+      wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
 }
 

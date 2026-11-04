@@ -479,6 +479,7 @@ body.thread-view-page #viewImage{ display: none; }
 .thread-view-tools{
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 10px;
 }
 .thread-view-thumb{

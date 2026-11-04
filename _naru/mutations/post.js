@@ -116,7 +116,7 @@ export async function write(ctx, args) {
   const title = text(args && args.title, 200, "제목", ctx, { required: !isLog && board.skin !== "GALLERY" });
   const body = text(args && args.body, MAX_BODY, "본문", ctx);
   const thumb = text(args && args.thumb, 2048, "대표 이미지 주소", ctx);
-  const source = text(args && args.source, 500, "출처", ctx, { required: String(board.skin || "").toUpperCase() === "GALLERY" });
+  const source = text(args && args.source, 500, "출처", ctx);
   const images = parseImages(args && args.images, ctx);
   const attachments = cleanAttachments(ctx, args && args.attachments);
   const tags = cleanTags(ctx, args && args.tags);

@@ -63,7 +63,7 @@ export function renderGuestbook(entries, board, boot) {
 function renderGuestbookEntry(entry) {
   const name = entry.isOwnerEntry ? ownerDisplayName() : (entry.name || "익명");
   const deleteBtn = (entry.deletable || entry.hasPassword)
-    ? `<button type="button" class="guestbook-delete" data-gb-delete="${entry.id}" data-ask-pass="${entry.deletable ? "" : "1"}">삭제</button>`
+    ? `<button type="button" class="guestbook-delete" data-gb-delete="${entry.id}" data-ask-pass="${entry.deletable ? "" : "1"}" title="삭제">D</button>`
     : "";
 
   let bodyHtml;

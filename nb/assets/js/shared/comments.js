@@ -51,7 +51,7 @@ function renderCommentItem(comment, options) {
   const dateStr = escapeHtml(formatDateTime(comment.createdAt));
   const nameHtml = `<span class="comment-author">${escapeHtml(displayName(comment))}</span>`;
   const deleteBtn = (comment.deletable || comment.hasPassword)
-    ? `<span class="comment-admin-actions"><button type="button" class="btn" data-del-comment data-comment-delete="${comment.id}" data-ask-pass="${comment.deletable ? "" : "1"}">삭제</button></span>`
+    ? `<span class="comment-admin-actions"><button type="button" class="btn" data-del-comment data-comment-delete="${comment.id}" data-ask-pass="${comment.deletable ? "" : "1"}" title="삭제">D</button></span>`
     : "";
 
   const metaLeft = options.dateFirstHeader ? `<span class="muted small">${dateStr}</span>` : nameHtml;
@@ -112,8 +112,8 @@ function renderCommentImages(images) {
   `;
 }
 
-// 원본 댓글 폼: ▼ 토글 → [이미지] → 닉네임(게스트만 — 나루 로그인 시 생략) → 내용 →
-// [접기] [비밀] [비밀번호(비밀 체크 시)] [등록]
+// 원본 댓글 폼: ▼ 토글 → 닉네임(게스트만 — 나루 로그인 시 생략) → 내용 →
+// [접기] [비밀] [이미지 첨부] [비밀번호(비밀 체크 시)] [등록]
 // 상세(#viewComments)·방명록에서는 CSS가 토글을 숨기고 항상 펼친다.
 function renderCommentForm(boot, options, canAttach, postId) {
   if (options.allowWrite === false) return "";
@@ -129,30 +129,28 @@ function renderCommentForm(boot, options, canAttach, postId) {
             <span class="comment-pass-label">비밀번호</span>
             <input type="password" class="comment-pass-input" placeholder="비밀번호" maxlength="64">
           </span>`;
-  // 이미지 첨부 UI는 폼 최상단
-  const attachRow = canAttach
+  // 이미지 첨부 버튼은 하단 옵션줄(접기·비밀 옆), 미리보기는 내용 입력칸 아래
+  const attachButton = canAttach
     ? `
-      <div class="comment-form-row comment-form-row-inline comment-image-row">
-        <button type="button" class="btn small comment-image-attach">이미지 첨부</button>
-        <input type="file" class="comment-image-input hidden" accept="image/*" multiple>
-      </div>
-      <div class="comment-image-previews hidden"></div>
-    `
+          <button type="button" class="btn comment-image-attach">이미지 첨부</button>
+          <input type="file" class="comment-image-input hidden" accept="image/*" multiple>`
     : "";
+  const attachPreviews = canAttach ? '<div class="comment-image-previews hidden"></div>' : "";
   return `
     <form class="comment-form" autocomplete="off" data-as-member="${asMember ? "1" : ""}">
       <div class="comment-form-head">
         <button type="button" class="comment-form-toggle" data-comment-form-toggle aria-label="댓글 작성 폼 열기">▼</button>
       </div>
       <div class="comment-form-body${formExpanded ? "" : " hidden"}">
-        ${attachRow}
         ${nameRow}
         <div class="comment-form-row">
           <textarea class="comment-memo-input" rows="3" placeholder="내용"></textarea>
         </div>
+        ${attachPreviews}
         <div class="comment-form-row comment-form-row-inline comment-form-row-options">
           <label class="comment-toggle"><input type="checkbox" class="comment-fold-toggle"> <span>접기</span></label>
           <label class="comment-toggle"><input type="checkbox" class="comment-secret-toggle"> <span>비밀</span></label>
+          ${attachButton}
           ${passWrap}
           <button type="submit" class="btn primary comment-submit-btn">등록</button>
         </div>
