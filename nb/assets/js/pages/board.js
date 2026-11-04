@@ -9,7 +9,9 @@ import { renderLogFeed, bindLogFeed } from "../skins/log.js";
 const DEFAULT_PAGE_SIZE = 20;
 const LOG_PAGE_SIZE = 10;
 
-// LOG·GALLERY 스킨 관리자 모드 — 켜면 각 글에 수정·삭제와 선택 체크박스 표시 (원본 ADMIN 토글)
+// 목록 스킨 관리자 모드 — 켜면 각 글에 수정·삭제와 선택 체크박스 표시 (원본 ADMIN 토글)
+// GUESTBOOK(항목별 D 버튼)·SCRIPT·PROFILE은 제외
+const ADMIN_TOGGLE_SKINS = ["LOG", "GALLERY", "THREAD", "BOARD"];
 let adminMode = false;
 
 async function init() {
@@ -48,9 +50,9 @@ async function init() {
     writeBtn.classList.remove("hidden");
   }
 
-  // LOG·GALLERY: 관리자에게 ADMIN 토글 버튼 — 켜면 글마다 수정·삭제와 선택 체크박스,
+  // 목록 스킨: 관리자에게 ADMIN 토글 버튼 — 켜면 글마다 수정·삭제와 선택 체크박스,
   // 상단에 선택삭제·전체삭제 버튼이 나타난다
-  if ((skinType === "LOG" || skinType === "GALLERY") && boot.owner) {
+  if (ADMIN_TOGGLE_SKINS.includes(skinType) && boot.owner) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "btn";
@@ -76,10 +78,10 @@ async function init() {
       await renderList(board, skinType, listEl, boot);
     });
 
-    // 선택삭제: 체크된 글만 지운다 (LOG·GALLERY 체크박스 모두 수집)
+    // 선택삭제: 체크된 글만 지운다 (스킨별 체크박스 모두 수집)
     selectDeleteBtn.addEventListener("click", async () => {
       const ids = [...listEl.querySelectorAll(".log-select-check:checked, [data-gallery-select]:checked")]
-        .map((input) => Number(input.dataset.logSelect || input.dataset.gallerySelect))
+        .map((input) => Number(input.dataset.logSelect || input.dataset.gallerySelect || input.dataset.postSelect))
         .filter(Boolean);
       if (!ids.length) return window.alert("삭제할 글을 먼저 체크하세요.");
       if (!window.confirm(`선택한 ${ids.length}개 글을 삭제할까요? 되돌릴 수 없습니다.`)) return;
@@ -173,7 +175,8 @@ async function renderList(board, skinType, listEl, boot, before = 0, accumulated
       listEl.innerHTML = renderGalleryList(all, board, { showManage, selectable });
       bindGallery(listEl, board, reload, { showManage, selectable });
     } else if (skinType === "THREAD") {
-      listEl.innerHTML = renderThreadList(all, board);
+      listEl.innerHTML = renderThreadList(all, board, { showManage, selectable });
+      bindPostDelete(listEl, reload);
     } else if (skinType === "SCRIPT") {
       const { renderScriptList } = await import("../skins/script.js");
       listEl.innerHTML = renderScriptList(all, board);
@@ -181,12 +184,28 @@ async function renderList(board, skinType, listEl, boot, before = 0, accumulated
       const { renderProfileList } = await import("../skins/profile.js");
       listEl.innerHTML = renderProfileList(all, board);
     } else {
-      listEl.innerHTML = renderBoardList(all, board);
+      listEl.innerHTML = renderBoardList(all, board, { showManage, selectable });
+      bindPostDelete(listEl, reload);
     }
     if (more && all.length) appendMore(listEl, () => renderList(board, skinType, listEl, boot, all[all.length - 1].id, all));
   } catch (error) {
     listEl.innerHTML = `<div class="notice">${escapeHtml(naruErrorMessage(error, "목록을 불러오지 못했습니다."))}</div>`;
   }
+}
+
+// BOARD·THREAD 목록의 삭제(D) 버튼 — LOG·GALLERY는 각 스킨의 bind가 처리한다
+function bindPostDelete(listEl, reload) {
+  listEl.querySelectorAll("[data-del-post]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!window.confirm("이 글을 삭제할까요? 댓글도 함께 삭제됩니다.")) return;
+      try {
+        await runMutate("post:remove", { id: Number(btn.dataset.delPost) });
+        await reload();
+      } catch (error) {
+        window.alert(naruErrorMessage(error, "삭제에 실패했습니다."));
+      }
+    });
+  });
 }
 
 function appendMore(listEl, onMore) {

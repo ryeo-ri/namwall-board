@@ -11,7 +11,7 @@ export function normalizeSkinType(board) {
 
 /* ── BOARD: 제목 + 날짜 한 줄 목록 (원본 board-line-list) ───────── */
 
-export function renderBoardList(posts, board) {
+export function renderBoardList(posts, board, opts = {}) {
   if (!posts.length) return '<div class="notice">게시물이 없습니다.</div>';
   return `
     <div class="board-list board-line-list">
@@ -20,10 +20,18 @@ export function renderBoardList(posts, board) {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const count = post.commentCount > 0 ? ` <span class="muted small">[${post.commentCount}]</span>` : "";
         const author = post.isOwnerPost ? "" : `<span class="muted small">${escapeHtml(post.nickname || "익명")}</span> `;
+        // 관리자 모드(ADMIN 토글): 선택 체크박스 + 수정·삭제 — LOG·GALLERY와 같은 동작
+        const check = opts.selectable
+          ? `<label class="log-select-wrap"><input type="checkbox" class="log-select-check" data-post-select="${post.id}" aria-label="선택"></label>`
+          : "";
+        const manage = (opts.showManage && post.editable)
+          ? ` <a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" title="수정">E</a> <button type="button" class="text-action danger" data-del-post="${post.id}" title="삭제">D</button>`
+          : "";
         return `
           <article class="search-item board-line-item" data-post-id="${post.id}">
+            ${check}
             <a href="${url}" class="board-line-title">${post.isSecret ? renderLockIcon("board-line-lock-icon") : ""}${title}${count}</a>
-            <span class="board-line-date">${author}${escapeHtml(formatDate(post.createdAt))}</span>
+            <span class="board-line-date">${author}${escapeHtml(formatDate(post.createdAt))}${manage}</span>
           </article>
         `;
       }).join("")}

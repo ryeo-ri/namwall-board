@@ -4,7 +4,7 @@ import { escapeHtml } from "../core/site.js";
 import { sanitizeHTML } from "../shared/sanitizer.js";
 
 /* ── 목록: 테두리·라운드 없는 카드 그리드 ── */
-export function renderThreadList(posts, board) {
+export function renderThreadList(posts, board, opts = {}) {
   if (!posts.length) return '<div class="notice">아직 등록된 타래가 없습니다.</div>';
   const columns = clampColumns(board.options?.galleryColumns, 3);
 
@@ -13,8 +13,17 @@ export function renderThreadList(posts, board) {
       ${posts.map((post) => {
         const url = `view.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}`;
         const title = escapeHtml(post.title || "(제목 없음)");
+        // 관리자 모드(ADMIN 토글): 카드 위에 선택 체크박스 + 수정·삭제 줄 — LOG·GALLERY와 같은 동작
+        const check = opts.selectable
+          ? `<label class="log-select-wrap"><input type="checkbox" class="log-select-check" data-post-select="${post.id}" aria-label="선택"></label>`
+          : "";
+        const manage = (opts.showManage && post.editable)
+          ? `<span class="gallery-manage-actions"><a class="text-action" href="write.html?id=${encodeURIComponent(post.id)}&bo=${encodeURIComponent(board.id)}" title="수정">E</a> <button type="button" class="text-action danger" data-del-post="${post.id}" title="삭제">D</button></span>`
+          : "";
+        const adminBar = (check || manage) ? `<div class="gallery-delete-topbar">${check}${manage}</div>` : "";
         return `
           <article class="thread-card" data-post-id="${post.id}">
+            ${adminBar}
             <a class="thread-card-link" href="${url}">
               <div class="thread-card-cover">
                 ${post.isSecret
