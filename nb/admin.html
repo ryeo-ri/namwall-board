@@ -419,19 +419,13 @@
               </div>
 
               <div class="field-group">
-                <label for="boardCategoriesInput">분류 (선택)</label>
-                <input id="boardCategoriesInput" maxlength="500" placeholder="예: 질문|답변 — 분류 사이를 | 로 구분">
-                <div class="muted small">설정하면 글 작성 시 분류를 고를 수 있고, 목록 위에 분류 칩이 생깁니다. 비우면 사용하지 않습니다.</div>
+                <label for="menuOrderInput">메뉴 순서</label>
+                <input id="menuOrderInput" type="number" min="0" step="1" placeholder="기본 0 / 작을수록 먼저 표시">
               </div>
 
               <div class="field-group">
                 <label for="pageSizeInput">페이지당 게시물 수</label>
                 <input id="pageSizeInput" type="number" min="1" max="100" step="1" placeholder="기본 10">
-              </div>
-
-              <div class="field-group">
-                <label for="menuOrderInput">메뉴 순서</label>
-                <input id="menuOrderInput" type="number" min="0" step="1" placeholder="기본 0 / 작을수록 먼저 표시">
               </div>
             </div>
           </div>
@@ -484,6 +478,18 @@
                 <label for="boardImageWidthInput">이미지 폭 크기</label>
                 <input id="boardImageWidthInput" type="number" min="0" max="2400" step="1" placeholder="자동 / 0 = 제한 없음">
               </div>
+            </div>
+          </div>
+
+          <div class="settings-block mt-md" id="categoryBlock">
+            <div class="settings-block-head">
+              <strong>카테고리</strong>
+              <span class="muted small">목록 상단에 분류 칩이 생깁니다.</span>
+            </div>
+            <div class="field-group">
+              <label for="boardCategoriesInput">분류 (선택)</label>
+              <input id="boardCategoriesInput" maxlength="500" placeholder="질문 | 답변">
+              <div class="muted small">분류 사이는 | 로 구분하세요. 글작성 시 카테고리로 추가됩니다.</div>
             </div>
           </div>
 

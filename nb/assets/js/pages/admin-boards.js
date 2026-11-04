@@ -80,6 +80,9 @@ function applySkin(skin) {
   const desc = document.getElementById("skinOptionsDesc");
   if (desc) desc.textContent = fields.length ? `${currentSkin} 스킨의 게시판 옵션입니다.` : "";
 
+  // 카테고리 블록: 방명록 스킨에는 없음, 나머지 스킨은 표시
+  document.getElementById("categoryBlock")?.classList.toggle("hidden", currentSkin === "GUESTBOOK");
+
   // 스킨별 라벨·기본값 (원본 그대로)
   const columnsPreset = COLUMN_PRESETS[currentSkin];
   const columnsInput = document.getElementById("boardColumnsInput");
@@ -272,8 +275,8 @@ async function save() {
       const imageWidthRaw = getValue("boardImageWidthInput").trim();
       if (imageWidthRaw !== "") options.imageWidth = Number(imageWidthRaw);
     }
-    // 분류: | 로 구분해 입력 — 비우면 사용 안 함
-    const categoriesRaw = getValue("boardCategoriesInput").trim();
+    // 카테고리(분류): | 로 구분해 입력 — 비우면 사용 안 함, 방명록 스킨은 제외
+    const categoriesRaw = currentSkin === "GUESTBOOK" ? "" : getValue("boardCategoriesInput").trim();
     if (categoriesRaw) {
       const categories = categoriesRaw.split("|").map((item) => item.trim()).filter(Boolean);
       if (categories.length) options.categories = categories;
