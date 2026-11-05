@@ -28,6 +28,7 @@ async function init() {
   const cachedBoard = getBoardById(peekCachedBoards(), boardId);
   const prefetch = cachedBoard ? {
     skinType: normalizeSkinType(cachedBoard),
+    category: activeCategory,
     promise: listQuery(cachedBoard, normalizeSkinType(cachedBoard), 0).catch(() => null)
   } : null;
 
@@ -47,7 +48,9 @@ async function init() {
 
   // 분류 칩: 게시판에 분류가 설정돼 있으면 목록 위에 표시 — 클릭하면 그 분류 글만 본다
   const categories = Array.isArray(board.options?.categories) ? board.options.categories : [];
-  if (categories.length && listEl && listEl.parentElement) {
+  // 설정에서 지워졌거나 잘못 입력된 ?cat=은 무시하고 전체를 보여준다
+  if (!categories.includes(activeCategory)) activeCategory = "";
+  if (categories.length && listEl?.parentElement) {
     const chipLink = (label, cat) => {
       const href = `board.html?bo=${encodeURIComponent(board.id)}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}`;
       return `<a class="tag${cat === activeCategory ? " is-active" : ""}" href="${href}">${escapeHtml(label)}</a>`;
@@ -113,9 +116,13 @@ async function init() {
     });
 
     // 전체삭제: 이 게시판의 모든 글을 페이지 단위로 받아 하나씩 지운다 (일괄 삭제 API 없음)
+    // 분류 칩으로 거른 상태면 그 분류의 글만 지운다
     deleteAllBtn.addEventListener("click", async () => {
-      if (!window.confirm(`"${board.title || board.id}" 게시판의 글을 전부 삭제할까요? 되돌릴 수 없습니다.`)) return;
-      if (!window.confirm("정말로 모든 글과 그 댓글이 삭제됩니다. 계속할까요?")) return;
+      const scope = activeCategory
+        ? `"${board.title || board.id}" 게시판의 [${activeCategory}] 분류 글을`
+        : `"${board.title || board.id}" 게시판의 글을`;
+      if (!window.confirm(`${scope} 전부 삭제할까요? 되돌릴 수 없습니다.`)) return;
+      if (!window.confirm(`정말로 ${activeCategory ? `[${activeCategory}] 분류의 ` : ""}모든 글과 그 댓글이 삭제됩니다. 계속할까요?`)) return;
       deleteAllBtn.disabled = true;
       deleteAllBtn.textContent = "삭제 중…";
       try {
@@ -140,9 +147,9 @@ async function init() {
     writeBtn?.parentElement?.prepend(toggle, selectDeleteBtn, deleteAllBtn);
   }
 
-  // 미리 던진 쿼리는 스킨이 캐시와 같을 때만 사용 (게시판 설정이 바뀐 경우 대비)
-  await renderList(board, skinType, listEl, boot, 0, [],
-    prefetch && prefetch.skinType === skinType ? prefetch.promise : null);
+  // 미리 던진 쿼리는 스킨·분류가 캐시와 같을 때만 사용 (게시판 설정이 바뀐 경우 대비)
+  const prefetchUsable = prefetch && prefetch.skinType === skinType && prefetch.category === activeCategory;
+  await renderList(board, skinType, listEl, boot, 0, [], prefetchUsable ? prefetch.promise : null);
 }
 
 function pageSizeFor(board) {

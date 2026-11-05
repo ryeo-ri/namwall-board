@@ -92,6 +92,9 @@ async function init() {
       if (post.logNo) setValue("logNumberInput", String(post.logNo));
       currentBoard = getBoardById(boot.boards, post.boardId) || currentBoard;
       setText("boardCurrentValue", currentBoard?.title || post.boardId);
+      // 수정 중인 글은 원래 게시판에 고정 (선택창이 보이면 applySkinFields가 다른 게시판으로 바꿔버린다)
+      document.getElementById("boardCurrentValue")?.classList.remove("hidden");
+      boardSelect?.classList.add("hidden");
       document.getElementById("visibilityInput").value = post.isSecret ? "secret" : (post.memberOnly ? "members" : "public");
       document.getElementById("secretPwWrap")?.classList.toggle("hidden", !post.isSecret);
       if (post.thumb) {

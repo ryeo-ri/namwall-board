@@ -109,40 +109,42 @@ export function renderGalleryCard(post, board, options = {}) {
   `;
 }
 
+function renderGallerySource(rawSource) {
+  const content = renderSourceLinks(rawSource);
+  return content ? `<div class="gallery-source">${content}</div>` : "";
+}
+
 // 출처 표시 — [라벨]URL 형식이면 라벨만 링크로, 나머지는 일반 텍스트 (여러 개 가능)
 // URL만 적으면 '링크', 그 외 텍스트는 그대로 보여준다.
-function renderGallerySource(rawSource) {
+export function renderSourceLinks(rawSource) {
   const source = String(rawSource || "").trim();
   if (!source) return "";
 
-  const linkPattern = /\[([^\]\r\n]+)\](https?:\/\/\S+)/gi;
+  // URL은 공백·대괄호 앞까지 — 붙여 쓴 다음 [라벨]을 삼키지 않게
+  const linkPattern = /\[([^\]\r\n]+)\](https?:\/\/[^\s[\]]+)/gi;
   let content = "";
   let lastIndex = 0;
   let match;
 
   while ((match = linkPattern.exec(source)) !== null) {
     content += escapeHtml(source.slice(lastIndex, match.index));
-
-    const url = getHttpUrl(match[2]);
-    if (url) {
-      content += `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">${escapeHtml(match[1].trim())}</a>`;
-    } else {
-      content += escapeHtml(match[0]);
-    }
-
+    // "…/abc, 다음" 처럼 URL 끝에 붙은 문장부호는 링크에서 빼고 텍스트로 둔다
+    const rawUrl = match[2].replace(/[.,;:!?]+$/, "");
+    const url = getHttpUrl(rawUrl);
+    content += url
+      ? sourceLink(url, match[1].trim()) + escapeHtml(match[2].slice(rawUrl.length))
+      : escapeHtml(match[0]);
     lastIndex = linkPattern.lastIndex;
   }
 
-  if (lastIndex > 0) {
-    content += escapeHtml(source.slice(lastIndex));
-  } else {
-    const url = getHttpUrl(source);
-    content = url
-      ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">링크</a>`
-      : `<span>${escapeHtml(source)}</span>`;
-  }
+  if (lastIndex > 0) return content + escapeHtml(source.slice(lastIndex));
+  // 공백이 섞인 텍스트는 URL 하나로 보지 않는다 (new URL은 경로의 공백을 허용함)
+  const url = /\s/.test(source) ? "" : getHttpUrl(source);
+  return url ? sourceLink(url, "링크") : `<span>${escapeHtml(source)}</span>`;
+}
 
-  return `<div class="gallery-source">${content}</div>`;
+function sourceLink(url, label) {
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">${escapeHtml(label)}</a>`;
 }
 
 // 비밀글 열람(서버 확인 후 카드 교체) + 삭제(이벤트 위임: 다시 그려도 유지)

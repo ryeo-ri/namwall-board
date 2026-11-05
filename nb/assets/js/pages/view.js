@@ -7,6 +7,7 @@ import { sanitizeHTML } from "../shared/sanitizer.js";
 import { loadComments } from "../shared/comments.js";
 import { normalizeSkinType } from "../shared/skins.js";
 import { renderThreadDetail, bindThreadDetail } from "../skins/thread.js";
+import { renderSourceLinks } from "../skins/gallery.js";
 
 async function init() {
   const params = new URLSearchParams(location.search);
@@ -150,7 +151,10 @@ async function init() {
   // 출처
   if (post.source) {
     const sourceEl = document.getElementById("viewSource");
-    if (sourceEl) {
+    if (sourceEl && skinType === "GALLERY") {
+      // 갤러리 목록 카드와 같은 [라벨]URL 표시
+      sourceEl.innerHTML = `출처 ${renderSourceLinks(post.source)}`;
+    } else if (sourceEl) {
       const url = getHttpUrl(post.source);
       sourceEl.innerHTML = url
         ? `출처 <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>`
