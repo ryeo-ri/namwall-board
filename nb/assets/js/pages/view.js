@@ -168,7 +168,7 @@ async function init() {
     commentsWrap?.classList.add("hidden");
   } else {
     const commentsEl = document.getElementById("viewComments");
-    if (commentsEl) await loadComments(post.id, commentsEl, {});
+    if (commentsEl) await loadComments(post.id, commentsEl, { memberOnly: board?.options?.memberComment === true });
   }
 
   // SCRIPT: 아카이브 로드 (메시지 300개씩)
@@ -201,7 +201,11 @@ function renderThreadMode(post, board, listUrl) {
   bindThreadDetail(main, board);
   const commentsEl = main.querySelector("#threadComments");
   if (commentsEl) {
-    loadComments(post.id, commentsEl, { dateFirstHeader: true, allowImages: true });
+    loadComments(post.id, commentsEl, {
+      dateFirstHeader: true,
+      allowImages: true,
+      memberOnly: board?.options?.memberComment === true
+    });
   }
 }
 

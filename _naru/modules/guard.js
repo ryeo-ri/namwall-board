@@ -32,6 +32,18 @@ export function assertBoardReadable(ctx, board, owner = ctx.owner) {
   }
 }
 
+// 덧글 제한(게시판 options.memberComment): 켜져 있으면 비로그인 방문자는 댓글·방명록을 못 쓴다 (스팸 방지)
+export function assertGuestWriteAllowed(ctx, board, owner, label) {
+  if (owner || ctx.member) return;
+  let options = {};
+  try {
+    options = JSON.parse(board.options || "{}") || {};
+  } catch (_error) { /* 옵션이 깨졌으면 제한 없음으로 본다 */ }
+  if (options.memberComment === true) {
+    ctx.fail("AUTH_REQUIRED", `로그인한 회원만 ${label}을 쓸 수 있습니다.`); // label: 댓글·방명록
+  }
+}
+
 export function requireOwner(ctx) {
   if (!ctx.owner) ctx.fail("ACCESS_DENIED", "관리자만 할 수 있습니다.");
 }

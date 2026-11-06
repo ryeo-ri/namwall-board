@@ -33,6 +33,7 @@ function cleanOptions(ctx, raw) {
   const position = String(source.commentPosition || "").toLowerCase();
   if (["bottom", "left"].includes(position)) out.commentPosition = position;
   if (source.detailThumb === false) out.detailThumb = false;
+  if (source.memberComment === true) out.memberComment = true; // 덧글 제한: 로그인 회원만 댓글·방명록
   const imageWidth = Number(source.imageWidth);
   if (Number.isFinite(imageWidth) && imageWidth >= 0) out.imageWidth = Math.min(2400, Math.round(imageWidth));
   // 분류 목록 — 글 작성 드롭다운·목록 칩에 사용 (최대 20개, 각 30자)

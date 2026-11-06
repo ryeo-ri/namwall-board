@@ -158,7 +158,7 @@ function bindForm() {
    "boardBoardWidthInput", "boardColumnsInput", "boardCommentPosInput", "boardImageWidthInput"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", updateSummary);
   });
-  ["menuVisibleInput", "boardAdminOnlyInput", "boardMemberWriteInput", "boardDetailThumbInput"].forEach((id) => {
+  ["menuVisibleInput", "boardAdminOnlyInput", "boardMemberWriteInput", "boardMemberCommentInput", "boardDetailThumbInput"].forEach((id) => {
     document.getElementById(id)?.addEventListener("change", updateSummary);
   });
 
@@ -208,7 +208,8 @@ function updateSummary() {
   const chips = [
     { label: "메뉴 노출", on: checked("menuVisibleInput") },
     { label: "관리자 전용", on: checked("boardAdminOnlyInput") },
-    { label: "회원 글쓰기", on: checked("boardMemberWriteInput") }
+    { label: "글쓰기 허용", on: checked("boardMemberWriteInput") },
+    { label: "덧글 제한", on: checked("boardMemberCommentInput") }
   ];
   const chipsEl = document.getElementById("boardSummaryChips");
   if (chipsEl) {
@@ -227,6 +228,7 @@ function resetForm(message = "") {
   document.getElementById("menuVisibleInput").checked = true;
   document.getElementById("boardAdminOnlyInput").checked = false;
   document.getElementById("boardMemberWriteInput").checked = false;
+  document.getElementById("boardMemberCommentInput").checked = false;
   if (titleImageStaged) URL.revokeObjectURL(titleImageStaged.previewUrl);
   titleImageStaged = null;
   renderTitleImagePreview();
@@ -281,6 +283,8 @@ async function save() {
       const categories = categoriesRaw.split("|").map((item) => item.trim()).filter(Boolean);
       if (categories.length) options.categories = categories;
     }
+    // 덧글 제한: 스킨과 무관하게 저장 (로그인 회원만 댓글·방명록 작성)
+    if (checked("boardMemberCommentInput")) options.memberComment = true;
 
     await runMutate("site:saveBoard", {
       id,
@@ -330,6 +334,7 @@ async function refreshBoards() {
           <span class="summary-chip is-on board-line-skin" title="${escapeHtml(board.skinType)}">${escapeHtml(skinLabel)}</span>
           ${board.isPublic ? "" : '<span class="summary-chip is-off">관리자 전용</span>'}
           ${board.memberWrite ? '<span class="summary-chip is-on">회원쓰기</span>' : ""}
+          ${board.options?.memberComment ? '<span class="summary-chip is-on">덧글 제한</span>' : ""}
           <span class="board-row-actions">
             <button type="button" class="btn small" data-board-edit="${escapeHtml(board.id)}">수정</button>
             <button type="button" class="btn small" data-board-delete="${escapeHtml(board.id)}">삭제</button>
@@ -355,6 +360,7 @@ async function refreshBoards() {
       document.getElementById("menuVisibleInput").checked = board.menuVisible;
       document.getElementById("boardAdminOnlyInput").checked = !board.isPublic;
       document.getElementById("boardMemberWriteInput").checked = board.memberWrite;
+      document.getElementById("boardMemberCommentInput").checked = board.options?.memberComment === true;
       setValue("boardBoardWidthInput", board.options?.boardWidth ?? "");
       setValue("boardColumnsInput", board.options?.galleryColumns ?? "");
       document.getElementById("boardDetailThumbInput").checked = board.options?.detailThumb !== false;

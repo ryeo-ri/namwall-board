@@ -162,12 +162,13 @@ export function bindLogFeed(root, board, posts, reload, options = {}) {
   const layout = resolveLogLayout(board);
   const showManage = options.showManage !== false;
   const selectable = options.selectable === true;
+  const commentOptions = { compact: true, logStyle: true, memberOnly: board?.options?.memberComment === true };
 
   // 글별 댓글
   posts.forEach((post) => {
     const container = root.querySelector(`#log-comments-${post.id}`);
     if (container && !(post.isSecret && post.body == null)) {
-      loadComments(post.id, container, { compact: true, logStyle: true });
+      loadComments(post.id, container, commentOptions);
     }
   });
 
@@ -186,7 +187,7 @@ export function bindLogFeed(root, board, posts, reload, options = {}) {
           wrap.innerHTML = renderLogEntry({ ...post, isSecret: false }, board, layout, showManage, selectable);
           article.replaceWith(wrap.firstElementChild);
           const container = root.querySelector(`#log-comments-${id}`);
-          if (container) loadComments(id, container, { compact: true, logStyle: true });
+          if (container) loadComments(id, container, commentOptions);
           bindLogDeletes(root, reload);
         }
       } catch (error) {

@@ -43,14 +43,18 @@ export function renderBoardList(posts, board, opts = {}) {
 
 export function renderGuestbook(entries, board, boot) {
   // 로그인(관리자·회원) 시 이름 입력 생략 — 별도 안내 문구 없음
-  const identityFields = (boot.owner || boot.me)
+  const signedIn = Boolean(boot.owner || boot.me);
+  const identityFields = signedIn
     ? ""
     : `
         <input class="gb-name" type="text" placeholder="NAME *" maxlength="40" required>
         <input class="gb-pass" type="password" placeholder="PASSWORD" maxlength="64">
       `;
-  const formHtml = `
-    <form class="guestbook-form card" autocomplete="off" data-as-member="${boot.owner || boot.me ? "1" : ""}">
+  // 덧글 제한 게시판: 비로그인 방문자에게는 작성 폼 대신 안내
+  const formHtml = board?.options?.memberComment === true && !signedIn
+    ? '<div class="notice small guestbook-member-only">로그인한 회원만 방명록을 쓸 수 있습니다.</div>'
+    : `
+    <form class="guestbook-form card" autocomplete="off" data-as-member="${signedIn ? "1" : ""}">
       <textarea class="guestbook-input gb-message" rows="3" placeholder="방명록 내용을 입력하세요" required></textarea>
       <div class="guestbook-form-row">
         <label class="guestbook-secret-toggle"><input type="checkbox" class="gb-secret"> SECRET</label>

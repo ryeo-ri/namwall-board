@@ -371,7 +371,7 @@
       <div class="board-editor-head">
         <div>
           <h2 id="boardEditorTitle">게시판 생성</h2>
-          <p class="muted small">게시판 ID, 메뉴 노출, 공개 여부, 회원 글쓰기를 한 화면에서 바로 조정합니다.</p>
+          <p class="muted small">게시판 ID, 메뉴 노출, 공개 여부, 글쓰기·덧글 권한을 한 화면에서 바로 조정합니다.</p>
         </div>
         <div class="formRow board-editor-actions">
           <button type="button" class="btn" id="resetBoardBtn">초기화</button>
@@ -510,14 +510,21 @@
                 <input type="checkbox" id="boardAdminOnlyInput">
                 <span class="option-card-copy">
                   <span class="option-card-title">관리자 전용</span>
-                  <span class="option-card-desc">켜면 관리자만 게시판을 볼 수 있습니다. 끄면 모두에게 공개됩니다.</span>
+                  <span class="option-card-desc">체크 시 관리자만 게시판을 볼 수 있습니다. 체크하지 않으면 전체공개.</span>
                 </span>
               </label>
               <label class="option-card" for="boardMemberWriteInput">
                 <input type="checkbox" id="boardMemberWriteInput">
                 <span class="option-card-copy">
-                  <span class="option-card-title">회원 글쓰기</span>
-                  <span class="option-card-desc">로그인한 회원이 이 게시판에 글을 쓸 수 있습니다.</span>
+                  <span class="option-card-title">글쓰기 허용</span>
+                  <span class="option-card-desc">로그인 한 회원이 게시판에 투고를 할 수 있도록 허용합니다.</span>
+                </span>
+              </label>
+              <label class="option-card" for="boardMemberCommentInput">
+                <input type="checkbox" id="boardMemberCommentInput">
+                <span class="option-card-copy">
+                  <span class="option-card-title">덧글 제한</span>
+                  <span class="option-card-desc">로그인 한 회원만 덧글을 작성 할 수 있도록 제한합니다. 스팸 방지용.</span>
                 </span>
               </label>
             </div>

@@ -1,6 +1,6 @@
 // 댓글 — 회원·게스트 작성, 삭제(관리자·작성자·게스트 비밀번호)
 // 이미지 첨부는 회원·관리자만 (나루 미디어 업로드가 회원 전용이므로)
-import { text, getBoard, assertBoardReadable, requireProfile, parseImages, isOwner } from "../modules/guard.js";
+import { text, getBoard, assertBoardReadable, assertGuestWriteAllowed, requireProfile, parseImages, isOwner } from "../modules/guard.js";
 
 export async function add(ctx, args) {
   const owner = await isOwner(ctx);
@@ -12,6 +12,7 @@ export async function add(ctx, args) {
   if (rows[0].member_only && !owner && !ctx.member) {
     ctx.fail("ACCESS_DENIED", "회원만 볼 수 있는 글입니다.");
   }
+  assertGuestWriteAllowed(ctx, board, owner, "댓글");
 
   const hasImages = Array.isArray(args && args.images) && args.images.length > 0;
   const body = text(args && args.body, 5000, "내용", ctx, { required: !hasImages });

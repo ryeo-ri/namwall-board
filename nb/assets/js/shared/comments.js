@@ -1,5 +1,6 @@
 // 댓글 — 목록/작성(회원·게스트)/비밀 댓글/접기/삭제 (원본 남월보드 마크업)
 // 이미지 첨부(allowImages 옵션): 회원·관리자만, Ctrl+V 붙여넣기, 최대 8장, 1400px WebP 리사이즈.
+// 덧글 제한(memberOnly 옵션 = 게시판 options.memberComment): 비로그인 방문자에게 폼을 숨긴다.
 // 권한 판정은 전부 서버 쿼리·뮤테이션이 하고, 여기서는 받은 플래그대로 그린다.
 import { runQuery, runMutate, getAdminSession, getMemberSession, naruErrorMessage } from "../core/naru-client.js";
 import { loadBoot, promptNickname, escapeHtml, formatDateTime, ownerDisplayName } from "../core/site.js";
@@ -117,6 +118,10 @@ function renderCommentImages(images) {
 function renderCommentForm(boot, options, canAttach, postId) {
   if (options.allowWrite === false) return "";
   const asMember = boot.owner || boot.me;
+  // 덧글 제한 게시판(memberOnly): 비로그인 방문자에게는 폼 대신 안내 — 로그 피드는 글마다 반복되니 생략
+  if (options.memberOnly && !asMember) {
+    return options.compact ? "" : '<div class="comment-member-only muted small mt-sm">로그인한 회원만 댓글을 쓸 수 있습니다.</div>';
+  }
   const formExpanded = expandedCommentForms.has(postId);
 
   const nameRow = asMember ? "" : `

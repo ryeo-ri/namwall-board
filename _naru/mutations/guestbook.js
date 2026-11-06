@@ -1,10 +1,11 @@
 // 방명록 — 회원·게스트 작성, 삭제(관리자·작성자·게스트 비밀번호)
-import { text, getBoard, assertBoardReadable, requireProfile, isOwner } from "../modules/guard.js";
+import { text, getBoard, assertBoardReadable, assertGuestWriteAllowed, requireProfile, isOwner } from "../modules/guard.js";
 
 export async function add(ctx, args) {
   const owner = await isOwner(ctx);
   const board = await getBoard(ctx, args && args.board);
   assertBoardReadable(ctx, board, owner);
+  assertGuestWriteAllowed(ctx, board, owner, "방명록");
 
   const body = text(args && args.body, 5000, "내용", ctx, { required: true });
   const isSecret = (args && args.secret) === true ? 1 : 0;
