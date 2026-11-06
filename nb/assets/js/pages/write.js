@@ -242,12 +242,17 @@ function renderProfileImagePreview(slot) {
 // staged 파일이 있으면 업로드하고, 없으면 입력된 URL을 그대로 쓴다
 async function resolveProfileImage(slot, msgEl, label) {
   const staged = profileImageStaged[slot];
-  if (staged?.blob) {
-    showMsg(msgEl, `${label} 업로드 중…`);
-    const uploaded = await uploader.media.upload(staged.blob);
-    return uploaded.url;
-  }
+  if (staged?.blob) return (await uploadStaged(staged, msgEl, label)).url;
   return getValue(PROFILE_IMAGE_IDS[slot].input).trim();
+}
+
+// staged 파일 업로드 — 등록이 실패해 다시 저장할 때 같은 파일을 또 올리지 않도록 결과를 기억한다
+async function uploadStaged(item, msgEl, label) {
+  if (!item.uploaded) {
+    showMsg(msgEl, `${label} 업로드 중…`);
+    item.uploaded = await uploader.media.upload(item.blob);
+  }
+  return item.uploaded;
 }
 
 /* ── 썸네일: 파일/URL 모드, staged ── */
@@ -288,6 +293,9 @@ function bindThumbControls() {
     if (event.defaultPrevented) return;
     const file = Array.from(event.clipboardData?.files || []).find((item) => /^image\//i.test(item.type || ""));
     if (!file) return;
+    // 입력칸에서 글자도 함께 붙여넣는 경우는 글자 우선 — Word·Excel은 복사한 글에 그림도 같이 싣는다
+    const typing = event.target instanceof Element && event.target.closest("input, textarea, [contenteditable]");
+    if (typing && Array.from(event.clipboardData.types || []).includes("text/plain")) return;
     event.preventDefault();
     if (urlRadio?.checked && fileRadio) {
       fileRadio.checked = true;
@@ -421,9 +429,7 @@ async function save(boot, msgEl) {
     let thumbUrl = "";
     if (thumbStaged) {
       if (thumbStaged.blob) {
-        showMsg(msgEl, "대표 이미지 업로드 중…");
-        const uploaded = await uploader.media.upload(thumbStaged.blob);
-        thumbUrl = uploaded.url;
+        thumbUrl = (await uploadStaged(thumbStaged, msgEl, "대표 이미지")).url;
       } else {
         thumbUrl = thumbStaged.url || "";
       }
@@ -431,8 +437,7 @@ async function save(boot, msgEl) {
     const extras = [];
     for (const item of extraStaged) {
       if (item.blob) {
-        showMsg(msgEl, `${item.name || "이미지"} 업로드 중…`);
-        const uploaded = await uploader.media.upload(item.blob);
+        const uploaded = await uploadStaged(item, msgEl, item.name || "이미지");
         extras.push({ url: uploaded.url, name: item.name || uploaded.name || "" });
       } else if (item.url) {
         extras.push({ url: item.url, name: item.name || "" });

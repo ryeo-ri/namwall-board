@@ -6,6 +6,7 @@ let admin = null;
 let savedSettings = {};
 let savedImages = [];   // [{url}]
 const pendingFiles = []; // [{file, previewUrl}]
+const MAX_HOME_IMAGES = 12;
 
 export async function initHomeAdmin(adminHandle) {
   admin = adminHandle;
@@ -76,18 +77,28 @@ function bindImageControls() {
   // 업로드: pending 전부 나루 미디어로 올리고 homeImages 설정 즉시 저장
   document.getElementById("saveHomeImagesBtn")?.addEventListener("click", async () => {
     if (!pendingFiles.length) return showMsg("먼저 이미지를 선택하세요.");
+    const room = MAX_HOME_IMAGES - savedImages.length;
+    if (pendingFiles.length > room) {
+      return showMsg(room > 0
+        ? `홈 이미지는 ${MAX_HOME_IMAGES}장까지입니다. ${room}장만 더 올릴 수 있습니다.`
+        : `홈 이미지는 ${MAX_HOME_IMAGES}장까지입니다. 등록된 이미지를 먼저 빼 주세요.`, true);
+    }
     try {
-      for (const item of pendingFiles) {
+      // 올린 파일은 바로 선택 목록에서 빼서, 중간에 실패해 다시 눌러도 같은 파일을 또 올리지 않는다
+      while (pendingFiles.length) {
+        const item = pendingFiles[0];
         showMsg(`${item.file.name} 업로드 중…`);
         const uploaded = await admin.media.upload(item.file);
         savedImages.push({ url: uploaded.url });
+        pendingFiles.shift();
+        URL.revokeObjectURL(item.previewUrl);
       }
-      clearPending();
       renderPending();
       await persistImages();
       renderSavedImages();
       showMsg("업로드했습니다.");
     } catch (error) {
+      renderPending();
       showMsg(naruErrorMessage(error, "업로드에 실패했습니다."), true);
     }
   });
@@ -144,7 +155,7 @@ function renderSavedImages() {
 }
 
 async function persistImages() {
-  await runMutate("site:saveSettings", { homeImages: JSON.stringify(savedImages.slice(0, 12)) });
+  await runMutate("site:saveSettings", { homeImages: JSON.stringify(savedImages.slice(0, MAX_HOME_IMAGES)) });
   clearSiteCache();
 }
 

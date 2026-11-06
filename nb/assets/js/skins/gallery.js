@@ -205,7 +205,7 @@ function getHttpUrl(value) {
 
 function clampColumns(value, fallback) {
   const number = Number(value);
-  return Number.isFinite(number) ? Math.max(1, Math.min(4, Math.round(number))) : fallback;
+  return Number.isFinite(number) ? Math.max(1, Math.min(6, Math.round(number))) : fallback;
 }
 
 function escapeJsString(value) {

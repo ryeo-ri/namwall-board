@@ -3,6 +3,9 @@
 import { getBoard, assertBoardReadable, isOwner } from "../modules/guard.js";
 
 const LIST_MAX = 50;
+// withBody 목록의 본문·이미지·첨부 바이트 상한 — 쿼리 응답은 JSON 1 MiB까지라
+// 이스케이프로 늘어나는 몫과 나머지 필드를 빼고 여유를 둔다.
+const BODY_BUDGET = 450 * 1024;
 
 function callerId(ctx) {
   return ctx.member ? ctx.member.id : null;
@@ -18,8 +21,10 @@ function parseJson(value, fallback) {
 }
 
 /* ── 글 목록 (키셋 페이징: id DESC) ──
-   withBody: LOG 스킨처럼 목록에서 본문까지 그릴 때 사용.
-   비밀글 본문은 관리자·작성자가 아니면 null로 가린다. */
+   withBody: LOG 스킨처럼 목록에서 본문까지 그릴 때 사용. 본문이 길어 응답 한도를
+   넘을 만큼이면 앞쪽 글만 돌려주고 more로 나머지를 '더 보기'에 넘긴다.
+   withAttachments: GALLERY처럼 본문 없이 추가 첨부만 필요할 때.
+   비밀글 본문·첨부는 관리자·작성자가 아니면 가린다. */
 export async function posts(ctx, args) {
   const owner = await isOwner(ctx);
   const board = await getBoard(ctx, args && args.board);
@@ -27,6 +32,7 @@ export async function posts(ctx, args) {
   const size = Math.min(Math.max(Number(args && args.size) || 20, 1), LIST_MAX);
   const before = Number(args && args.before) || 0;
   const withBody = (args && args.withBody) === true;
+  const withAttachments = !withBody && (args && args.withAttachments) === true;
   // 분류 필터 (게시판 분류 칩에서 사용)
   const category = String((args && args.category) || "").trim().slice(0, 30);
 
@@ -35,7 +41,8 @@ export async function posts(ctx, args) {
   const beforeId = before || Number.MAX_SAFE_INTEGER;
   const sql = `
     SELECT p.id, p.title, p.author_id, p.is_secret, p.member_only, p.thumb, p.source, p.tags, p.log_no, p.category, p.skin_data, p.created_at,
-           ${withBody ? "p.body, p.images, p.attachments, p.updated_at," : ""}
+           ${withBody ? "length(CAST(p.body AS BLOB)) + length(CAST(p.images AS BLOB)) + length(CAST(p.attachments AS BLOB)) AS body_bytes," : ""}
+           ${withAttachments ? "p.attachments," : ""}
            pr.nickname,
            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
     FROM posts p LEFT JOIN profiles pr ON pr.member_id = p.author_id
@@ -49,9 +56,33 @@ export async function posts(ctx, args) {
   const { rows } = await ctx.sql(sql, values);
 
   const me = callerId(ctx);
-  const more = rows.length > size;
+  const canSeeRow = (row) => !row.is_secret || owner || (!!row.author_id && row.author_id === me);
+  let list = rows.slice(0, size);
+  let more = rows.length > size;
+
+  // 본문은 크기를 재서 한도 안에 드는 글까지만 따로 읽는다 (최소 1개)
+  let bodies = new Map();
+  if (withBody) {
+    let total = 0;
+    let keep = 0;
+    for (const row of list) {
+      if (canSeeRow(row)) total += Number(row.body_bytes) || 0;
+      if (keep > 0 && total > BODY_BUDGET) break;
+      keep += 1;
+    }
+    if (keep < list.length) {
+      list = list.slice(0, keep);
+      more = true;
+    }
+    const ids = JSON.stringify(list.filter(canSeeRow).map((row) => row.id));
+    const { rows: bodyRows } = await ctx.sql`
+      SELECT id, body, images, attachments FROM posts
+      WHERE id IN (SELECT value FROM json_each(${ids}))`;
+    bodies = new Map(bodyRows.map((row) => [row.id, row]));
+  }
+
   return {
-    posts: rows.slice(0, size).map((row) => {
+    posts: list.map((row) => {
       const mine = !!row.author_id && row.author_id === me;
       const item = {
         id: row.id,
@@ -71,10 +102,12 @@ export async function posts(ctx, args) {
         editable: owner || mine
       };
       if (withBody) {
-        const canSee = !row.is_secret || owner || mine;
-        item.body = canSee ? row.body : null;
-        item.images = canSee ? parseJson(row.images, []) : [];
-        item.attachments = canSee ? parseJson(row.attachments, []) : [];
+        const full = bodies.get(row.id);
+        item.body = full ? full.body : null;
+        item.images = full ? parseJson(full.images, []) : [];
+        item.attachments = full ? parseJson(full.attachments, []) : [];
+      } else if (withAttachments) {
+        item.attachments = canSeeRow(row) ? parseJson(row.attachments, []) : [];
       }
       return item;
     }),

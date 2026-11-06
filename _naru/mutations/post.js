@@ -198,3 +198,32 @@ export async function remove(ctx, args) {
   await ctx.sql`DELETE FROM posts WHERE id = ${id}`;
   return null;
 }
+
+// 관리자 선택삭제·전체삭제 — 글마다 post:remove를 부르면 회원 세션(연결된 관리자 회원)의
+// 분당 뮤테이션 한도 30번에 걸려 중간에 멈추므로 한 번에 지운다.
+export async function removeMany(ctx, args) {
+  if (!(await isOwner(ctx))) ctx.fail("ACCESS_DENIED", "관리자만 할 수 있습니다.");
+  const raw = Array.isArray(args && args.ids) ? args.ids : [];
+  const ids = [...new Set(raw.map((id) => Number(id) || 0).filter((id) => id > 0))];
+  if (ids.length > 50) ctx.fail("INVALID_REQUEST", "한 번에 50개까지 삭제할 수 있습니다.");
+  if (!ids.length) return { removed: 0 };
+  const list = JSON.stringify(ids);
+  await ctx.sql`DELETE FROM comments WHERE post_id IN (SELECT value FROM json_each(${list}))`;
+  const { changes } = await ctx.sql`DELETE FROM posts WHERE id IN (SELECT value FROM json_each(${list}))`;
+  return { removed: changes };
+}
+
+// 게시판의 글 전체(분류를 주면 그 분류만)와 댓글 삭제
+export async function removeAll(ctx, args) {
+  if (!(await isOwner(ctx))) ctx.fail("ACCESS_DENIED", "관리자만 할 수 있습니다.");
+  const board = await getBoard(ctx, args && args.board);
+  const category = String((args && args.category) || "").trim();
+  if (category) {
+    await ctx.sql`DELETE FROM comments WHERE post_id IN (SELECT id FROM posts WHERE board_id = ${board.id} AND category = ${category})`;
+    const { changes } = await ctx.sql`DELETE FROM posts WHERE board_id = ${board.id} AND category = ${category}`;
+    return { removed: changes };
+  }
+  await ctx.sql`DELETE FROM comments WHERE post_id IN (SELECT id FROM posts WHERE board_id = ${board.id})`;
+  const { changes } = await ctx.sql`DELETE FROM posts WHERE board_id = ${board.id}`;
+  return { removed: changes };
+}

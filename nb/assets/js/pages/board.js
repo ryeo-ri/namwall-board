@@ -105,7 +105,9 @@ async function init() {
       if (!window.confirm(`선택한 ${ids.length}개 글을 삭제할까요? 되돌릴 수 없습니다.`)) return;
       selectDeleteBtn.disabled = true;
       try {
-        for (const id of ids) await runMutate("post:remove", { id });
+        for (let i = 0; i < ids.length; i += 50) {
+          await runMutate("post:removeMany", { ids: ids.slice(i, i + 50) });
+        }
         await renderList(board, skinType, listEl, boot);
       } catch (error) {
         window.alert(naruErrorMessage(error, "삭제에 실패했습니다."));
@@ -115,7 +117,7 @@ async function init() {
       }
     });
 
-    // 전체삭제: 이 게시판의 모든 글을 페이지 단위로 받아 하나씩 지운다 (일괄 삭제 API 없음)
+    // 전체삭제: 이 게시판의 모든 글과 댓글을 서버에서 한 번에 지운다
     // 분류 칩으로 거른 상태면 그 분류의 글만 지운다
     deleteAllBtn.addEventListener("click", async () => {
       const scope = activeCategory
@@ -126,15 +128,10 @@ async function init() {
       deleteAllBtn.disabled = true;
       deleteAllBtn.textContent = "삭제 중…";
       try {
-        for (;;) {
-          const { posts } = await runQuery("board:posts", {
-            board: board.id,
-            size: 50,
-            ...(activeCategory ? { category: activeCategory } : {})
-          });
-          if (!posts.length) break;
-          for (const post of posts) await runMutate("post:remove", { id: post.id });
-        }
+        await runMutate("post:removeAll", {
+          board: board.id,
+          ...(activeCategory ? { category: activeCategory } : {})
+        });
       } catch (error) {
         window.alert(naruErrorMessage(error, "전체 삭제 중 오류가 났습니다. 남은 글을 확인하세요."));
       } finally {
@@ -167,8 +164,9 @@ function listQuery(board, skinType, before) {
   return runQuery("board:posts", {
     board: board.id,
     size: pageSizeFor(board),
-    // LOG는 본문까지, GALLERY는 추가 이미지(attachments)까지 목록에서 그린다
-    ...(skinType === "LOG" || skinType === "GALLERY" ? { withBody: true } : {}),
+    // LOG는 본문까지, GALLERY는 추가 이미지(attachments)만 목록에서 그린다
+    ...(skinType === "LOG" ? { withBody: true } : {}),
+    ...(skinType === "GALLERY" ? { withAttachments: true } : {}),
     ...(activeCategory ? { category: activeCategory } : {}),
     ...(before ? { before } : {})
   });

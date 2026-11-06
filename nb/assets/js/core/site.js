@@ -86,7 +86,7 @@ export function loadBoot() {
         return value;
       } catch (error) {
         console.warn("사이트 정보를 불러오지 못했습니다.", error);
-        return empty; // 실패는 캐시하지 않음
+        return { ...empty, failed: true }; // 실패는 캐시하지 않음
       }
     })();
   }
@@ -163,10 +163,12 @@ export async function renderHeader() {
 
   // 로그인 복귀 직후 세션 확립이 페이지 로드보다 늦는 경우 보정:
   // 비로그인으로 그려졌다면 잠시 후 한 번 더 확인하고, 세션이 생겼으면 새로 그린다.
-  if (!boot.me && !boot.owner) scheduleSessionRecheck();
+  // (boot 자체가 실패한 경우는 새로고침해도 같으므로 제외)
+  if (!boot.me && !boot.owner && !boot.failed) scheduleSessionRecheck();
   return boot;
 }
 
+const RECHECK_KEY = "naru_board_session_recheck";
 let sessionRechecked = false;
 function scheduleSessionRecheck() {
   if (sessionRechecked) return;
@@ -174,10 +176,13 @@ function scheduleSessionRecheck() {
   setTimeout(async () => {
     try {
       const member = await naru.members.session();
-      if (member) {
-        clearSiteCache();
-        location.reload();
-      }
+      if (!member) return;
+      // 서버가 계속 비로그인으로 답하면(만료된 세션 등) 새로고침이 반복되지 않게 30초에 한 번만
+      const last = Number(sessionStorage.getItem(RECHECK_KEY)) || 0;
+      if (Date.now() - last < 30000) return;
+      sessionStorage.setItem(RECHECK_KEY, String(Date.now()));
+      clearSiteCache();
+      location.reload();
     } catch (_error) { /* ignore */ }
   }, 800);
 }

@@ -22,6 +22,8 @@ let selectedFile = null;
 let processedSource = null;
 let processedSourceMode = "";
 let analysisToken = 0;
+// 마지막으로 올린 아카이브 — 등록이 실패해 다시 저장할 때 같은 파일·설정이면 재업로드하지 않는다
+let lastUpload = null; // { file, sourceMode, backup, script }
 
 /* ── 글쓰기 폼 바인딩 — write.html의 #scriptFields 안에서 동작 ── */
 export function bindScriptWriter(container, existingScript = null) {
@@ -85,6 +87,10 @@ export async function prepareScriptArchive({ container, uploader, existingScript
   if (!uploader?.media?.upload) throw new Error("업로드 권한이 없습니다. 로그인 상태를 확인하세요.");
 
   const sourceMode = getSourceMode(container);
+  const shouldBackupImages = container.querySelector("[data-script-backup-images]")?.checked !== false;
+  if (lastUpload && lastUpload.file === selectedFile && lastUpload.sourceMode === sourceMode && lastUpload.backup === shouldBackupImages) {
+    return { ...lastUpload.script };
+  }
   if (!processedSource || processedSourceMode !== sourceMode) {
     setStatus(container, "로그를 정리하는 중...");
     processedSource = await processScriptHtml(selectedFile, { sourceType: sourceMode });
@@ -96,7 +102,6 @@ export async function prepareScriptArchive({ container, uploader, existingScript
   const archiveId = createScriptArchiveId();
   const archive = structuredClone(processedSource.archive);
   let archivedAssetCount = 0;
-  const shouldBackupImages = container.querySelector("[data-script-backup-images]")?.checked !== false;
   if (shouldBackupImages && archive.assets.length) {
     setStatus(container, `이미지 백업 중 · 0 / ${archive.assets.length}`);
     const result = await backupAssets(archive.assets, uploader, archiveId, (done) => {
@@ -133,7 +138,8 @@ export async function prepareScriptArchive({ container, uploader, existingScript
     container,
     `업로드 완료 · 메시지 ${formatCount(script.messageCount)}개 · ${formatBytes(script.originalBytes)} → ${formatBytes(script.archiveBytes)}`
   );
-  return script;
+  lastUpload = { file: selectedFile, sourceMode, backup: shouldBackupImages, script };
+  return { ...script };
 }
 
 async function selectSourceFile(file, container) {
