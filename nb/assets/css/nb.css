@@ -29,6 +29,22 @@
   margin-top: 14px;
 }
 
+/* 원본 라이트박스: 이미지 높이 = 화면 높이, 그러면 화면보다 넓어지는 가로 이미지는 화면 너비에 맞춤.
+   맞춘 크기가 원본보다 작으면 눌러서 원본 크기로 확대 (lightbox.js가 --lightbox-ratio·클래스 지정) */
+/* 기준은 화면 전체를 덮는 .lightbox 크기(cq) — 100vw는 html의 scrollbar-gutter만큼 좁게 잡힌다 */
+.lightbox{ container-type: size; }
+.lightbox:not(.is-zoomed){ overflow: hidden; }
+.lightbox-image{
+  width: min(100vw, 100vh * var(--lightbox-ratio, 1));
+  width: min(100cqw, 100cqh * var(--lightbox-ratio, 1));
+  height: auto;
+}
+.lightbox.is-zoomable .lightbox-image{ cursor: zoom-in; }
+.lightbox.is-zoomed .lightbox-image{
+  width: auto;
+  cursor: zoom-out;
+}
+
 /* 상세: 추가 첨부 다운로드 링크 목록 (갤러리 기획) */
 .view-attachments{
   display: grid;
