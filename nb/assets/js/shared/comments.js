@@ -4,7 +4,6 @@
 import { runQuery, runMutate, getAdminSession, getMemberSession, naruErrorMessage } from "../core/naru-client.js";
 import { loadBoot, promptNickname, escapeHtml, formatDateTime, ownerDisplayName } from "../core/site.js";
 import { sanitizeHTML } from "./sanitizer.js";
-import { renderLockIcon } from "./secret-icon.js";
 
 const MAX_COMMENT_IMAGES = 8;
 const COMMENT_IMAGE_MAX_EDGE = 1400;
@@ -75,7 +74,7 @@ function renderCommentItem(comment, options) {
   } else if (comment.hasPassword) {
     bodyHtml = `
       <div class="comment-secret-lock" data-reveal-box="${comment.id}">
-        <small>${renderLockIcon("", "비밀 댓글")} 비밀 댓글입니다.</small>
+        <small>비밀 댓글입니다.</small>
         <div class="comment-secret-unlock">
           <input type="password" class="comment-secret-input" placeholder="비밀번호">
           <button type="button" class="btn comment-secret-submit" data-reveal="${comment.id}" data-reveal-kind="board:commentReveal" data-reveal-class="comment-content">확인</button>
