@@ -148,6 +148,14 @@ body.site-page .comment-admin-actions [data-del-comment]{
   color: var(--muted);
 }
 
+/* 비밀 댓글 자물쇠: 크기 지정이 없으면 SVG가 칸 너비만큼 커진다 */
+.comment-secret-lock .secret-lock-icon{
+  width: 12px;
+  height: 12px;
+  margin-right: 2px;
+  vertical-align: -2px;
+}
+
 /* 방명록 폼의 메시지 영역 */
 .gb-msg{ margin-top: 4px; }
 

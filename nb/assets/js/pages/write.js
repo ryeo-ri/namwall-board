@@ -283,9 +283,17 @@ function bindThumbControls() {
     event.preventDefault();
     pickFile(event.dataTransfer?.files?.[0]);
   });
-  dropZone?.addEventListener("paste", (event) => {
+  // Ctrl+V: 페이지 어디서든 클립보드 이미지를 대표이미지로 (추가 이미지 칸에 붙여넣으면 그쪽이 먼저 처리)
+  document.addEventListener("paste", (event) => {
+    if (event.defaultPrevented) return;
     const file = Array.from(event.clipboardData?.files || []).find((item) => /^image\//i.test(item.type || ""));
-    if (file) { event.preventDefault(); pickFile(file); }
+    if (!file) return;
+    event.preventDefault();
+    if (urlRadio?.checked && fileRadio) {
+      fileRadio.checked = true;
+      applyMode();
+    }
+    pickFile(file);
   });
   document.getElementById("clearThumbFileBtn")?.addEventListener("click", () => {
     if (thumbStaged?.blob && thumbStaged.previewUrl) URL.revokeObjectURL(thumbStaged.previewUrl);
