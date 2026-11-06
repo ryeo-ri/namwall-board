@@ -88,6 +88,19 @@ export async function saveBoard(ctx, args) {
   return null;
 }
 
+// 메뉴 순서 일괄 변경 — 관리자 게시판 목록의 드래그 정렬. ids 순서대로 menu_order = 0, 1, 2…
+export async function reorderBoards(ctx, args) {
+  requireOwner(ctx);
+  const ids = Array.isArray(args && args.ids) ? args.ids.map((id) => String(id ?? "").trim()) : [];
+  if (!ids.length || ids.length > 200 || !ids.every((id) => BOARD_ID_RE.test(id)) || new Set(ids).size !== ids.length) {
+    ctx.fail("INVALID_REQUEST", "게시판 순서 목록이 잘못되었습니다.");
+  }
+  for (let index = 0; index < ids.length; index += 1) {
+    await ctx.sql`UPDATE boards SET menu_order = ${index} WHERE id = ${ids[index]}`;
+  }
+  return null;
+}
+
 // 관리자 회원 계정 연결 — 나루 관리자 로그인은 페이지 단위라, 사이트 전역에서
 // 유지되는 회원 로그인을 관리자로 인정해 모든 페이지에서 글쓰기·관리가 되게 한다.
 // memberId를 비우면 연결 해제. (연결/해제는 관리자 페이지의 소유자만 가능)

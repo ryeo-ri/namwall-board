@@ -32,6 +32,8 @@ const BOARD_WIDTH_PLACEHOLDERS = {
   THREAD: "기본 1100 / 100 이하는 %",
   SCRIPT: "기본 1100 / 100 이하는 %"
 };
+// 게시판 목록 행의 드래그 손잡이 (점 6개)
+const DRAG_HANDLE_ICON = '<svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true" focusable="false"><g fill="currentColor"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></g></svg>';
 
 let admin = null;
 let boards = [];
@@ -318,15 +320,15 @@ async function refreshBoards() {
   const listEl = document.getElementById("boardsList");
   if (!listEl) return;
 
-  // 한 줄 행: 램프(메뉴 노출) · 순서 · ID(새 창 바로가기) · 제목 · 설명 · 스킨 · 상태
-  // 메뉴에서 꺼진 게시판은 행 전체를 흐리게(불꺼짐) 표시한다.
+  // 한 줄 행: 드래그 손잡이 · 순서 · ID(새 창 바로가기) · 제목 · 설명 · 스킨 · 상태
+  // 메뉴에서 꺼진 게시판은 행 전체를 흐리게 표시한다.
   listEl.innerHTML = boards.length
     ? boards.map((board) => {
         const skinInfo = SKINS.find((item) => item.type === board.skinType);
         const skinLabel = skinInfo ? skinInfo.label : board.skinType;
         return `
-        <div class="board-list-item board-line ${board.menuVisible ? "" : "is-menu-off"}">
-          <span class="board-line-lamp" title="${board.menuVisible ? "메뉴에 노출 중" : "메뉴에서 꺼져 있음"}"></span>
+        <div class="board-list-item board-line ${board.menuVisible ? "" : "is-menu-off"}" data-board-id="${escapeHtml(board.id)}"${board.menuVisible ? "" : ' title="메뉴에서 꺼져 있음"'}>
+          <button type="button" class="board-line-handle" data-board-drag aria-label="${escapeHtml(board.title || board.id)} 순서 이동 (드래그 또는 위·아래 화살표)" title="드래그해서 순서 변경">${DRAG_HANDLE_ICON}</button>
           <span class="board-line-order" title="메뉴 순서">${Number(board.menuOrder) || 0}</span>
           <a class="board-line-id" href="board.html?bo=${encodeURIComponent(board.id)}" target="_blank" rel="noopener noreferrer" title="게시판을 새 창에서 열기">${escapeHtml(board.id)}</a>
           <strong class="board-line-title">${escapeHtml(board.title || board.id)}</strong>
@@ -343,6 +345,8 @@ async function refreshBoards() {
       `;
       }).join("")
     : '<div class="notice small">게시판이 없습니다. 아래 게시판 생성 버튼으로 추가하세요.</div>';
+
+  bindBoardReorder(listEl);
 
   listEl.querySelectorAll("[data-board-edit]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -390,6 +394,93 @@ async function refreshBoards() {
         showListMsg(naruErrorMessage(error, "삭제에 실패했습니다."), true);
       }
     });
+  });
+}
+
+/* ── 메뉴 순서: 손잡이를 드래그(마우스·터치)하거나 위·아래 화살표로 옮기면 바로 저장 ── */
+function bindBoardReorder(listEl) {
+  const rows = () => Array.from(listEl.querySelectorAll(".board-line"));
+  const currentIds = () => rows().map((row) => row.dataset.boardId);
+
+  listEl.querySelectorAll("[data-board-drag]").forEach((handle) => {
+    const row = handle.closest(".board-line");
+
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      const before = currentIds().join("\n");
+      const pointerId = event.pointerId;
+      row.classList.add("is-dragging");
+      document.body.classList.add("is-board-dragging");
+
+      // 포인터 아래 위치로 행을 바로 옮긴다: 가운데선이 포인터보다 아래인 첫 행 앞에 끼운다.
+      // 행을 DOM에서 옮기면 포인터 캡처가 풀리므로 이동·놓기는 document에서 받는다.
+      const onMove = (moveEvent) => {
+        if (moveEvent.pointerId !== pointerId) return;
+        const next = rows().find((other) => {
+          if (other === row) return false;
+          const rect = other.getBoundingClientRect();
+          return moveEvent.clientY < rect.top + rect.height / 2;
+        });
+        if (next) {
+          if (next !== row.nextElementSibling) listEl.insertBefore(row, next);
+        } else if (row !== rows().at(-1)) {
+          rows().at(-1).after(row);
+        }
+      };
+      const onEnd = (endEvent) => {
+        if (endEvent.pointerId !== pointerId) return;
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onEnd);
+        document.removeEventListener("pointercancel", onEnd);
+        row.classList.remove("is-dragging");
+        document.body.classList.remove("is-board-dragging");
+        if (currentIds().join("\n") !== before) saveBoardOrder(listEl, currentIds());
+      };
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onEnd);
+      document.addEventListener("pointercancel", onEnd);
+    });
+
+    handle.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      event.preventDefault();
+      const sibling = event.key === "ArrowUp" ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling?.classList.contains("board-line")) return;
+      if (event.key === "ArrowUp") sibling.before(row);
+      else sibling.after(row);
+      handle.focus();
+      saveBoardOrder(listEl, currentIds());
+    });
+  });
+}
+
+let reorderSaving = Promise.resolve();
+function saveBoardOrder(listEl, ids) {
+  // 화면 번호는 바로 갱신하고, 저장은 앞선 저장이 끝난 뒤 차례로 (빠른 연속 이동에도 마지막 순서가 남게)
+  listEl.querySelectorAll(".board-line").forEach((row, index) => {
+    const orderEl = row.querySelector(".board-line-order");
+    if (orderEl) orderEl.textContent = String(index);
+  });
+  reorderSaving = reorderSaving.then(async () => {
+    try {
+      await runMutate("site:reorderBoards", { ids });
+      clearSiteCache();
+      ids.forEach((id, index) => {
+        const board = boards.find((item) => item.id === id);
+        if (board) board.menuOrder = index;
+      });
+      // 편집 중인 게시판의 '메뉴 순서' 칸도 새 값으로 (그대로 저장하면 옛 순서로 되돌아가지 않게)
+      if (document.getElementById("boardIdInput")?.readOnly) {
+        const editing = boards.find((item) => item.id === getValue("boardIdInput").trim());
+        if (editing) setValue("menuOrderInput", editing.menuOrder);
+        updateSummary();
+      }
+      showListMsg("메뉴 순서를 저장했습니다.");
+    } catch (error) {
+      showListMsg(naruErrorMessage(error, "순서 저장에 실패했습니다."), true);
+      await refreshBoards();
+    }
   });
 }
 

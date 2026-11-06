@@ -499,8 +499,8 @@ body.site-page .btn.comment-image-attach{
   min-height: 30px;
   padding: 6px 10px;
 }
-/* 게시판 목록 — 한 줄 행: 램프(메뉴 노출) · 순서 · ID 링크 · 제목 · 설명 · 스킨 · 상태
-   메뉴에서 꺼진 게시판은 행 전체를 흐리게(불꺼짐) 표시한다. */
+/* 게시판 목록 — 한 줄 행: 드래그 손잡이 · 순서 · ID 링크 · 제목 · 설명 · 스킨 · 상태
+   메뉴에서 꺼진 게시판은 행 전체를 흐리게 표시한다. 손잡이로 끌어 메뉴 순서를 바꾼다 (admin-boards.js) */
 .board-line{
   display: flex;
   align-items: center;
@@ -511,17 +511,37 @@ body.site-page .btn.comment-image-attach{
   opacity: 0.55;
   background: rgba(15, 23, 42, 0.035);
 }
-.board-line-lamp{
+.board-line-handle{
   flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ffd34d;
-  box-shadow: 0 0 6px rgba(255, 200, 0, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 30px;
+  margin: -6px 0 -6px -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none; /* 터치로 끌 때 화면이 스크롤되지 않게 */
 }
-.board-line.is-menu-off .board-line-lamp{
-  background: #c7c7c7;
-  box-shadow: none;
+.board-line-handle:hover,
+.board-line-handle:focus-visible{
+  color: var(--text);
+  background: rgba(15, 23, 42, 0.06);
+}
+.board-line.is-dragging{
+  position: relative;
+  z-index: 1;
+  border-color: var(--text);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.14);
+}
+body.is-board-dragging,
+body.is-board-dragging .board-line-handle{
+  cursor: grabbing;
+  user-select: none;
 }
 .board-line-order{
   flex: 0 0 auto;
