@@ -1,0 +1,24 @@
+# site/ 폴더를 나루 템플릿의 새 버전으로 게시한다.
+# 이 커밋의 메시지가 템플릿 버전 설명으로 쓰인다.
+# 나루에서 템플릿 글이 이 저장소·브랜치·폴더(site)를 가리키기 전에는 아무 일도 하지 않고 성공한다.
+name: 나루 템플릿 게시
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: naru-pub/actions/deploy@v1
+        with:
+          dir: site
+          template-owner: ryeori

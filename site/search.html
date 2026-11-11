@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
+  <title>검색</title>
+  <link rel="stylesheet" href="assets/css/style.css?v=1.0.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <!-- import 체인을 미리 병렬로 받는다 -->
+  <link rel="modulepreload" href="assets/js/core/naru-client.js">
+  <link rel="modulepreload" href="https://sdk.naru.pub/sdk/1.1.0/naru.js">
+  <link rel="modulepreload" href="assets/js/core/config.js">
+  <link rel="modulepreload" href="assets/js/core/site.js">
+  <link rel="modulepreload" href="assets/js/shared/design.js">
+  <link rel="modulepreload" href="assets/js/shared/video.js">
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="index.html"><span id="siteTitle"></span></a>
+        <nav class="nav" id="topNav"></nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card">
+      <h2>검색</h2>
+      <div class="formRow mt-sm">
+        <input id="searchInput" placeholder="제목, 본문, 출처">
+        <input id="tagInput" placeholder="태그(선택)">
+        <button class="btn primary" id="searchBtn">검색</button>
+      </div>
+      <div class="muted small mt-sm" id="searchMeta"></div>
+    </section>
+
+    <section class="card mt-md">
+      <div id="searchResults"><div class="notice">검색어를 입력해 주세요.</div></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="muted small">&copy; NAMWALL</div>
+  </footer>
+
+  <script type="module" src="assets/js/pages/search.js"></script>
+</body>
+</html>

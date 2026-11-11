@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
+  <title>게시판</title>
+  <link rel="stylesheet" href="assets/css/style.css?v=1.0.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://media.naru.pub">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <!-- import 체인을 미리 병렬로 받는다 -->
+  <link rel="modulepreload" href="assets/js/core/naru-client.js">
+  <link rel="modulepreload" href="https://sdk.naru.pub/sdk/1.1.0/naru.js">
+  <link rel="modulepreload" href="assets/js/core/config.js">
+  <link rel="modulepreload" href="assets/js/core/site.js">
+  <link rel="modulepreload" href="assets/js/shared/design.js">
+  <link rel="modulepreload" href="assets/js/shared/skins.js">
+  <link rel="modulepreload" href="assets/js/shared/rich-text.js">
+  <link rel="modulepreload" href="assets/js/shared/sanitizer.js">
+  <link rel="modulepreload" href="assets/js/shared/ui.js">
+  <link rel="modulepreload" href="assets/js/shared/comments.js">
+  <link rel="modulepreload" href="assets/js/skins/gallery.js">
+  <link rel="modulepreload" href="assets/js/shared/video.js">
+  <link rel="modulepreload" href="assets/js/skins/thread.js">
+  <link rel="modulepreload" href="assets/js/skins/log.js">
+  <link rel="modulepreload" href="assets/js/shared/script-sanitizer.js">
+  <link rel="modulepreload" href="assets/js/skins/script.js">
+  <link rel="modulepreload" href="assets/js/skins/profile.js">
+</head>
+<body class="site-page">
+  <div class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="index.html">
+          <span id="siteTitle"></span>
+        </a>
+        <nav class="nav" id="topNav"></nav>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="card board-header">
+      <div class="board-title-row">
+        <div>
+          <h1 id="boardTitle">게시판</h1>
+          <p class="muted small board-description" id="boardDescription"></p>
+        </div>
+        <div class="board-actions">
+          <a class="btn primary hidden" href="write.html" id="writeBtn" hidden>WRITE</a>
+        </div>
+      </div>
+    </section>
+
+    <div id="boardContent" class="board-content">
+      <div class="loading-indicator" role="status" aria-live="polite">
+        <span class="sr-only">게시물을 불러오는 중</span>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="muted small">&copy; NAMWALL</div>
+  </footer>
+
+  <script src="assets/js/shared/lightbox.js" defer></script>
+  <script type="module" src="assets/js/pages/board.js"></script>
+</body>
+</html>
