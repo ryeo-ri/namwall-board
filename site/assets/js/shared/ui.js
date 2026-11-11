@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 화면 공용 조각 — 입력칸·알림 헬퍼, 잠금 아이콘, 관리자 모드 줄, 비밀번호 열람, 이미지 받기
 import { naruErrorMessage } from "../core/naru-client.js";
 import { escapeHtml } from "../core/site.js";

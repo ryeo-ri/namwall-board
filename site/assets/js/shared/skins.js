@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 스킨 — BOARD(한 줄 목록) · GUESTBOOK(방명록)
 import { runMutate, naruErrorMessage } from "../core/naru-client.js";
 import { promptNickname, escapeHtml, formatDate, formatDateTime, ownerDisplayName } from "../core/site.js";

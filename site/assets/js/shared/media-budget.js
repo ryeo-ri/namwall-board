@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 import { runQuery } from "../core/naru-client.js";
 
 export const MAX_MEDIA_BYTES = 25 * 1024 * 1024;

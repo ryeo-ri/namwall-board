@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // SCRIPT 스킨 글쓰기 — Roll20/코코포리아 로그 HTML(코코포리아 탭 로그 ZIP 포함)을 아카이브 JSON으로 정리해 나루 미디어에 올린다.
 // 나루 미디어는 코드로 지울 수 없어, 로그를 교체해도 이전 파일은 미디어 라이브러리에 남는다.
 import { escapeHtml } from "../core/site.js";

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 회원 계정 — 닉네임 등록·변경
 import { text } from "../modules/guard.js";
 

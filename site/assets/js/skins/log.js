@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // LOG 스킨 — 목록과 상세가 합쳐진 피드: 이미지 + 본문(첫 댓글 모양) + 댓글, 로그 번호, 태그
 import { runQuery } from "../core/naru-client.js";
 import { escapeHtml, formatDateTime, ownerDisplayName } from "../core/site.js";

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 관리자 — admin.html 한 페이지에서 해시로 화면 전환 (나루 관리자 로그인은 페이지 URL 단위로 유지된다)
 // (없음) 대시보드 · #home 홈 소개 · #boards 게시판 · #design 디자인
 import {
@@ -17,6 +17,8 @@ async function init() {
 
   if (!admin) {
     gate?.classList.remove("hidden");
+    const siteUrlEl = document.getElementById("adminSiteUrl");
+    if (siteUrlEl) siteUrlEl.textContent = new URL("./", location.href).href;
     document.getElementById("adminLoginBtn")?.addEventListener("click", () => {
       signInAdmin().catch((error) => window.alert(naruErrorMessage(error, "로그인을 시작하지 못했습니다.")));
     });
@@ -25,7 +27,7 @@ async function init() {
 
   const boot = await loadBoot();
   const info = document.getElementById("adminInfo");
-  if (info) info.textContent = `${boot.settings.title || "NARU BOARD"} · 관리자로 접속 중 · NARU BOARD ${BOARD_VERSION}`;
+  if (info) info.textContent = `${boot.settings.title || "NAMWALL Edition"} · 관리자로 접속 중 · NAMWALL Edition ${BOARD_VERSION}`;
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
     await signOutAdmin();
     clearSiteCache();

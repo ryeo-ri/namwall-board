@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 관리자 · 디자인 관리 — 색·폰트·배경 이미지·프리셋 + 미리보기
 // settings.design(JSON)과 settings.headerFontFamily로 저장한다
 import { runMutate, naruErrorMessage } from "../core/naru-client.js";

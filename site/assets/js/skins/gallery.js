@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // GALLERY 스킨 — masonry 카드 목록, 댓글 없음
 // 대표 칸은 이미지(클릭 = 라이트박스)·VIDEO·TEXT 중 하나. 카드 아래 줄에 추가 이미지(●)와 출처(커서를 올리면 표시).
 import { runQuery } from "../core/naru-client.js";

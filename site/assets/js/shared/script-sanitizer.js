@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // SCRIPT 아카이브는 외부 JSON도 연결할 수 있으므로 가져올 때와 표시할 때 모두 정제한다.
 const TAGS = new Set("div span p br b strong i em u s del small sub sup code pre blockquote a img ul ol li table thead tbody tfoot tr td th caption colgroup col hr dl dt dd".split(" "));
 export const DROP_TAGS = new Set("script style iframe object embed form input button textarea select link meta base audio video canvas svg math template slot".split(" "));

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 관리자 · 게시판 관리 (생성·수정·삭제·메뉴 순서)
 import { runMutate, naruErrorMessage } from "../core/naru-client.js";
 import { loadBoot, clearSiteCache, escapeHtml, formatResponsiveWidth } from "../core/site.js";

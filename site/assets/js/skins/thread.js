@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // THREAD(타래) 스킨 — 카드형 목록 + 좌(제목·썸네일)/우(본문 스크롤) 분할 상세
 // 댓글 위치 옵션(options.commentPosition): bottom(기본, 본문 스크롤에 쌓임) / left(좌측 패널)
 import { escapeHtml, formatDate, clampColumns } from "../core/site.js";

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 홈 — 히어로(소개 글 + 대표 이미지) · 최근 업데이트 · 로그인 창 · 검색 · 최근 태그
 import { runQuery, signInMember, signOutMember, naruErrorMessage } from "../core/naru-client.js";
 import { renderHeader, clearSiteCache, escapeHtml, formatDate, renderSourceLinks, parseHomeImages } from "../core/site.js";
@@ -7,6 +7,7 @@ import { sanitizeHTML } from "../shared/sanitizer.js";
 async function init() {
   const boot = await renderHeader();
 
+  renderSetupGuide(boot);
   renderHomeIntro(boot);
   const visible = applyHomeMenuVisibility(boot.settings || {});
   if (visible.login) renderHomeLogin(boot);
@@ -17,12 +18,12 @@ async function init() {
   if (visible.search) bindQuickSearch();
 }
 
-// 하단 메뉴 노출 — 설정이 없으면 로그인 창만 꺼져 있고 나머지는 보인다
+// 하단 메뉴 노출 — 설정이 없으면 모두 보인다
 function applyHomeMenuVisibility(settings) {
   const recent = settings.homeShowRecent !== "0";
   const search = settings.homeShowSearch !== "0";
   const tags = settings.homeShowTags !== "0";
-  const login = settings.homeShowLogin === "1";
+  const login = settings.homeShowLogin !== "0";
 
   document.getElementById("homeRecentCard")?.classList.toggle("hidden", !recent);
   document.getElementById("homeLoginBlock")?.classList.toggle("hidden", !login);
@@ -41,6 +42,42 @@ function applyHomeMenuVisibility(settings) {
     grid.style.gridTemplateColumns = (recent && asideVisible) ? "" : "minmax(0, 1fr)";
   }
   return { recent, search, tags, login };
+}
+
+// 첫 설정 안내 — 서버가 새 사이트(제목 없음 + 게시판 0개, 비공개 포함)라고 할 때만 보인다
+function renderSetupGuide(boot) {
+  if (!boot.isNew || boot.owner) return;
+  const main = document.querySelector("main.container");
+  if (!main) return;
+  const siteUrl = new URL("./", location.href).href;
+  const guide = document.createElement("section");
+  guide.className = "card home-setup-guide";
+  guide.innerHTML = `
+    <h2>처음 오셨나요?</h2>
+    <p>게시판 템플릿을 설치했습니다. 아래 순서대로 사이트를 설정하세요.</p>
+    <ol>
+      <li><a href="https://naru.pub/database" target="_blank" rel="noopener noreferrer">나루 제어판 → 데이터베이스</a>의
+        <b>웹사이트 관리자 로그인</b>에 이 사이트 주소를 등록하세요. 컬렉션은 고르지 않아도 됩니다.
+        <span class="home-setup-url"><code>${escapeHtml(siteUrl)}</code>
+        <button type="button" class="btn small" data-copy-site-url>주소 복사</button></span></li>
+      <li>같은 곳의 <b>사이트 회원</b>에서 방문자의 가입 정책을 고르세요. (누구나 가입 / 승인 후 이용 / 가입 중단)</li>
+      <li><b>관리자 페이지</b>에서 관리자 로그인 → 홈 소개 관리에서 사이트 제목 저장 → 게시판/메뉴 통합 관리에서 게시판을 만드세요.</li>
+    </ol>
+    <div class="formRow">
+      <a class="btn primary" href="admin.html">관리자 페이지로 가기</a>
+    </div>
+    <p class="muted small">사이트 제목을 저장하거나 게시판을 하나 만들면 이 안내는 사라집니다.
+      관리자 페이지는 언제든 하단의 <b>관리자 로그인</b> 버튼이나 <code>admin.html</code> 주소로 들어갈 수 있습니다.</p>
+  `;
+  main.prepend(guide);
+  guide.querySelector("[data-copy-site-url]")?.addEventListener("click", async (event) => {
+    try {
+      await navigator.clipboard.writeText(siteUrl);
+      event.currentTarget.textContent = "복사했습니다";
+    } catch (_error) {
+      window.prompt("이 주소를 복사하세요.", siteUrl);
+    }
+  });
 }
 
 // 로그인 창 — 비로그인: 로그인·관리자 로그인 / 회원: 닉네임·로그아웃(관리자면 관리자 메뉴 추가)
@@ -105,7 +142,7 @@ function renderHomeIntro(boot) {
 }
 
 function renderHomeCopy(settings) {
-  const siteTitle = String(settings.title || "NARU BOARD").trim();
+  const siteTitle = String(settings.title || "NAMWALL Edition").trim();
   const introHtml = String(settings.intro || "").trim();
   const safeIntro = sanitizeHTML(introHtml, { allowIframes: true });
   return `

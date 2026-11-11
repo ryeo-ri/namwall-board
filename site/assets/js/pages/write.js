@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 글쓰기/수정 — 관리자 또는 (회원 글쓰기가 켜진 게시판의) 회원
 // 파일은 staged 목록에 들고 있다가 저장할 때 업로드한다
 import { getAdminSession, getMemberSession, signInAdmin, signInMember, runQuery, runMutate, naruErrorMessage } from "../core/naru-client.js";

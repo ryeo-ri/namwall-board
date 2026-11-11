@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 방명록 — 작성(회원·게스트·관리자), 삭제(관리자·작성자·게스트 비밀번호)
 import { text, getBoard, assertBoardReadable, assertGuestWriteAllowed, isOwner, resolveAuthor, assertCanDelete } from "../modules/guard.js";
 

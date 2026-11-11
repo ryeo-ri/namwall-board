@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 관리자 · 홈 소개 관리
 import { runMutate, naruErrorMessage } from "../core/naru-client.js";
 import { loadBoot, clearSiteCache, escapeHtml, parseHomeImages } from "../core/site.js";
@@ -37,11 +37,11 @@ function fillForm() {
   setValue("ownerNameInput", savedSettings.ownerName || "");
   setValue("homeHeaderWidthInput", savedSettings.homeHeaderWidth || "");
   setChecked("homeShowTextInput", savedSettings.homeShowText === "1");
-  // 하단 메뉴 노출 — 설정이 없으면 켜진 것으로 본다 (로그인 창만 기본 꺼짐)
+  // 하단 메뉴 노출 — 설정이 없으면 켜진 것으로 본다
   setChecked("homeShowRecentInput", savedSettings.homeShowRecent !== "0");
   setChecked("homeShowSearchInput", savedSettings.homeShowSearch !== "0");
   setChecked("homeShowTagsInput", savedSettings.homeShowTags !== "0");
-  setChecked("homeShowLoginInput", savedSettings.homeShowLogin === "1");
+  setChecked("homeShowLoginInput", savedSettings.homeShowLogin !== "0");
   setValue("homeIntroWidthInput", savedSettings.homeIntroWidth || "");
   setValue("homeIntroHtmlInput", savedSettings.intro || "");
   setValue("homeImageWidthInput", savedSettings.homeImageWidth || "");

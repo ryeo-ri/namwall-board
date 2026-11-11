@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 나루 SDK 1.1.0 래퍼 — 클라이언트 생성, 관리자·회원 세션, 쿼리/뮤테이션 호출
 import { createNaru } from "https://sdk.naru.pub/sdk/1.1.0/naru.js";
 import { NARU_SITE } from "./config.js";

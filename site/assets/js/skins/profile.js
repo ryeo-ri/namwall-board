@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // PROFILE 스킨 — 캐릭터 프로필
 // 목록 = 호버 오버레이 카드, 상세 = 전신 이미지 + 네임카드 + 외형/성격/기타 패널
 import { escapeHtml, clampColumns } from "../core/site.js";

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 사이트 디자인 설정(settings.design JSON) — 사용자 페이지에 CSS 변수로 적용, 관리자 디자인 화면이 편집
 const HEADING_FONT_LINK_ID = "archiveHeadingFontLink";
 const BODY_FONT_LINK_ID = "archiveBodyFontLink";

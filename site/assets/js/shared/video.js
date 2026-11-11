@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 대표 VIDEO — 유튜브 링크·iframe 코드 → 임베드 주소, 영상 프레임 렌더
 // 영상 글은 thumb에 임베드 주소, skinData.cover에 "video"를 둔다
 import { escapeHtml } from "../core/site.js";

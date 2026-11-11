@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) -->
+<!-- NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base href="./">
 <title>관리자</title>
-<link rel="stylesheet" href="assets/css/style.css?v=1.0.0">
+<link rel="stylesheet" href="assets/css/style.css?v=1.1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
@@ -23,10 +23,16 @@
   <main class="container hidden" id="adminGate">
     <section class="card">
       <h2>관리자 로그인</h2>
-      <p class="muted small">나루 계정으로 로그인하면 이 사이트를 관리할 수 있습니다.</p>
+      <p class="muted small">사이트 주인의 나루 계정으로 로그인하면 이 사이트를 관리할 수 있습니다.</p>
       <div class="formRow mt-sm">
         <button type="button" class="btn primary" id="adminLoginBtn">관리자 로그인</button>
         <a class="btn" href="index.html">홈</a>
+      </div>
+      <div class="notice small mt-md">
+        <b>로그인이 안 되나요?</b> 처음 한 번은
+        <a href="https://naru.pub/database" target="_blank" rel="noopener noreferrer">나루 제어판 → 데이터베이스</a>의
+        <b>웹사이트 관리자 로그인</b>에 이 사이트 주소(<code id="adminSiteUrl"></code>)를 등록해야 합니다.
+        컬렉션은 고르지 않아도 됩니다.
       </div>
     </section>
   </main>
@@ -84,7 +90,7 @@
             <div class="grid tight">
               <div class="field-group">
                 <label for="siteTitleInput">사이트 이름</label>
-                <input id="siteTitleInput" maxlength="60" placeholder="기본 NARU BOARD">
+                <input id="siteTitleInput" maxlength="60" placeholder="기본 NAMWALL Edition">
               </div>
               <div class="field-group">
                 <label for="ownerNameInput">관리자 표시 이름</label>

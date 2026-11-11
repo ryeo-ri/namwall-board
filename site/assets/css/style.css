@@ -1,4 +1,4 @@
-/* NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) */
+/* NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/) */
 /* ==========================================================================
    게시판 전체 스타일 — 같은 우선순위에서는 뒤 규칙이 이기므로 섹션 순서를 지킬 것
    (홈 테마는 사용자 테마 뒤 · .board-line-item은 .search-item 뒤 · .btn.primary는 .btn.small 뒤)
@@ -4657,3 +4657,17 @@ body.site-page .card.profile-card{
     min-height: 240px;
   }
 }
+
+/* 첫 설정 안내 (새 사이트 홈) */
+body.home-page .home-setup-guide{
+  margin: 24px 0;
+  padding: 20px 24px;
+  border: 1px solid currentColor;
+}
+body.home-page .home-setup-guide h2{ margin: 0 0 8px; }
+body.home-page .home-setup-guide ol{ margin: 12px 0 16px; padding-left: 1.4em; line-height: 1.8; }
+body.home-page .home-setup-guide li{ margin-bottom: 6px; }
+body.home-page .home-setup-guide .formRow + p{ margin-top: 12px; }
+body.home-page .home-setup-guide a:not(.btn){ text-decoration: underline; }
+.home-setup-url{ display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: 4px; }
+.home-setup-url code{ word-break: break-all; }

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // BOOKMARK 스킨 — 배너 모음(이름·배너 이미지·링크). 맨 위는 게시판 설정의 소개 HTML(introHtml)
 import { escapeHtml, getHttpUrl, clampColumns } from "../core/site.js";
 import { sanitizeHTML } from "../shared/sanitizer.js";

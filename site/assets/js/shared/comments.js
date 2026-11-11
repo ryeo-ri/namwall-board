@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 댓글 — 목록·작성(회원·게스트)·비밀 댓글·접기·답글·삭제
 // options: allowImages(회원·관리자 이미지 첨부, 최대 8장, 1400px WebP) · memberOnly(비로그인 작성 차단)
 //          allowReplies(답글 R) · guestbook(postId 자리에 방명록 항목 번호) · compact · dateFirstHeader · onRendered

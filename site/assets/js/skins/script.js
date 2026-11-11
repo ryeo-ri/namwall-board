@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // SCRIPT 스킨(TRPG 플레이 로그) 뷰어 — 목록은 세션 카드, 상세는 세션 정보 + 아카이브 뷰어.
 // 아카이브 JSON을 내려받아 메시지를 300개씩 끊어 그린다.
 import { escapeHtml, formatDate, clampColumns, getHttpUrl } from "../core/site.js";

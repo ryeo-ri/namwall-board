@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 검색 — 제목·본문·출처·태그·댓글
 import { runQuery, naruErrorMessage } from "../core/naru-client.js";
 import { renderHeader, escapeHtml, formatDate } from "../core/site.js";

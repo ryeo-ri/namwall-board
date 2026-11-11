@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 게시판 읽기 쿼리 — 목록·상세·댓글·방명록·최근 글·태그·검색
 // 누구나 호출할 수 있으므로, 무엇을 보여줄지는 전부 여기서 결정한다.
 import { getBoard, assertBoardReadable, isOwner, isAuthor, resolveCommentTarget, parseJson } from "../modules/guard.js";

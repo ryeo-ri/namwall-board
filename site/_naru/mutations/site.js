@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 사이트 관리 뮤테이션 — 관리자(소유자) 전용
 import { text, requireOwner } from "../modules/guard.js";
 
@@ -19,7 +19,7 @@ const SETTING_KEYS = {
   homeShowRecent: 4,     // "0"이면 숨김
   homeShowSearch: 4,     // "0"이면 숨김
   homeShowTags: 4,       // "0"이면 숨김
-  homeShowLogin: 4,      // "1"이면 표시 (기본 꺼짐)
+  homeShowLogin: 4,      // "0"이면 숨김
   design: 4000,          // 디자인 설정 JSON
   headerFontFamily: 80,  // 로고/내비 폰트
   ownerFiles: 4          // "1"이면 사용자 페이지가 /_owner/style.css·script.js를 불러온다

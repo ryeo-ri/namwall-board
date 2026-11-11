@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 쿼리·뮤테이션 공통 헬퍼 (QuickJS에서 실행 — 브라우저 API 없음)
 
 export function text(value, max, label, ctx, { required = false } = {}) {

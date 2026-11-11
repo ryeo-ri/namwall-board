@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 댓글 — 작성(회원·게스트·관리자), 삭제(관리자·작성자·게스트 비밀번호)
 // 게시글 또는 방명록 항목에 단다. 이미지 첨부는 회원·관리자만(나루 미디어 업로드가 회원 전용).
 // 답글: parent = 같은 곳의 댓글 번호. 댓글을 지우면 그 아래 답글까지 함께 지운다.

@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 라이트박스 — [data-lightbox-image] 클릭으로 연다. 큰 이미지는 화면에 맞춰 줄이고(누르면 원본 크기로 확대),
 // 작은 이미지는 원본 크기 그대로. 이미지 밖을 누르거나 Esc로 닫는다.
 let updateLightboxZoomable = null;

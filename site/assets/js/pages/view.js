@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 게시물 상세 + 댓글 — 비밀글은 서버가 비밀번호를 확인한 뒤에만 본문을 준다
 // 스킨: THREAD(좌/우 분할) · GALLERY(댓글 없음, 출처·첨부) · SCRIPT(세션 정보 + 로그 뷰어) · PROFILE(네임카드 + 패널)
 import { runQuery, runMutate, naruErrorMessage } from "../core/naru-client.js";

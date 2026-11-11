@@ -1,4 +1,4 @@
-// NARU BOARD Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
+// NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 사이트 공통 — 부트스트랩(설정·게시판·내 프로필, 세션 캐시), 헤더, 공용 포맷 함수
 import {
   naru, runQuery, runMutate, getAdminSession, getMemberSession,
@@ -78,7 +78,8 @@ export function loadBoot() {
           settings: result?.settings || {},
           boards: (result?.boards || []).map(normalizeBoard),
           me: result?.me || null,
-          owner: result?.owner === true
+          owner: result?.owner === true,
+          isNew: result?.isNew === true
         };
         writeCache(cacheKey, value);
         currentSettings = value.settings;
@@ -124,7 +125,7 @@ export async function renderHeader() {
   const boot = await loadBoot();
   const { settings, boards } = boot;
 
-  if (titleEl) titleEl.textContent = settings.title || "NARU BOARD";
+  if (titleEl) titleEl.textContent = settings.title || "NAMWALL Edition";
   if (settings.title && !document.title.includes(settings.title)) {
     document.title = `${document.title} - ${settings.title}`;
   }
