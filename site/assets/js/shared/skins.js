@@ -138,7 +138,7 @@ export function bindGuestbook(root, board, reload) {
       }
       try {
         await runMutate("guestbook:add", payload);
-        await reload();
+        await reload({ firstPage: true }); // 새 글이 보이도록 1페이지로
       } catch (error) {
         if (error?.details?.needProfile) {
           await promptNickname("방명록을 쓰려면 닉네임이 필요합니다. 사용할 닉네임을 입력하세요.");

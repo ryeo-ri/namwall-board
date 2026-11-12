@@ -147,18 +147,28 @@ export async function bindScriptViewer(container, post) {
     let rendered = 0;
     let speakerFlowOpen = false;
     let speakerKey = "";          // 바로 앞 코코포리아 대사의 탭+화자
-    let autoLoadArmed = true;
     let isAppending = false;
-    let observer = null;
+    // 끝 표시(sentinel)가 화면 가까이 오면 저절로 이어 그린다. 스크롤 감지가 안 되는 브라우저만 '더 보기' 버튼.
+    const observer = sentinel && "IntersectionObserver" in window
+      ? new IntersectionObserver(([entry]) => {
+        if (entry?.isIntersecting) appendChunk();
+      }, { rootMargin: "600px 0px", threshold: 0 })
+      : null;
 
     applyScriptArchiveCss(shell, archive.css);
 
     const updateLoadControls = () => {
       const hasMore = rendered < messages.length;
-      moreButton.classList.toggle("hidden", !hasMore);
+      moreButton.classList.toggle("hidden", !hasMore || Boolean(observer));
       sentinel?.classList.toggle("hidden", !hasMore);
       if (hasMore) observer?.observe(sentinel);
       else observer?.disconnect();
+    };
+    // 관찰을 다시 걸면 지금 위치로 한 번 더 알려 준다 — 그린 뒤에도 끝이 화면 가까이면 이어서 그린다
+    const rearm = () => {
+      if (!observer || rendered >= messages.length) return;
+      observer.unobserve(sentinel);
+      observer.observe(sentinel);
     };
     const appendChunk = () => {
       if (isAppending || rendered >= messages.length) return;
@@ -180,6 +190,7 @@ export async function bindScriptViewer(container, post) {
       updateLoadControls();
       requestAnimationFrame(() => {
         isAppending = false;
+        rearm();
       });
     };
 
@@ -191,10 +202,7 @@ export async function bindScriptViewer(container, post) {
     }
 
     statusEl.classList.add("hidden");
-    moreButton.addEventListener("click", () => {
-      autoLoadArmed = false;
-      appendChunk();
-    });
+    moreButton.addEventListener("click", () => appendChunk());
     appendChunk();
     bindScriptTabs(shell.querySelector("[data-script-tabs]"), allMessages, archive.tabs, (hiddenTabs) => {
       // 가리지 않고 처음부터 다시 그린다 — 이어 말하기·여백이 보이는 메시지끼리 맞물리도록.
@@ -204,22 +212,9 @@ export async function bindScriptViewer(container, post) {
       speakerFlowOpen = false;
       speakerKey = "";
       isAppending = false;
-      autoLoadArmed = true;
       observer?.disconnect();   // 다시 관찰을 걸어 현재 위치 기준으로 이어 불러오게 한다
       appendChunk();
     });
-    if (sentinel && "IntersectionObserver" in window && rendered < messages.length) {
-      observer = new IntersectionObserver(([entry]) => {
-        if (!entry?.isIntersecting) {
-          autoLoadArmed = true;
-          return;
-        }
-        if (!autoLoadArmed || isAppending) return;
-        autoLoadArmed = false;
-        appendChunk();
-      }, { rootMargin: "600px 0px", threshold: 0 });
-      observer.observe(sentinel);
-    }
   } catch (error) {
     console.error("SCRIPT archive load failed:", error);
     statusEl.classList.remove("hidden");

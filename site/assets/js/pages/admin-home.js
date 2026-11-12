@@ -82,7 +82,7 @@ function bindImageControls() {
       for (const item of batch) {
         if (item.uploadedUrl) continue;
         showMsg(`${item.file.name} 업로드 중…`);
-        const uploaded = await admin.media.upload(item.file);
+        const uploaded = await admin.media.upload(item.file, { keepOriginal: true });
         item.uploadedUrl = uploaded.url;
       }
       await persistImages([...savedImages, ...batch.map((item) => ({ url: item.uploadedUrl, source: item.source }))]);

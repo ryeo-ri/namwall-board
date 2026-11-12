@@ -420,9 +420,21 @@ textarea.textarea:focus{
   line-height: 1;
   cursor: pointer;
 }
+.pagination-btn:hover,
 .pagination-btn:focus-visible{
   text-decoration: underline;
   text-underline-offset: 0.25em;
+}
+.pagination-btn.is-active{
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  cursor: default;
+}
+.pagination-btn:disabled{
+  opacity: 0.3;
+  cursor: default;
+  text-decoration: none;
 }
 .pagination-arrow{
   font-size: 15px;
@@ -1072,6 +1084,20 @@ body.site-page .board-actions .btn{
 .log-feed.is-unlimited-image .log-media-column{
   flex: 1 1 auto;
   max-width: none;
+}
+/* 좌우 배치: 이미지 폭 설정은 최대 폭 — 작은 이미지는 원래 크기 그대로, 댓글 칸이 바로 옆에 붙는다 */
+.log-feed.has-log-media-width .log-post-content .log-media-column.is-image{
+  flex: 0 0 auto;
+  width: auto;
+  max-width: min(100%, var(--log-media-width));
+}
+.log-feed.is-unlimited-image .log-post-content .log-media-column.is-image{
+  flex-grow: 0;
+}
+/* 태그가 많아도 이미지 칸을 넓히지 않는다 (폭 계산에서 빠지고 칸 폭만 채움) */
+.log-post-content .log-media-column.is-image > .log-tags{
+  width: 0;
+  min-width: 100%;
 }
 .log-top-meta{
   display: flex;
@@ -2657,8 +2683,10 @@ body.home-page .footer{
   .log-content-column{
     width: 100%;
   }
-  .log-feed.has-log-media-width .log-media-column{
+  .log-feed.has-log-media-width .log-media-column,
+  .log-feed.has-log-media-width .log-post-content .log-media-column.is-image{
     width: 100%;
+    max-width: 100%;
   }
   .log-hero-video{
     width: 100%;

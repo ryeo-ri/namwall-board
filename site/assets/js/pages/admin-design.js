@@ -271,7 +271,7 @@ async function saveDesignSettings() {
     // 골라둔 배경 이미지 파일을 먼저 업로드해 URL 칸에 넣는다
     if (bgImageStaged) {
       showMsg("배경 이미지 업로드 중…");
-      const uploaded = await admin.media.upload(bgImageStaged.file);
+      const uploaded = await admin.media.upload(bgImageStaged.file, { keepOriginal: true });
       const input = document.getElementById("bgImageInput");
       if (input) input.value = uploaded.url;
       URL.revokeObjectURL(bgImageStaged.previewUrl);

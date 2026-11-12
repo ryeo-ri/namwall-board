@@ -310,7 +310,7 @@ async function save() {
     };
     if (stagedImage) {
       showMsg("제목 이미지 업로드 중…");
-      const uploaded = await admin.media.upload(stagedImage.file);
+      const uploaded = await admin.media.upload(stagedImage.file, { keepOriginal: true });
       payload.titleImage = uploaded.url;
     }
     await runMutate("site:saveBoard", payload);

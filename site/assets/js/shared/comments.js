@@ -40,6 +40,7 @@ export async function loadComments(postId, container, options = {}) {
   container.innerHTML = `
     <div class="comments-list">
       <div class="comment-pagination${page.more ? "" : " hidden"}">
+        <span class="comment-page-status muted small hidden">이전 댓글을 불러오는 중…</span>
         <button type="button" class="btn small" data-older-comments>이전 댓글 더 보기</button>
         <div class="comment-page-error notice small hidden"></div>
       </div>
@@ -73,29 +74,68 @@ function queryCommentPage(target, before = null) {
   return runQuery("board:comments", { ...target, size: COMMENT_PAGE_SIZE, ...(before ? { before } : {}) });
 }
 
+// 이전 댓글 — 목록 맨 위 줄이 화면 가까이 오면 저절로 불러오고, 아직 가까이 있으면 이어서 더 불러온다.
+// 스크롤 감지가 안 되는 브라우저와 불러오기에 실패했을 때만 '이전 댓글 더 보기' 버튼.
 function bindCommentPaging(container, target, firstPage, onOlder) {
   const pagination = container.querySelector(".comment-pagination");
   const button = container.querySelector("[data-older-comments]");
+  const statusEl = container.querySelector(".comment-page-status");
   const errorEl = container.querySelector(".comment-page-error");
+  if (!pagination) return;
   let before = firstPage.before;
-  button?.addEventListener("click", async () => {
-    if (button.disabled || !before) return;
-    button.disabled = true;
+  let more = Boolean(firstPage.more);
+  let loading = false;
+  let observer = null;
+  const showButton = (show) => {
+    button?.classList.toggle("hidden", !show);
+    statusEl?.classList.toggle("hidden", show);
+  };
+
+  const loadOlder = async () => {
+    if (loading || !more || !before) return;
+    loading = true;
+    if (button) button.disabled = true;
     errorEl?.classList.add("hidden");
     try {
       const page = await queryCommentPage(target, before);
       onOlder(page.comments);
       before = page.before;
-      pagination.classList.toggle("hidden", !page.more);
+      more = Boolean(page.more);
+      pagination.classList.toggle("hidden", !more);
+      if (observer) showButton(false);
     } catch (error) {
       if (errorEl) {
         errorEl.textContent = naruErrorMessage(error, "이전 댓글을 불러오지 못했습니다.");
         errorEl.classList.remove("hidden");
       }
+      showButton(true); // 실패하면 저절로 다시 시도하지 않고 버튼으로
+      observer?.unobserve(pagination);
+      return;
     } finally {
-      button.disabled = false;
+      loading = false;
+      if (button) button.disabled = false;
     }
-  });
+    // 관찰을 다시 걸면 지금 위치로 한 번 더 알려 준다 — 아직 화면 가까이면 이어서 불러온다
+    if (observer && more) {
+      observer.unobserve(pagination);
+      observer.observe(pagination);
+    } else {
+      observer?.disconnect();
+    }
+  };
+
+  button?.addEventListener("click", loadOlder);
+  if (!more || !("IntersectionObserver" in window)) return;
+  observer = new IntersectionObserver(([entry]) => {
+    // 댓글을 다시 그려 이 줄이 문서에서 빠졌으면 관찰을 끝낸다
+    if (!pagination.isConnected) {
+      observer.disconnect();
+      return;
+    }
+    if (entry?.isIntersecting) loadOlder();
+  }, { rootMargin: "300px 0px", threshold: 0 });
+  showButton(false);
+  observer.observe(pagination);
 }
 
 // 답글을 부모 댓글 아래로 묶는다. 부모가 목록에 없으면(삭제됐거나 아직 안 불러옴) 일반 댓글로 둔다.
@@ -536,7 +576,8 @@ function bindSubmit(container, target, reload, { canAttach, uploader }) {
         showMsg("이미지 업로드 중…");
         // 업로드 결과를 기억해 등록이 실패해도 다시 올리지 않는다
         for (const item of pendingImages) {
-          if (!item.uploadedUrl) item.uploadedUrl = (await uploader.media.upload(item.blob)).url;
+          // 이미 1400px WebP로 줄여 두었으니 SDK가 한 번 더 압축하지 않게 한다
+          if (!item.uploadedUrl) item.uploadedUrl = (await uploader.media.upload(item.blob, { keepOriginal: true })).url;
         }
         payload.images = pendingImages.map((item) => item.uploadedUrl);
       }

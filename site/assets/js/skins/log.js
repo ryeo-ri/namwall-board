@@ -32,6 +32,8 @@ function renderLogEntry(post, board, layout, { showManage = true, selectable = f
   const author = post.isOwnerPost ? ownerDisplayName() : (post.nickname || "익명");
   const locked = post.isSecret && post.body == null;
   const hasMedia = Boolean(locked || post.thumb);
+  // 이미지 칸은 이미지 크기에 맞춰 줄어든다(동영상·비밀글 칸은 설정 폭 그대로)
+  const mediaColumnClass = !locked && post.thumb && !isVideoPost(post) ? "log-media-column is-image" : "log-media-column";
 
   const bodyHtml = renderRichText(post.body, { boardId: board.id, allowIframes: true });
   const bodyContent = document.createElement("div");
@@ -127,7 +129,7 @@ function renderLogEntry(post, board, layout, { showManage = true, selectable = f
       ` : ""}
       ${layout.commentPosition === "bottom" ? `
         <div class="log-post-stack">
-          ${hasMedia ? `<div class="log-media-column">${mediaHtml}</div>` : ""}
+          ${hasMedia ? `<div class="${mediaColumnClass}">${mediaHtml}</div>` : ""}
           <div class="log-content-column log-content-column-full">
             ${contentBits}
           </div>
@@ -137,7 +139,7 @@ function renderLogEntry(post, board, layout, { showManage = true, selectable = f
       ` : `
         <div class="log-post-content">
           ${hasMedia ? `
-            <div class="log-media-column">
+            <div class="${mediaColumnClass}">
               ${mediaHtml}
               ${tagChips}
             </div>

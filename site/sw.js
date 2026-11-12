@@ -1,7 +1,7 @@
 // NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
 // 서비스 워커 — assets/*, SDK, 최상위 게시판 페이지를 캐시 우선 + 백그라운드 갱신으로 제공한다.
 // 새 배포는 다음 로드부터 반영된다. API 호출과 하위 폴더 페이지는 건드리지 않는다.
-const CACHE_NAME = "board-static-1.1.0";
+const CACHE_NAME = "board-static-1.2.0";
 const SCOPE = self.registration.scope;
 const ASSET_BASE = new URL("assets/", SCOPE).href;
 

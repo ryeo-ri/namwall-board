@@ -17,11 +17,11 @@ export async function createMediaUploadSession(uploader, help = "로그 이미�
   };
   return {
     assertAvailable,
-    async upload(file) {
+    async upload(file, options) {
       assertAvailable(1);
       // 병렬 이미지 백업도 예약한 횟수 안에서만 시작한다. 실패 여부가 불확실하면 돌려주지 않는다.
       remaining -= 1;
-      return uploader.media.upload(file);
+      return uploader.media.upload(file, options);
     }
   };
 }

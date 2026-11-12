@@ -8,8 +8,11 @@ const LIST_MAX = 50;
 const BODY_BUDGET = 450 * 1024;
 const COMMENT_BUDGET = 450 * 1024;
 
-// 글 목록 (키셋 페이징: id DESC)
-// withBody: LOG·GALLERY처럼 목록에서 본문·첨부까지 그릴 때. 응답 한도를 넘으면 앞쪽 글만 주고 more로 넘긴다.
+// 글 목록 (id DESC)
+// page(1부터)를 주면 페이지 번호 방식 — 전체 글 수·페이지 수를 함께 준다. logNo를 주면 그 로그가 있는 페이지.
+// page 없이 before를 주면 키셋 방식(더 보기).
+// withBody: LOG·GALLERY처럼 목록에서 본문·첨부까지 그릴 때. 응답 한도를 넘으면 앞쪽 글만 주고
+// 키셋 방식은 more, 페이지 방식은 partial로 알린다 — 나머지는 skip(이 페이지에서 이미 받은 수)으로 이어 받는다.
 // 비밀글 본문·첨부는 관리자·작성자에게만.
 export async function posts(ctx, args) {
   const owner = await isOwner(ctx);
@@ -19,42 +22,73 @@ export async function posts(ctx, args) {
   const before = Number(args && args.before) || 0;
   const withBody = (args && args.withBody) === true;
   const category = String((args && args.category) || "").trim().slice(0, 30);
+  const paged = args && args.page != null;
 
-  // 회원 공개 글은 비회원에게 목록에서도 숨긴다
+  // 회원 공개 글은 비회원에게 목록에서도 숨긴다 — 목록과 개수에 같은 조건
   const seeMemberOnly = owner || !!ctx.member;
-  const beforeId = before || Number.MAX_SAFE_INTEGER;
+  const where = `p.board_id = ?
+      ${seeMemberOnly ? "" : "AND p.member_only = 0"}
+      ${category ? "AND p.category = ?" : ""}`;
+  const whereValues = category ? [board.id, category] : [board.id];
+
+  let page = 0;
+  let pages = 0;
+  let total = 0;
+  let offset = 0;
+  let limit = size + 1;
+  if (paged) {
+    const { rows: countRows } = await ctx.sql(`SELECT COUNT(*) AS n FROM posts p WHERE ${where}`, whereValues);
+    total = Number(countRows[0] && countRows[0].n) || 0;
+    pages = Math.max(1, Math.ceil(total / size));
+    page = Math.floor(Number(args.page)) || 1;
+    const logNo = Math.floor(Number(args.logNo)) || 0;
+    if (logNo > 0) {
+      // 그 로그보다 새 글이 몇 개인지로 페이지를 정한다 (없는 번호면 1페이지)
+      const { rows: newer } = await ctx.sql(
+        `SELECT COUNT(*) AS n FROM posts p WHERE ${where}
+           AND p.id > (SELECT MAX(id) FROM posts WHERE board_id = ? AND log_no = ?)`,
+        [...whereValues, board.id, logNo]);
+      page = Math.floor((Number(newer[0] && newer[0].n) || 0) / size) + 1;
+    }
+    page = Math.min(Math.max(page, 1), pages);
+    const skip = Math.min(Math.max(Math.floor(Number(args.skip)) || 0, 0), size - 1);
+    offset = (page - 1) * size + skip;
+    limit = size - skip;
+  }
+
   const sql = `
     SELECT p.id, p.title, p.author_id, p.is_secret, p.member_only, p.thumb, p.source, p.tags, p.log_no, p.category, p.skin_data, p.created_at,
            ${withBody ? "length(CAST(p.body AS BLOB)) + length(CAST(p.images AS BLOB)) + length(CAST(p.attachments AS BLOB)) AS body_bytes," : ""}
            pr.nickname,
            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
     FROM posts p LEFT JOIN profiles pr ON pr.member_id = p.author_id
-    WHERE p.board_id = ? AND p.id < ?
-      ${seeMemberOnly ? "" : "AND p.member_only = 0"}
-      ${category ? "AND p.category = ?" : ""}
-    ORDER BY p.id DESC LIMIT ?`;
-  const values = [board.id, beforeId];
-  if (category) values.push(category);
-  values.push(size + 1);
+    WHERE ${where}
+      ${paged ? "" : "AND p.id < ?"}
+    ORDER BY p.id DESC LIMIT ?${paged ? " OFFSET ?" : ""}`;
+  const values = paged
+    ? [...whereValues, limit, offset]
+    : [...whereValues, before || Number.MAX_SAFE_INTEGER, limit];
   const { rows } = await ctx.sql(sql, values);
 
   const canSeeRow = (row) => !row.is_secret || owner || isAuthor(ctx, row.author_id);
-  let list = rows.slice(0, size);
-  let more = rows.length > size;
+  let list = paged ? rows : rows.slice(0, size);
+  let more = paged ? offset + rows.length < total : rows.length > size;
+  let partial = false;
 
   // 본문은 한도 안에 드는 글까지만 따로 읽는다 (최소 1개)
   let bodies = new Map();
   if (withBody) {
-    let total = 0;
+    let bytes = 0;
     let keep = 0;
     for (const row of list) {
-      if (canSeeRow(row)) total += Number(row.body_bytes) || 0;
-      if (keep > 0 && total > BODY_BUDGET) break;
+      if (canSeeRow(row)) bytes += Number(row.body_bytes) || 0;
+      if (keep > 0 && bytes > BODY_BUDGET) break;
       keep += 1;
     }
     if (keep < list.length) {
       list = list.slice(0, keep);
       more = true;
+      partial = paged;
     }
     const ids = JSON.stringify(list.filter(canSeeRow).map((row) => row.id));
     const { rows: bodyRows } = await ctx.sql`
@@ -91,7 +125,8 @@ export async function posts(ctx, args) {
       }
       return item;
     }),
-    more
+    more,
+    ...(paged ? { page, pages, total, partial } : {})
   };
 }
 
@@ -232,25 +267,38 @@ export async function commentReveal(ctx, args) {
   return { body: row.body };
 }
 
-// 방명록 목록
+// 방명록 목록 — page(1부터)를 주면 페이지 번호 방식(전체 수·페이지 수 포함), 아니면 before 키셋
 export async function guestbook(ctx, args) {
   const owner = await isOwner(ctx);
   const board = await getBoard(ctx, args && args.board);
   assertBoardReadable(ctx, board, owner);
   const size = Math.min(Math.max(Number(args && args.size) || 20, 1), LIST_MAX);
   const before = Number(args && args.before) || 0;
+  const paged = args && args.page != null;
 
-  const beforeId = before || Number.MAX_SAFE_INTEGER;
+  let page = 0;
+  let pages = 0;
+  let total = 0;
+  if (paged) {
+    const { rows: countRows } = await ctx.sql`SELECT COUNT(*) AS n FROM guestbook WHERE board_id = ${board.id}`;
+    total = Number(countRows[0] && countRows[0].n) || 0;
+    pages = Math.max(1, Math.ceil(total / size));
+    page = Math.min(Math.max(Math.floor(Number(args.page)) || 1, 1), pages);
+  }
+
+  const beforeId = paged ? Number.MAX_SAFE_INTEGER : (before || Number.MAX_SAFE_INTEGER);
+  const offset = paged ? (page - 1) * size : 0;
   const { rows } = await ctx.sql`
     SELECT g.id, g.author_id, g.is_owner, g.guest_name, g.guest_hash, g.body, g.is_secret, g.created_at,
            pr.nickname,
            (SELECT COUNT(*) FROM comments c WHERE c.guestbook_id = g.id) AS comment_count
     FROM guestbook g LEFT JOIN profiles pr ON pr.member_id = g.author_id
     WHERE g.board_id = ${board.id} AND g.id < ${beforeId}
-    ORDER BY g.id DESC LIMIT ${size + 1}`;
+    ORDER BY g.id DESC LIMIT ${size + 1} OFFSET ${offset}`;
 
   const more = rows.length > size;
   return {
+    ...(paged ? { page, pages, total } : {}),
     entries: rows.slice(0, size).map((row) => {
       const mine = isAuthor(ctx, row.author_id);
       const canSee = !row.is_secret || owner || mine;

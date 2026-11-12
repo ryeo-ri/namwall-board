@@ -3,7 +3,7 @@
 // 파일은 staged 목록에 들고 있다가 저장할 때 업로드한다
 import { getAdminSession, getMemberSession, signInAdmin, signInMember, runQuery, runMutate, naruErrorMessage } from "../core/naru-client.js";
 import { renderHeader, getBoardById, promptNickname, escapeHtml, ownerDisplayName, normalizeSkinType } from "../core/site.js";
-import { createMediaUploadSession } from "../shared/media-budget.js";
+import { createMediaUploadSession, MAX_MEDIA_BYTES } from "../shared/media-budget.js";
 import { toVideoEmbedSrc, renderVideoFrame } from "../shared/video.js";
 import { getValue, setValue, setText, showNotice, bindImagePicker } from "../shared/ui.js";
 
@@ -294,8 +294,11 @@ async function resolveProfileImage(snapshot, msgEl, label) {
 // staged 파일 업로드 — 등록이 실패해 다시 저장할 때 같은 파일을 또 올리지 않게 결과를 기억한다
 async function uploadStaged(item, msgEl, label, uploadSession = null) {
   if (!item.uploaded) {
+    // keepOriginal이라 SDK가 줄여 주지 않으므로 25MiB 서버 한도를 넘는 파일은 올리기 전에 거른다
+    if (item.blob.size > MAX_MEDIA_BYTES) throw new Error(`${label} 파일이 25MB를 넘습니다. 용량을 줄여 다시 선택해 주세요.`);
     showNotice(msgEl, `${label} 업로드 중…`);
-    item.uploaded = await (uploadSession ? uploadSession.upload(item.blob) : uploader.media.upload(item.blob));
+    const options = { keepOriginal: true };
+    item.uploaded = await (uploadSession ? uploadSession.upload(item.blob, options) : uploader.media.upload(item.blob, options));
   }
   return item.uploaded;
 }

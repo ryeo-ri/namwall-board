@@ -1,6 +1,6 @@
 // NAMWALL Edition Copyright (c) 2026 NAMWALL — MPL-2.0 (https://mozilla.org/MPL/2.0/)
-// 나루 SDK 1.1.0 래퍼 — 클라이언트 생성, 관리자·회원 세션, 쿼리/뮤테이션 호출
-import { createNaru } from "https://sdk.naru.pub/sdk/1.1.0/naru.js";
+// 나루 SDK 1.2.0 래퍼 — 클라이언트 생성, 관리자·회원 세션, 쿼리/뮤테이션 호출
+import { createNaru } from "https://sdk.naru.pub/sdk/1.2.0/naru.js";
 import { NARU_SITE } from "./config.js";
 
 // NARU_SITE 없이 초기화에 실패해도 페이지는 뜨도록, 호출할 때 안내 오류를 던지는 대체 클라이언트
